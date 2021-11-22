@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model, authenticate
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import update_last_login
+from django.core.validators import RegexValidator
 from rest_framework import serializers
 from rest_framework_jwt.settings import api_settings
 
@@ -18,7 +19,7 @@ class UserCreateSerializer(serializers.Serializer):
     password = serializers.CharField(required=True)
     email = serializers.EmailField(required=True)
     nickname = serializers.CharField(required=True)
-    studentid = serializers.IntegerField(required=False)
+    studentid = serializers.CharField(required=False, validators=[RegexValidator(regex=r'^\d\d\d\d-\d\d\d\d\d$', message='학번 포맷을 확인해주세요.')])
     university = serializers.CharField(required=False)
 
     def validate(self, data):
@@ -32,13 +33,13 @@ class UserCreateSerializer(serializers.Serializer):
         studentid = validated_data.get('studentid')
         university = validated_data.get('university')
 
-        user = User.objects(username=username, email=email)
+        user = User.objects.create_user(username, email, password, nickname=nickname, studentid=studentid, university=university)
         jwt_token = jwt_token_of(user)
-        return user, jwt_token(user)
+        return user, jwt_token
 
 class UserLoginSerializer(serializers.Serializer):
     username = serializers.CharField(required=True)
-    password = serializers.CharField(required=True)
+    password = serializers.CharField(write_only=True)
     token = serializers.CharField(max_length=255, read_only=True)
 
     def validate(self, data):

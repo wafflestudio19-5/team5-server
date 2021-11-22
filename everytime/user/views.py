@@ -20,7 +20,7 @@ class UserSignUpView(APIView):
         try:
             user, jwt_token = serializer.save()
         except IntegrityError:
-            return Response(statusj=status.HTTP_409_CONFLICT, data='이미 존재하는 유저입니다.')
+            return Response(status=status.HTTP_409_CONFLICT, data='이미 존재하는 유저입니다.')
 
         return Response({
             'user' : user.username,
