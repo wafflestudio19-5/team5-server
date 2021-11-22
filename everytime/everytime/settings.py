@@ -75,8 +75,12 @@ WSGI_APPLICATION = 'everytime.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',
+        'HOST': 'team-5.cvyy2p2s4med.ap-northeast-2.rds.amazonaws.com',
+        'PORT': 3306,
+        'NAME': 'everytime_backend',
+        'USER': 'everytime-backend',
+        'PASSWORD': 't5database',
     }
 }
 
