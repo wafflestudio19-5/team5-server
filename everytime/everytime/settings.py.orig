@@ -9,8 +9,11 @@ https://docs.djangoproject.com/en/3.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
+<<<<<<< HEAD
 
 import datetime
+=======
+>>>>>>> user-migrate
 import os
 from pathlib import Path
 
@@ -39,14 +42,18 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+<<<<<<< HEAD
     'django.contrib.sites',
     'rest_framework',
     'rest_framework_jwt',
     'rest_framework.authtoken',
+    'user.apps.UserConfig',
+=======
     'user',
     'board',
     'post',
     'comment',
+>>>>>>> user-migrate
 ]
 
 MIDDLEWARE = [
@@ -86,11 +93,19 @@ WSGI_APPLICATION = 'everytime.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
+<<<<<<< HEAD
+        'HOST': 'localhost',
+        'PORT': 3306,
+        'NAME': 'everytime',
+        'USER': 'waffle-backend',
+        'PASSWORD': 'seminar'
+=======
         'HOST': 'team-5.cvyy2p2s4med.ap-northeast-2.rds.amazonaws.com',
         'PORT': 3306,
         'NAME': 'everytime_backend',
         'USER': 'everytime-backend',
         'PASSWORD': 't5database',
+>>>>>>> user-migrate
     }
 }
 
@@ -139,7 +154,7 @@ MEDIA_URL = '/images/'
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+<<<<<<< HEAD
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
@@ -164,5 +179,10 @@ JWT_AUTH = {
 }
 
 AUTH_USER_MODEL = 'user.User'
+=======
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+AUTH_USER_MODEL = 'user.User'
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'static/images')
+>>>>>>> user-migrate
