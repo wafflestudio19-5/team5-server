@@ -19,8 +19,8 @@ class UserCreateSerializer(serializers.Serializer):
     password = serializers.CharField(required=True)
     email = serializers.EmailField(required=True)
     nickname = serializers.CharField(required=True)
-    studentid = serializers.CharField(required=False, validators=[RegexValidator(regex=r'^\d\d\d\d-\d\d\d\d\d$', message='학번 포맷을 확인해주세요.')])
-    university = serializers.CharField(required=False)
+    admission_year = serializers.CharField(required=True)
+    univ = serializers.CharField(required=True)
 
     def validate(self, data):
         return data
@@ -30,10 +30,10 @@ class UserCreateSerializer(serializers.Serializer):
         password = validated_data.get('password')
         email = validated_data.get('email')
         nickname = validated_data.get('nickname')
-        studentid = validated_data.get('studentid')
-        university = validated_data.get('university')
+        admission_year = validated_data.get('admission_year')
+        univ = validated_data.get('univ')
 
-        user = User.objects.create_user(username, email, password, nickname=nickname, studentid=studentid, university=university)
+        user = User.objects.create_user(username, email, password, nickname=nickname, admission_year=admission_year, univ=univ)
         jwt_token = jwt_token_of(user)
         return user, jwt_token
 

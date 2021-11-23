@@ -14,24 +14,23 @@ from post.models import Post
 class CustomUserManager(BaseUserManager):
     use_in_migrations = True
 
-    def _create_user(self, username, password, **extra_fields):
+    def _create_user(self, username, email, password, **extra_fields):
         if not username:
             raise ValueError('아이디를 설정해주세요.')
-#        if 'email' in extra_fields:
-#            extra_fields.get('email') = self.normalize_email(extra_fields.get('email'))
-        user = self.model(username=username, **extra_fields)
+        email = self.normalize_email(email)
+        user = self.model(username=username, email=email, **extra_fields)
         user.set_password(password)
         user.save(force_insert=True, using=self._db)
         return user
 
-    def create_user(self, username, password, **extra_fields):
+    def create_user(self, username, email, password, **extra_fields):
         # setdefault -> 딕셔너리에 key가 없을 경우 default로 값 설정
         extra_fields.setdefault('is_staff', False)
         extra_fields.setdefault('is_superuser', False)
 
         return self._create_user(username, email, password, **extra_fields)
 
-    def create_superuser(self, username, password, **extra_fields):
+    def create_superuser(self, username, email, password, **extra_fields):
 
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
@@ -39,7 +38,7 @@ class CustomUserManager(BaseUserManager):
         if extra_fields.get('is_staff') is not True or extra_fields.get('is_superuser') is not True:
             raise ValueError('권한 설정이 잘못되었습니다.')
 
-        return self._create_user(username, password, **extra_fields)
+        return self._create_user(username, email, password, **extra_fields)
 
 
 # 이메일 기반으로 인증하여 가입한다고 가정하였을 때
