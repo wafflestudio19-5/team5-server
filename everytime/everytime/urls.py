@@ -27,12 +27,13 @@ from drf_yasg import openapi
 
 
 urlpatterns = [
+    path("", ping, name="index"),
     path('admin/', admin.site.urls),
     path('', include('user.urls'))
 ]
+
 if settings.DEBUG_TOOLBAR:
     import debug_toolbar
-
     urlpatterns += [
         url(r'^__debug__/', include(debug_toolbar.urls)),
     ]
