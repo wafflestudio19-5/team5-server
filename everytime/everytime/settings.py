@@ -168,3 +168,5 @@ JWT_AUTH = {
 AUTH_USER_MODEL = 'user.User'
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'static/images')
+
+SITE_ID = 1
