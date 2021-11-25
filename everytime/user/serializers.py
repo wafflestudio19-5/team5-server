@@ -23,6 +23,7 @@ class UserCreateSerializer(serializers.Serializer):
     univ = serializers.CharField(required=True)
 
     def validate(self, data):
+        # singup 과정에서 validate 함수 만들기
         return data
 
     def create(self, validated_data):
