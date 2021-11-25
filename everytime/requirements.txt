@@ -8,3 +8,4 @@ djangorestframework==3.11.1
 djangorestframework-jwt
 django-rest-authtoken
 Pillow  # profile picture 관련, 이미지처리
+drf-yasg

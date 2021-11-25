@@ -26,8 +26,12 @@ SECRET_KEY = 'django-insecure-cp=psw_ct_oa!ag6jd)jms5sk7us+docif%@w=pwp#ai@fzdam
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
+DEBUG_TOOLBAR = os.getenv('DEBUG_TOOLBAR') in ('true', 'True')
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    '13.125.247.56',
+    '127.0.0.1',
+]
 
 
 # Application definition
@@ -43,6 +47,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_jwt',
     'rest_framework.authtoken',
+    'drf_yasg',
     'user',
     'board',
     'post',
@@ -60,6 +65,11 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'everytime.urls'
+
+if DEBUG_TOOLBAR:
+    INSTALLED_APPS.append('debug_toolbar')
+    MIDDLEWARE.append('debug_toolbar.middleware.DebugToolbarMiddleware')
+    INTERNAL_IPS = ['127.0.0.1', ]
 
 TEMPLATES = [
     {
