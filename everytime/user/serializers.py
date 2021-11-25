@@ -24,6 +24,9 @@ class UserCreateSerializer(serializers.Serializer):
 
     def validate(self, data):
         # singup 과정에서 validate 함수 만들기
+        admission_year = data.get('admission_year')
+        if (admission_year, admission_year) not in User.YEAR_CHOICES:
+            raise serializers.ValidationError('학번을 올바르게 입력하세요.')
         return data
 
     def create(self, validated_data):
@@ -49,7 +52,7 @@ class UserLoginSerializer(serializers.Serializer):
         user = authenticate(username=username, password=password)
 
         if user is None:
-            raise serializers.ValidationError('아이디 또는 비밀번호를 확인하십시오.')
+            raise serializers.ValidationError('아이디 또는 비밀번호를 확인하세요.')
 
         return {
             'username' : user.username,
