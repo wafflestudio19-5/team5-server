@@ -53,7 +53,7 @@ schema_view = get_schema_view(
     ),
     public=True,
     permission_classes=(permissions.AllowAny,),
-    url="https://13.125.247.56",
+    url="https://www.waffle-minkyu.shop",
 )
 urlpatterns += [
         re_path(r'^swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name="schema-json"),
