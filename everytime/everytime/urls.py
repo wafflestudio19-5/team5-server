@@ -29,7 +29,7 @@ from drf_yasg import openapi
 urlpatterns = [
   # path("", ping, name="index"),
     path('admin/', admin.site.urls),
-    path('', include('user.urls'))
+    path('user/', include('user.urls'))
 ]
 
 if settings.DEBUG_TOOLBAR:
