@@ -72,6 +72,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     admission_year = models.CharField(max_length=10, choices=YEAR_CHOICES)   # 학번
     date_joined = models.DateTimeField(auto_now_add=True)
     last_login = models.DateTimeField(default=timezone.now)                  # 혹시 필요할까 해서
+    is_deleted = models.BooleanField(default=False)
 
     # 프로필 사진, default.png = static/images/default.png 의미
     # path 관련해서는 settings.py의 MEDIA 관련 부분 참조
