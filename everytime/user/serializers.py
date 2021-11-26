@@ -19,9 +19,8 @@ class UserCreateSerializer(serializers.Serializer):
     password = serializers.CharField(required=True)
     email = serializers.EmailField(required=True)
     nickname = serializers.CharField(required=True)
-    admission_year = serializers.CharField(required=True)
     univ = serializers.CharField(required=True)
-    admission_year = serializers.ChoiceField(choices=User.YEAR_CHOICES)
+    admission_year = serializers.ChoiceField(choices=User.YEAR_CHOICES, required=True)
 
     # def validate(self, data):
     #     # singup 과정에서 validate 함수 만들기
