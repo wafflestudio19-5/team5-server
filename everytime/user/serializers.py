@@ -19,15 +19,15 @@ class UserCreateSerializer(serializers.Serializer):
     password = serializers.CharField(required=True)
     email = serializers.EmailField(required=True)
     nickname = serializers.CharField(required=True)
-    admission_year = serializers.CharField(required=True)
     univ = serializers.CharField(required=True)
+    admission_year = serializers.ChoiceField(choices=User.YEAR_CHOICES, required=True)
 
-    def validate(self, data):
-        # singup 과정에서 validate 함수 만들기
-        admission_year = data.get('admission_year')
-        if (admission_year, admission_year) not in User.YEAR_CHOICES:
-            raise serializers.ValidationError('학번을 올바르게 입력하세요.')
-        return data
+    # def validate(self, data):
+    #     # singup 과정에서 validate 함수 만들기
+    #     admission_year = data.get('admission_year')
+    #     if (admission_year, admission_year) not in User.YEAR_CHOICES:
+    #         raise serializers.ValidationError('학번을 올바르게 입력하세요.')
+    #     return data
 
     def create(self, validated_data):
         username = validated_data.get('username')
