@@ -10,12 +10,13 @@ from post.models import Post
 from uuid import uuid4
 import os
 
+
 def profile_upload_func(instance, filename):
-    prefix = 'images/profile/user_{}'.format(instance.id)
+    prefix = 'images/profile/user_{}'.format(instance.username)
     file_name = uuid4().hex
     extension = os.path.splitext(filename)[-1].lower()  # 확장자 추출
     return "/".join(
-        [prefix, file_name, extension,]
+        [prefix, file_name+extension,]
     )
 
 
