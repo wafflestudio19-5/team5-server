@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'rest_framework_jwt',
     'rest_framework.authtoken',
     'drf_yasg',
+    'storages',
     'user',
     'board',
     'post',
@@ -141,12 +142,28 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
+AWS_ACCESS_KEY_ID = 'AKIAWQQPBAX75NZPTFJO' # .csv 파일에 있는 내용을 입력 Access key ID
+AWS_SECRET_ACCESS_KEY = 'Yad+/cxpD7cVgoXlDsE2tqDh4Vrp1PlXcSt3gAsQ' # .csv 파일에 있는 내용을 입력 Secret access key
+AWS_REGION = 'ap-northeast-2'
+
+###S3 Storages
+AWS_STORAGE_BUCKET_NAME = 't5backendbucket' # 설정한 버킷 이름
+AWS_S3_CUSTOM_DOMAIN = '%s.s3.%s.amazonaws.com' % (AWS_STORAGE_BUCKET_NAME,AWS_REGION)
+AWS_S3_OBJECT_PARAMETERS = {
+    'CacheControl': 'max-age=86400',
+}
+DEFAULT_FILE_STORAGE = 'everytime.storages.MediaStorage'
+STATICFILES_STORAGE = 'everytime.storages.StaticStorage'
+MEDIAFILES_LOCATION = 'media'
+STATICFILES_LOCATION = 'static'
+
 
 STATIC_URL = '/static/'
 STATIC_DIR = os.path.join(BASE_DIR, 'static')
 STATIC_ROOT = STATIC_DIR
 
 MEDIA_URL = '/images/'
+MEDIA_ROOT = os.path.join('images')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
@@ -176,7 +193,5 @@ JWT_AUTH = {
 }
 
 AUTH_USER_MODEL = 'user.User'
-
-MEDIA_ROOT = os.path.join(BASE_DIR, 'static/images')
 
 SITE_ID = 1
