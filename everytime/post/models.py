@@ -16,7 +16,7 @@ class Post(models.Model):
     # 게시판에 따라 image 첨부가능 여부가 다름 --> 어떻게 구현?
 
     # on_delete 옵션이 없으므로 view에서 구현
-    tags = models.ManyToManyField('Tag', related_name='posts')
+    tags = models.ManyToManyField('Tag', related_name='posts', null=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
