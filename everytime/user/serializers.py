@@ -9,17 +9,19 @@ User = get_user_model()
 JWT_PAYLOAD_HANDLER = api_settings.JWT_PAYLOAD_HANDLER
 JWT_ENCODE_HANDLER = api_settings.JWT_ENCODE_HANDLER
 
+
 def jwt_token_of(user):
     payload = JWT_PAYLOAD_HANDLER(user)
     jwt_token = JWT_ENCODE_HANDLER(payload)
     return jwt_token
 
+
 class UserCreateSerializer(serializers.Serializer):
-    username = serializers.CharField(required=True)
+    username = serializers.CharField(required=True, max_length=100)
     password = serializers.CharField(required=True)
-    email = serializers.EmailField(required=True)
-    nickname = serializers.CharField(required=True)
-    univ = serializers.CharField(required=True)
+    email = serializers.EmailField(required=True, max_length=255)
+    nickname = serializers.CharField(required=True, max_length=10)
+    univ = serializers.CharField(required=True, max_length=50)
     admission_year = serializers.ChoiceField(choices=User.YEAR_CHOICES, required=True)
     profile_picture = serializers.ImageField()
 
