@@ -54,9 +54,11 @@ INSTALLED_APPS = [
     'board',
     'post',
     'comment',
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -192,3 +194,10 @@ JWT_AUTH = {
 AUTH_USER_MODEL = 'user.User'
 
 SITE_ID = 1
+
+# CORS 설정
+CORS_ORIGIN_ALLOW_ALL = True # 임시로 모든 host 허용
+# CORS_ORIGIN_WHITELIST = [
+#
+# ]
+
