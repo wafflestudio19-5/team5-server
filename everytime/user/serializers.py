@@ -20,7 +20,7 @@ class UserCreateSerializer(serializers.Serializer):
     username = serializers.CharField(required=True, max_length=100)
     password = serializers.CharField(required=True)
     email = serializers.EmailField(required=True, max_length=255)
-    nickname = serializers.CharField(required=True, max_length=10)
+    nickname = serializers.CharField(required=True, max_length=30)
     univ = serializers.CharField(required=True, max_length=50)
     admission_year = serializers.ChoiceField(choices=User.YEAR_CHOICES, required=True)
     profile_picture = serializers.ImageField(required=False, default="images/profile/default.png")
