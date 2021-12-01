@@ -11,3 +11,4 @@ Pillow  # profile picture 관련, 이미지처리
 drf-yasg
 django-storages # 다양한 storage 활용을 위한
 boto3 # aws s3 접근을 위
+faker

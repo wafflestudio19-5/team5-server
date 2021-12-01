@@ -31,6 +31,7 @@ DEBUG_TOOLBAR = os.getenv('DEBUG_TOOLBAR') in ('true', 'True')
 ALLOWED_HOSTS = [
     '13.125.247.56',
     '127.0.0.1',
+#     'localhost',
 ]
 
 
@@ -191,7 +192,6 @@ JWT_AUTH = {
 }
 
 AUTH_USER_MODEL = 'user.User'
-
 
 SITE_ID = 1
 
