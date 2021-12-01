@@ -29,7 +29,7 @@ class Post(models.Model):
     is_question = models.BooleanField(default=False, blank=True)
 
 class Tag(models.Model):
-    tag = models.CharField(max_length=30, blank=False, null=False, unique=True)
+    tag = models.CharField(max_length=30, blank=False, primary_key=True)
 
 # class Report(models.Model):
 #     TYPE_CHOICES = (
