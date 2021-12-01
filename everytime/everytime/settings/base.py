@@ -156,8 +156,6 @@ AWS_S3_OBJECT_PARAMETERS = {
 }
 DEFAULT_FILE_STORAGE = 'everytime.storages.MediaStorage'
 STATICFILES_STORAGE = 'everytime.storages.StaticStorage'
-MEDIAFILES_LOCATION = 'media'
-STATICFILES_LOCATION = 'static'
 
 
 STATIC_URL = '/static/'
