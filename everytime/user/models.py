@@ -4,7 +4,6 @@ from django.db import models
 # Create your models here.
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser, PermissionsMixin, UserManager
 from django.utils import timezone
-from django.contrib.auth import get_user_model
 
 from post.models import Post
 from uuid import uuid4

@@ -15,7 +15,9 @@ import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = os.path.dirname(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+)
 
 
 # Quick-start development settings - unsuitable for production
@@ -25,7 +27,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-cp=psw_ct_oa!ag6jd)jms5sk7us+docif%@w=pwp#ai@fzdam'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
 DEBUG_TOOLBAR = os.getenv('DEBUG_TOOLBAR') in ('true', 'True')
 
 ALLOWED_HOSTS = [
@@ -90,20 +91,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'everytime.wsgi.application'
 
-
-# Database
-# https://docs.djangoproject.com/en/3.2/ref/settings/#databases
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'HOST': 'team-5.cvyy2p2s4med.ap-northeast-2.rds.amazonaws.com',
-        'PORT': 3306,
-        'NAME': 'everytime_backend',
-        'USER': 'everytime-backend',
-        'PASSWORD': 't5database',
-    }
-}
 
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
