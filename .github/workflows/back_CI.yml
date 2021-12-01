@@ -31,5 +31,4 @@ jobs:
         
     - name: Run Tests
       run: |
-        cd everytime
         python manage.py test
