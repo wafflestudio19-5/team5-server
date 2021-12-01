@@ -89,7 +89,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     # path 관련해서는 settings.py의 MEDIA 관련 부분 참조
     # 프로필 사진은 media/images/profile 에 저장됨
     # 참고 자료 : https://www.youtube.com/watch?v=aNk2CAkHvlE
-    profile_picture = models.ImageField(default='default.png', upload_to=profile_upload_func, blank=True)   # 프로필 사진
+    profile_picture = models.ImageField(default='images/profile/default.png', upload_to=profile_upload_func, blank=True)   # 프로필 사진
 
     # 한 사람도 여러개의 게시물을 좋아할 수 있고, 한 게시물에도 그것을 좋아해준 사람이 여러명일 수 있으므로 many to many 관계
     like_post = models.ManyToManyField(Post, related_name='like_user')      # 좋아한 게시물

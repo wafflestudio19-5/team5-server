@@ -23,7 +23,7 @@ class UserCreateSerializer(serializers.Serializer):
     nickname = serializers.CharField(required=True, max_length=10)
     univ = serializers.CharField(required=True, max_length=50)
     admission_year = serializers.ChoiceField(choices=User.YEAR_CHOICES, required=True)
-    profile_picture = serializers.ImageField()
+    profile_picture = serializers.ImageField(required=False)
 
     # def validate(self, data):
     #     # singup 과정에서 validate 함수 만들기
@@ -40,7 +40,10 @@ class UserCreateSerializer(serializers.Serializer):
         admission_year = validated_data.get('admission_year')
         univ = validated_data.get('univ')
         profile_picture = validated_data.get('profile_picture')
-        user = User.objects.create_user(username, email, password, nickname=nickname, admission_year=admission_year, univ=univ, profile_picture=profile_picture)
+        if profile_picture:
+            user = User.objects.create_user(username, email, password, nickname=nickname, admission_year=admission_year, univ=univ, profile_picture=profile_picture)
+        else:
+            user = User.objects.create_user(username, email, password, nickname=nickname, admission_year=admission_year, univ=univ,)
         jwt_token = jwt_token_of(user)
         return user, jwt_token
 
