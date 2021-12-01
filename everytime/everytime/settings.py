@@ -31,6 +31,7 @@ DEBUG_TOOLBAR = os.getenv('DEBUG_TOOLBAR') in ('true', 'True')
 ALLOWED_HOSTS = [
     '13.125.247.56',
     '127.0.0.1',
+    'localhost',
 ]
 
 
