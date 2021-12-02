@@ -11,20 +11,32 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
 import datetime
-import os
+import os, json
 from pathlib import Path
-
+from django.core.exceptions import ImproperlyConfigured
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = os.path.dirname(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 )
 
 
+secret_file = os.path.join(BASE_DIR, 'secrets.json')
+
+with open(secret_file) as f:
+    secrets = json.loads(f.read())
+
+def get_secret(setting, secrets=secrets):
+    try:
+        return secrets[setting]
+    except KeyError:
+        error_msg = "Set the {} environment variable".format(setting)
+        raise ImproperlyConfigured(error_msg)
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-cp=psw_ct_oa!ag6jd)jms5sk7us+docif%@w=pwp#ai@fzdam'
+SECRET_KEY = get_secret("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG_TOOLBAR = os.getenv('DEBUG_TOOLBAR') in ('true', 'True')
@@ -132,8 +144,8 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
-AWS_ACCESS_KEY_ID = 'AKIAWQQPBAX75NZPTFJO' # .csv 파일에 있는 내용을 입력 Access key ID
-AWS_SECRET_ACCESS_KEY = 'Yad+/cxpD7cVgoXlDsE2tqDh4Vrp1PlXcSt3gAsQ' # .csv 파일에 있는 내용을 입력 Secret access key
+AWS_ACCESS_KEY_ID = get_secret("AWS_ACCESS_KEY_ID") # .csv 파일에 있는 내용을 입력 Access key ID
+AWS_SECRET_ACCESS_KEY = get_secret("AWS_SECRET_ACCESS_KEY") # .csv 파일에 있는 내용을 입력 Secret access key
 AWS_REGION = 'ap-northeast-2'
 
 ###S3 Storages
@@ -144,8 +156,6 @@ AWS_S3_OBJECT_PARAMETERS = {
 }
 DEFAULT_FILE_STORAGE = 'everytime.storages.MediaStorage'
 STATICFILES_STORAGE = 'everytime.storages.StaticStorage'
-MEDIAFILES_LOCATION = 'media'
-STATICFILES_LOCATION = 'static'
 
 
 STATIC_URL = '/static/'
