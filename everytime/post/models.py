@@ -1,9 +1,8 @@
 from django.db import models
+from django.core.exceptions import ValidationError
 
 from board.models import Board
 from everytime import settings
-
-from django.contrib.auth import get_user_model
 
 
 
@@ -30,6 +29,13 @@ class Post(models.Model):
 
 class Tag(models.Model):
     tag = models.CharField(max_length=30, blank=False, primary_key=True)
+
+    def save(self, *args, **kwargs):
+        if Tag.objects.filter(tag__iexact=self.tag).first():
+            raise ValidationError("Invalid tag - this tag already exists")
+        else:
+            self.tag = self.tag.upper()
+            super(Tag, self).save(*args, **kwargs)
 
 # class Report(models.Model):
 #     TYPE_CHOICES = (
