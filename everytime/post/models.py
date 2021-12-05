@@ -7,7 +7,6 @@ class Post(models.Model):
     board = models.ForeignKey('board.Board', on_delete=models.CASCADE)
     # 작성자가 탈퇴해도 글은 남아있으므로 set_null, 작성자가 없으면 (알수없음)으로 뜸
     writer = models.ForeignKey('user.User', on_delete=models.SET_NULL, null=True)
-
     title = models.CharField(max_length=100)    # 게시판에 따라 title 유무가 다름 --> 어떻게 구현?
     content = models.TextField()
     image = models.ImageField(upload_to='post/', null=True, blank=True)  # 사진은 필수가 아님, static/images/post에 저장됨
@@ -32,7 +31,8 @@ class Tag(models.Model):
         else:
             self.tag = self.tag.upper()
             super(Tag, self).save(*args, **kwargs)
-
+            
+            
 # class Report(models.Model):
 #     TYPE_CHOICES = (
 #         ('게시판 성격에 부적절함', '게시판 성격에 부적절함'),
@@ -45,7 +45,7 @@ class Tag(models.Model):
 #     )
 #
 #     is_user_reported = models.BooleanField()
-#     reported_user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='report', null=True)
+#     reported_user = models.ForeignKey(AUTH_USER_MODEL, related_name='report', null=True)
 #     reported_post = models.ForeignKey(Post, related_name='report', null=True)
 #     # 위 둘 중 하나는 무조건 있어야 하는데 둘 다 null=True로 해둬서, 이후 validation 에서 둘 중 하나 값은 갖는지 따로 체크해줘야할듯
 #     type = models.CharField(max_length=50, choices=TYPE_CHOICES)

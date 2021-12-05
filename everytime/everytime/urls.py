@@ -39,7 +39,7 @@ if settings.DEBUG_TOOLBAR:
         url(r'^__debug__/', include(debug_toolbar.urls)),
     ]
 # profile picture 관련
-urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+# urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 # swagger(api 문서화)
 schema_view = get_schema_view(

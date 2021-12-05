@@ -11,26 +11,40 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
 import datetime
-import os
+import os, json
 from pathlib import Path
-
+from django.core.exceptions import ImproperlyConfigured
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = os.path.dirname(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+)
 
+
+secret_file = os.path.join(BASE_DIR, 'secrets.json')
+
+with open(secret_file) as f:
+    secrets = json.loads(f.read())
+
+def get_secret(setting, secrets=secrets):
+    try:
+        return secrets[setting]
+    except KeyError:
+        error_msg = "Set the {} environment variable".format(setting)
+        raise ImproperlyConfigured(error_msg)
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-cp=psw_ct_oa!ag6jd)jms5sk7us+docif%@w=pwp#ai@fzdam'
+SECRET_KEY = get_secret("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
 DEBUG_TOOLBAR = os.getenv('DEBUG_TOOLBAR') in ('true', 'True')
 
 ALLOWED_HOSTS = [
     '13.125.247.56',
     '127.0.0.1',
+#     'localhost',
 ]
 
 
@@ -48,13 +62,16 @@ INSTALLED_APPS = [
     'rest_framework_jwt',
     'rest_framework.authtoken',
     'drf_yasg',
+    'storages',
     'user',
     'board',
     'post',
     'comment',
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -89,20 +106,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'everytime.wsgi.application'
 
-
-# Database
-# https://docs.djangoproject.com/en/3.2/ref/settings/#databases
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'HOST': 'team-5.cvyy2p2s4med.ap-northeast-2.rds.amazonaws.com',
-        'PORT': 3306,
-        'NAME': 'everytime_backend',
-        'USER': 'everytime-backend',
-        'PASSWORD': 't5database',
-    }
-}
 
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
@@ -141,12 +144,22 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
+AWS_ACCESS_KEY_ID = get_secret("AWS_ACCESS_KEY_ID") # .csv 파일에 있는 내용을 입력 Access key ID
+AWS_SECRET_ACCESS_KEY = get_secret("AWS_SECRET_ACCESS_KEY") # .csv 파일에 있는 내용을 입력 Secret access key
+AWS_REGION = 'ap-northeast-2'
+
+###S3 Storages
+AWS_STORAGE_BUCKET_NAME = 't5backendbucket' # 설정한 버킷 이름
+AWS_S3_CUSTOM_DOMAIN = '%s.s3.%s.amazonaws.com' % (AWS_STORAGE_BUCKET_NAME,AWS_REGION)
+AWS_S3_OBJECT_PARAMETERS = {
+    'CacheControl': 'max-age=86400',
+}
+DEFAULT_FILE_STORAGE = 'everytime.storages.MediaStorage'
+STATICFILES_STORAGE = 'everytime.storages.StaticStorage'
+
 
 STATIC_URL = '/static/'
-STATIC_DIR = os.path.join(BASE_DIR, 'static')
-STATIC_ROOT = STATIC_DIR
-
-MEDIA_URL = '/images/'
+MEDIA_URL = '/media/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
@@ -177,6 +190,11 @@ JWT_AUTH = {
 
 AUTH_USER_MODEL = 'user.User'
 
-MEDIA_ROOT = os.path.join(BASE_DIR, 'static/images')
-
 SITE_ID = 1
+
+# CORS 설정
+CORS_ORIGIN_ALLOW_ALL = True # 임시로 모든 host 허용
+# CORS_ORIGIN_WHITELIST = [
+#
+# ]
+

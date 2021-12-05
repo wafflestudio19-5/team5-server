@@ -132,3 +132,6 @@ dmypy.json
 
 #pyCharm, intelliJ setting file
 .idea/
+
+#secret file
+secrets.json

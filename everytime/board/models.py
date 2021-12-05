@@ -1,7 +1,5 @@
 from django.db import models
-
 from everytime import settings
-
 
 class Board(models.Model):
     # 게시판 관리자가 탈퇴했다고 게시판이 사라지면 안되므로 set_null
