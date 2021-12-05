@@ -25,12 +25,12 @@ class UserCreateSerializer(serializers.Serializer):
     admission_year = serializers.ChoiceField(choices=User.YEAR_CHOICES, required=True)
     profile_picture = serializers.ImageField(required=False, default="images/profile/default.png")
 
-    # def validate(self, data):
-    #     # singup 과정에서 validate 함수 만들기
-    #     admission_year = data.get('admission_year')
-    #     if (admission_year, admission_year) not in User.YEAR_CHOICES:
-    #         raise serializers.ValidationError('학번을 올바르게 입력하세요.')
-    #     return data
+    def validate(self, data):
+        # singup 과정에서 validate 함수 만들기
+        admission_year = data.get('admission_year')
+        if (admission_year, admission_year) not in User.YEAR_CHOICES:
+            raise serializers.ValidationError('학번을 올바르게 입력하세요.')
+        return data
 
     def create(self, validated_data):
         username = validated_data.get('username')

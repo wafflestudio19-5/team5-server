@@ -18,7 +18,6 @@ def profile_upload_func(instance, filename):
         [prefix, file_name+extension,]
     )
 
-
 # 이메일 기반으로 인증 방식을 변경하기 위한 구현
 # CustomUserManager는 과제 assignment2와 동일
 class CustomUserManager(BaseUserManager):
@@ -91,8 +90,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     profile_picture = models.ImageField(default='images/profile/default.png', upload_to=profile_upload_func, blank=True)   # 프로필 사진
 
     # 한 사람도 여러개의 게시물을 좋아할 수 있고, 한 게시물에도 그것을 좋아해준 사람이 여러명일 수 있으므로 many to many 관계
-    like_post = models.ManyToManyField(Post, related_name='like_user')      # 좋아한 게시물
-    scrap_post = models.ManyToManyField(Post, related_name='scrap_user')    # 스크랩한 게시물
+    like_post = models.ManyToManyField('post.Post', related_name='like_user')      # 좋아한 게시물
+    scrap_post = models.ManyToManyField('post.Post', related_name='scrap_user')    # 스크랩한 게시물
     reported_cnt = models.PositiveSmallIntegerField(default=0, blank=True)  # 신고당한 횟수
 
     is_staff = models.BooleanField(default=False)

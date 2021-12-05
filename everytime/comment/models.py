@@ -1,15 +1,13 @@
-from everytime.settings import AUTH_USER_MODEL
 from django.db import models
 
-from post.models import Post
 
 
 class Comment(models.Model):
     pass
     # # 연결된 게시글, 게시글이 삭제되면 댓글도 삭제됨
-    # post_id = models.ForeignKey(Post, related_name='post', on_delete=models.CASCADE, db_column='post_id')
+    # post_id = models.ForeignKey('Post', related_name='post', on_delete=models.CASCADE, db_column='post_id')
     # # 작성자가 탈퇴해도 글은 남아있으므로 set_null, 작성자가 없으면 (삭제)로 뜸
-    # writer = models.ForeignKey(AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
+    # writer = models.ForeignKey('User', on_delete=models.SET_NULL, null=True)
     #
     # content = models.TextField()
     # created_at = models.DateTimeField(auto_now_add=True)
