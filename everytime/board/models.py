@@ -5,7 +5,7 @@ from everytime import settings
 
 class Board(models.Model):
     # 게시판 관리자가 탈퇴했다고 게시판이 사라지면 안되므로 set_null
-    manager = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
+    manager = models.ForeignKey('user.User', on_delete=models.SET_NULL, null=True)
     # 게시판 생성자가 아래 사항을 모두 정하도록 함
     title = models.CharField(max_length=30)
     description = models.CharField(max_length=50)
