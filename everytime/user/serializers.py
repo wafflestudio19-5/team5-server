@@ -30,6 +30,20 @@ class UserCreateSerializer(serializers.Serializer):
         admission_year = data.get('admission_year')
         if (admission_year, admission_year) not in User.YEAR_CHOICES:
             raise serializers.ValidationError('학번을 올바르게 입력하세요.')
+
+        username = data.get('username')
+        email = data.get('email')
+        nickname = data.get('nickname')
+
+        queryset = User.objects.filter(username=username) | User.objects.filter(email=email) | User.objects.filter(nickname=nickname)
+
+        if queryset.filter(username=username).exists():
+            raise serializers.ValidationError('이미 존재하는 아이디입니다.')
+        if queryset.filter(email=email).exists():
+            raise serializers.ValidationError('이미 존재하는 이메일입니다.')
+        if queryset.filter(nickname=nickname).exists():
+            raise serializers.ValidationError('이미 존재하는 닉네임입니다.')
+
         return data
 
     def create(self, validated_data):
