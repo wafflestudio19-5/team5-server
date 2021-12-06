@@ -11,7 +11,6 @@ class BoardSerializer(serializers.ModelSerializer):
     title_enabled = serializers.BooleanField(required=False, default=True)
     question_enabled = serializers.BooleanField(required=False, default=False)
     notice_enabled = serializers.BooleanField(required=False, default=False)
-    manager = serializers.RelatedField(source='Board.manager', read_only=True)
 
     class Meta:
         model = Board
