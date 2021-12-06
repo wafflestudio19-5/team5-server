@@ -1,5 +1,4 @@
 from django.shortcuts import render
-from django.db import IntegrityError
 
 from rest_framework import status, viewsets, permissions, exceptions
 from rest_framework.views import APIView
@@ -20,7 +19,6 @@ class BoardCreateView(APIView):
         user = request.user
         if user.is_staff is not True:
             raise exceptions.ValidationError(detail='staff만 Board를 생성할 수 있습니다.')
-
         serializer = BoardSerializer(data=data)
         serializer.is_valid(raise_exception=True)
         board = serializer.save()

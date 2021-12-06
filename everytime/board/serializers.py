@@ -1,6 +1,7 @@
-from rest_framework import serializers
+from rest_framework import serializers, exceptions
 
 from .models import Board
+from user.models import User
 
 class BoardSerializer(serializers.ModelSerializer):
     title = serializers.CharField(required=True, max_length=30)
@@ -10,21 +11,21 @@ class BoardSerializer(serializers.ModelSerializer):
     title_enabled = serializers.BooleanField(required=False, default=True)
     question_enabled = serializers.BooleanField(required=False, default=False)
     notice_enabled = serializers.BooleanField(required=False, default=False)
+    manager = serializers.RelatedField(source='Board.manager', read_only=True)
 
     class Meta:
         model = Board
         fields = '__all__'
 
-    def create(self, validated_data):
-        title = validated_data.get('title')
-        description = validated_data.get('description')
-        anonym_enabled = validated_data.get('anonym_enabled')
-        is_market = validated_data.get('is_market')
-        title_enabled = validated_data.get('title_enabled')
-        question_enabled = validated_data.get('question_enabled')
-        notice_enabled = validated_data.get('notice_enabled')
+    def validate(self, data):
+        title = data.get('title')
+        print(data)
+        if Board.objects.filter(title=title).exists():
+            raise serializers.ValidationError('이미 있는 게시판입니다.')
+        return data
 
-        board = Board.objects.create(title=title,description=description,anonym_enabled=anonym_enabled,is_market=is_market,\
-                                     title_enabled=title_enabled,question_enabled=question_enabled,notice_enabled=notice_enabled)
+    def create(self, validated_data):
+
+        board = Board.objects.create(validated_data)
 
         return board
