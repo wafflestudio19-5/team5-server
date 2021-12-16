@@ -35,7 +35,7 @@ try:
     AWS_SECRET_ACCESS_KEY = get_secret("AWS_SECRET_ACCESS_KEY")  # .csv 파일에 있는 내용을 입력 Secret access key
     SECRET_KEY = get_secret("SECRET_KEY")
 
-except:
+except FileNotFoundError:
     SECRET_KEY = os.environ["SECRET_KEY"]
     AWS_ACCESS_KEY_ID: os.environ["AWS_ACCESS_KEY_ID"]
     AWS_SECRET_ACCESS_KEY: os.environ["AWS_SECRET_ACCESS_KEY"]
