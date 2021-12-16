@@ -19,24 +19,34 @@ BASE_DIR = os.path.dirname(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 )
 
+try:
+    secret_file = os.path.join(BASE_DIR, 'secrets.json')
+    with open(secret_file) as f:
+        secrets = json.loads(f.read())
 
-secret_file = os.path.join(BASE_DIR, 'secrets.json')
+    def get_secret(setting, secrets=secrets):
+        try:
+            return secrets[setting]
+        except KeyError:
+            error_msg = "Set the {} environment variable".format(setting)
+            raise ImproperlyConfigured(error_msg)
 
-with open(secret_file) as f:
-    secrets = json.loads(f.read())
+    AWS_ACCESS_KEY_ID = get_secret("AWS_ACCESS_KEY_ID")  # .csv 파일에 있는 내용을 입력 Access key ID
+    AWS_SECRET_ACCESS_KEY = get_secret("AWS_SECRET_ACCESS_KEY")  # .csv 파일에 있는 내용을 입력 Secret access key
+    SECRET_KEY = get_secret("SECRET_KEY")
 
-def get_secret(setting, secrets=secrets):
-    try:
-        return secrets[setting]
-    except KeyError:
-        error_msg = "Set the {} environment variable".format(setting)
-        raise ImproperlyConfigured(error_msg)
+except:
+    SECRET_KEY = os.environ["SECRET_KEY"]
+    AWS_ACCESS_KEY_ID: os.environ["AWS_ACCESS_KEY_ID"]
+    AWS_SECRET_ACCESS_KEY: os.environ["AWS_SECRET_ACCESS_KEY"]
+
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = get_secret("SECRET_KEY")
+
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG_TOOLBAR = os.getenv('DEBUG_TOOLBAR') in ('true', 'True')
@@ -144,8 +154,7 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
-AWS_ACCESS_KEY_ID = get_secret("AWS_ACCESS_KEY_ID") # .csv 파일에 있는 내용을 입력 Access key ID
-AWS_SECRET_ACCESS_KEY = get_secret("AWS_SECRET_ACCESS_KEY") # .csv 파일에 있는 내용을 입력 Secret access key
+
 AWS_REGION = 'ap-northeast-2'
 
 ###S3 Storages
