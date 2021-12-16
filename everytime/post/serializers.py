@@ -1,33 +1,36 @@
-from rest_framework import serializers
-
+from rest_framework import serializers, exceptions
 from .models import Post, Tag
+from board.models import Board
 
 class PostSerializer(serializers.ModelSerializer):
     board = serializers.StringRelatedField(read_only=True)
     writer = serializers.StringRelatedField(read_only=True)
     title = serializers.CharField(required=False, max_length=100)
-    content = serializers.CharField(required=True)
+    content = serializers.CharField()
     image = serializers.ImageField(required=False)
-    tags = serializers.ManyRelatedField(read_only=True)
-    is_anonymous = serializers.BooleanField(required=True)
+    is_anonymous = serializers.BooleanField(default=False)
     is_question = serializers.BooleanField(default=False)
 
     class Meta:
         model = Post
-        fields = {
+        fields = (
             'board',
             'writer',
             'title',
             'content',
             'image',
-            'tags',
             'is_anonymous',
-            'is_question'
-        }
+            'is_question',
+        )
 
-    def valide(self, data):
+    def validate(self, data):
+        user = self.context['request'].user
+        board = self.context['request'].query_params['board']
+        board = Board.objects.get(title=board)
+        data['writer'] = user
+        data['board'] = board
         return data
 
     def create(self, validated_data):
-        post = Post.objects.create(validated_data)
+        post = Post.objects.create(**validated_data)
         return post
