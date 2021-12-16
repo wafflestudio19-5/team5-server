@@ -18,3 +18,6 @@ class Board(models.Model):
     title_enabled = models.BooleanField(default=True, blank=True)
     question_enabled = models.BooleanField(default=False, blank=True)
     notice_enabled = models.BooleanField(default=False, blank=True)
+
+    def __str__(self):
+        return self.title

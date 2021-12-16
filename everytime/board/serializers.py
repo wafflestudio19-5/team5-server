@@ -25,6 +25,6 @@ class BoardSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
 
-        board = Board.objects.create(validated_data)
+        board = Board.objects.create(**validated_data)
 
         return board
