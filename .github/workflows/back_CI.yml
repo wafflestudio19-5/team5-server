@@ -33,7 +33,7 @@ jobs:
       run: |
         cd everytime
         python manage.py test
-      env: |       
-        SECRET_KEY = ${{ secrets.SECRET_KEY }}
+      env:
+        SECRET_KEY: ${{ secrets.SECRET_KEY }}
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
