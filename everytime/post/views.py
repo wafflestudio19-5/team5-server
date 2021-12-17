@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 
 from rest_framework import status, viewsets, permissions, exceptions
 from rest_framework.views import APIView
@@ -21,3 +21,12 @@ class PostViewSet(viewsets.GenericViewSet):
         serializer.is_valid(raise_exception=True)
         post = serializer.save()
         return Response(self.get_serializer(post).data, status=status.HTTP_201_CREATED)
+    
+    def retrieve(self, request, pk=None):
+        post = get_object_or_404(Post, pk=pk)
+        return Response(self.get_serializer(post).data, status=status.HTTP_200_OK)
+
+    def list(self, request):
+        board = request.query_params.get('board')
+        posts = self.get_queryset().filter(board=board).all()
+        return Response(self.get_serializer(posts, many=True).data)
