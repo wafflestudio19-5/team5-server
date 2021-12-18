@@ -30,7 +30,9 @@ from .views import ping
 urlpatterns = [
     path("", ping, name="index"),
     path('admin/', admin.site.urls),
-    path('user/', include('user.urls'))
+    path('user/', include('user.urls')),
+    path('board/', include('board.urls')),
+    path('post/', include('post.urls'))
 ]
 
 if settings.DEBUG_TOOLBAR:

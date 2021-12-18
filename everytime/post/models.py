@@ -1,6 +1,17 @@
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.utils import timezone
+from uuid import uuid4
+import os
+
+def postimage_upload_func(instance, filename):
+    prefix = 'images/posts/post_{}'.format(instance.post.id)
+    file_name = uuid4().hex
+    extension = os.path.splitext(filename)[-1].lower()  # 확장자 추출
+    return "/".join(
+        [prefix, file_name+extension,]
+    )
+
 
 class Post(models.Model):
     # 게시판이 삭제되면 글도 삭제되어야하므로 cascade
@@ -9,8 +20,6 @@ class Post(models.Model):
     writer = models.ForeignKey('user.User', on_delete=models.SET_NULL, null=True)
     title = models.CharField(max_length=100)    # 게시판에 따라 title 유무가 다름 --> 어떻게 구현?
     content = models.TextField()
-    image = models.ImageField(upload_to='post/', null=True, blank=True)  # 사진은 필수가 아님, static/images/post에 저장됨
-    # 게시판에 따라 image 첨부가능 여부가 다름 --> 어떻게 구현?
 
     # on_delete 옵션이 없으므로 view에서 구현
     tags = models.ManyToManyField('post.Tag', related_name='posts')
@@ -21,6 +30,12 @@ class Post(models.Model):
     num_of_scrap = models.PositiveIntegerField(default=0, blank=True)
     is_anonymous = models.BooleanField(default=True, blank=True)
     is_question = models.BooleanField(default=False, blank=True)
+
+
+class PostImage(models.Model):
+    post = models.ForeignKey(Post, on_delete=models.CASCADE)
+    image = models.ImageField(upload_to=postimage_upload_func, null=True, blank=True)
+
 
 class Tag(models.Model):
     tag = models.CharField(max_length=30, blank=False, primary_key=True)
