@@ -1,4 +1,5 @@
 from rest_framework import serializers, exceptions
+from rest_framework.utils import model_meta
 from .models import Post, Tag, PostImage
 from board.models import Board
 
@@ -53,4 +54,27 @@ class PostSerializer(serializers.ModelSerializer):
         image_set = self.context['request'].FILES
         for image_data in image_set.getlist('image'):
             PostImage.objects.create(post=post, image=image_data)
+        return post
+
+    def update(self, post, validated_data):
+        PostImage.objects.filter(post=post).delete()
+        image_set = self.context['request'].FILES
+        for image_data in image_set.getlist('image'):
+            PostImage.objects.create(post=post, image=image_data)
+
+        info = model_meta.get_field_info(post)
+        m2m_fields = []
+
+        for attr, value in validated_data.items():
+            if attr in info.relations and info.relations[attr].to_many:
+                m2m_fields.append((attr, value))
+            else:
+                setattr(post, attr, value)
+
+        post.save()
+
+        for attr, value in m2m_fields:
+            field = getattr(post, attr)
+            field.set(value)
+
         return post

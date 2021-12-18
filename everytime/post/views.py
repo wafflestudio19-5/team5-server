@@ -30,3 +30,16 @@ class PostViewSet(viewsets.GenericViewSet):
         board = request.query_params.get('board')
         posts = self.get_queryset().filter(board=board).all()
         return Response(self.get_serializer(posts, many=True).data)
+
+    def update(self, request, pk=None):
+        post = get_object_or_404(Post, pk=pk)
+
+        data = request.data
+        user = request.user
+
+        if post.writer_id is not user.id:
+            raise exceptions.AuthenticationFailed('글 작성자가 아니므로 글을 수정할 수 없습니다.')
+        serializer = self.get_serializer(post, data=data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(self.get_serializer(post).data, status=status.HTTP_201_CREATED)
