@@ -1,5 +1,5 @@
 from rest_framework import serializers, exceptions
-from .models import Post, Tag, PostImage
+from .models import Post, Tag, PostImage, PostTag
 from board.models import Board
 
 
@@ -65,7 +65,7 @@ class PostSerializer(serializers.ModelSerializer):
         # 게시글과 태그 연결
         if tags is not None:
             for tag in tags:
-                post.tags.add(tag)
+                PostTag.objects.create(post=post, tag=tag)
 
         # 이미지 저장 및 업로드
         image_set = self.context['request'].FILES
@@ -85,11 +85,11 @@ class PostSerializer(serializers.ModelSerializer):
         # 기존 태그에서 사라진 부분은 제거 후 새로 생긴 태그 추가
         new_tags = validated_data.pop('tags') if 'tags' in validated_data else None
         if new_tags is not None:
-            post.tags.exclude(tag__in=[tag.tag for tag in new_tags]).delete()
+            post.posttag_set.exclude(tag__in=[tag.name for tag in new_tags]).delete()
             past_tags = post.tags.all()
             for tag in new_tags:
                 if tag not in past_tags:
-                    post.tags.add(tag)
+                    PostTag.objects.create(post=post, tag=tag)
 
         # 입력된 값들에 한해서 기존 게시글 수정 (e.g. title key가 없으면 제목은 수정 안 함)
         for attr, value in validated_data.items():

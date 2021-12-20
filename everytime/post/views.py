@@ -17,7 +17,7 @@ def create_tag(data):
         for tag_name in data.getlist('tags'):
             tag_name = tag_name.upper()
             if not all_tag.filter(tag__iexact=tag_name).exists():
-                Tag.objects.create(tag=tag_name)
+                Tag.objects.create(name=tag_name)
 
 
 class PostViewSet(viewsets.GenericViewSet):
