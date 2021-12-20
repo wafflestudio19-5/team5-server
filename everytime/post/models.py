@@ -22,7 +22,7 @@ class Post(models.Model):
     content = models.TextField()
 
     # on_delete 옵션이 없으므로 view에서 구현
-    tags = models.ManyToManyField('post.Tag', related_name='posts')
+    tags = models.ManyToManyField('post.Tag', related_name='posts', through='PostTag')
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -33,12 +33,12 @@ class Post(models.Model):
 
 
 class PostImage(models.Model):
-    post = models.ForeignKey(Post, on_delete=models.CASCADE)
+    post = models.ForeignKey('Post', on_delete=models.CASCADE)
     image = models.ImageField(upload_to=postimage_upload_func, null=True, blank=True)
 
 
 class Tag(models.Model):
-    tag = models.CharField(max_length=30, blank=False, primary_key=True)
+    name = models.CharField(max_length=30, blank=False, primary_key=True)
 
     def save(self, *args, **kwargs):
         if Tag.objects.filter(tag__iexact=self.tag).first():
@@ -46,6 +46,11 @@ class Tag(models.Model):
         else:
             self.tag = self.tag.upper()
             super(Tag, self).save(*args, **kwargs)
+
+class PostTag(models.Model):
+    post = models.ForeignKey('Post', on_delete=models.CASCADE)
+    tag = models.ForeignKey('Tag', on_delete=models.CASCADE)
+
             
             
 # class Report(models.Model):
@@ -60,8 +65,8 @@ class Tag(models.Model):
 #     )
 #
 #     is_user_reported = models.BooleanField()
-#     reported_user = models.ForeignKey(AUTH_USER_MODEL, related_name='report', null=True)
-#     reported_post = models.ForeignKey(Post, related_name='report', null=True)
+#     reported_user = models.ForeignKey('User', related_name='report', null=True)
+#     reported_post = models.ForeignKey('Post', related_name='report', null=True)
 #     # 위 둘 중 하나는 무조건 있어야 하는데 둘 다 null=True로 해둬서, 이후 validation 에서 둘 중 하나 값은 갖는지 따로 체크해줘야할듯
 #     type = models.CharField(max_length=50, choices=TYPE_CHOICES)
 
