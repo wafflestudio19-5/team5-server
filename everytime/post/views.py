@@ -13,10 +13,11 @@ from drf_yasg.utils import swagger_auto_schema
 # request.data안에 새로운 Tag를 찾아서 데이터베이스에 저장
 def create_tag(data):
     if 'tags' in data:
+        all_tag = Tag.objects.all()
         for tag_name in data.getlist('tags'):
             tag_name = tag_name.upper()
-            if not Tag.objects.filter(tag__iexact=tag_name).exists():
-                Tag.objects.create(tag=tag_name)
+            if not all_tag.filter(name__iexact=tag_name).exists():
+                Tag.objects.create(name=tag_name)
 
 
 class PostViewSet(viewsets.GenericViewSet):
@@ -49,7 +50,6 @@ class PostViewSet(viewsets.GenericViewSet):
         user = request.user
 
         create_tag(data)
-
         if post.writer_id is not user.id:
             raise exceptions.AuthenticationFailed('글 작성자가 아니므로 글을 수정할 수 없습니다.')
 
