@@ -24,7 +24,11 @@ class Migration(migrations.Migration):
                 ('tag', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='post.tag')),
             ],
         ),
-        migrations.AlterField(
+        migrations.RemoveField(
+            model_name='post',
+            name='tags'
+        ),
+        migrations.AddField(
             model_name='post',
             name='tags',
             field=models.ManyToManyField(related_name='posts', through='post.PostTag', to='post.Tag'),
