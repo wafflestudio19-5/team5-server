@@ -41,10 +41,10 @@ class Tag(models.Model):
     name = models.CharField(max_length=30, blank=False, primary_key=True)
 
     def save(self, *args, **kwargs):
-        if Tag.objects.filter(tag__iexact=self.tag).first():
+        if Tag.objects.filter(name__iexact=self.name).first():
             raise ValidationError("Invalid tag - this tag already exists")
         else:
-            self.tag = self.tag.upper()
+            self.name = self.name.upper()
             super(Tag, self).save(*args, **kwargs)
 
 class PostTag(models.Model):

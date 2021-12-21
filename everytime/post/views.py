@@ -16,7 +16,7 @@ def create_tag(data):
         all_tag = Tag.objects.all()
         for tag_name in data.getlist('tags'):
             tag_name = tag_name.upper()
-            if not all_tag.filter(tag__iexact=tag_name).exists():
+            if not all_tag.filter(name__iexact=tag_name).exists():
                 Tag.objects.create(name=tag_name)
 
 
@@ -50,7 +50,6 @@ class PostViewSet(viewsets.GenericViewSet):
         user = request.user
 
         create_tag(data)
-
         if post.writer_id is not user.id:
             raise exceptions.AuthenticationFailed('글 작성자가 아니므로 글을 수정할 수 없습니다.')
 

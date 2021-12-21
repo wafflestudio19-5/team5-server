@@ -17,6 +17,7 @@ class PostSerializer(serializers.ModelSerializer):
     writer = serializers.StringRelatedField(read_only=True)
     title = serializers.CharField(required=False, max_length=100)
     content = serializers.CharField()
+    tags = serializers.PrimaryKeyRelatedField(queryset=Tag.objects.all(), many=True)
     images = serializers.SerializerMethodField()
     is_anonymous = serializers.BooleanField(default=False)
     is_question = serializers.BooleanField(default=False)
@@ -41,6 +42,12 @@ class PostSerializer(serializers.ModelSerializer):
     def validate(self, data):
         request = self.context['request']
         user = request.user
+
+        tags = []
+        for tag in request.data.getlist('tags'):
+            tags.append(Tag.objects.get(name__iexact=tag))
+        if len(tags) != 0:
+            data['tags']=tags
 
         try:
             board =request.query_params['board']
