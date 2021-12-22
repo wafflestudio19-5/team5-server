@@ -57,3 +57,15 @@ class PostViewSet(viewsets.GenericViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(self.get_serializer(post).data, status=status.HTTP_201_CREATED)
+
+    def destroy(self, request, pk=None):
+        post = get_object_or_404(Post, pk=pk)
+        tags = list(post.tags.all()) # 이렇게 하지 않으면 post.delete() 이후에 tags도 비어있게 됨.
+        print('1', tags)
+        post.delete()
+        print('2', tags)
+        for tag in tags:
+            print(tag.name, tag.posttag_set.count())
+            if tag.posttag_set.count() == 0:
+                tag.delete()
+        return Response("%s번 게시글이 삭제되었습니다." % pk, status=status.HTTP_200_OK)
