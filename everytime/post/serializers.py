@@ -44,8 +44,9 @@ class PostSerializer(serializers.ModelSerializer):
         user = request.user
 
         tags = []
-        for tag in request.data.getlist('tags'):
-            tags.append(Tag.objects.get(name__iexact=tag))
+        if hasattr(request.data, 'getlist'):
+            for tag in request.data.getlist('tags'):
+                tags.append(Tag.objects.get(name__iexact=tag))
         if len(tags) != 0:
             data['tags']=tags
 
@@ -97,6 +98,8 @@ class PostSerializer(serializers.ModelSerializer):
             for tag in new_tags:
                 if tag not in past_tags:
                     PostTag.objects.create(post=post, tag=tag)
+        else: # new_tags is None
+            post.posttag_set.all().delete()
 
         # 입력된 값들에 한해서 기존 게시글 수정 (e.g. title key가 없으면 제목은 수정 안 함)
         for attr, value in validated_data.items():
