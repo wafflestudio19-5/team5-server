@@ -19,6 +19,11 @@ def create_tag(data):
             if not all_tag.filter(name__iexact=tag_name).exists():
                 Tag.objects.create(name=tag_name)
 
+def delete_tag(tags):
+    for tag in tags:
+        if tag.posttag_set.count() == 0:
+            tag.delete()
+
 
 class PostViewSet(viewsets.GenericViewSet):
     permission_classes = (permissions.IsAuthenticated, )
@@ -46,6 +51,8 @@ class PostViewSet(viewsets.GenericViewSet):
 
     def update(self, request, pk=None):
         post = get_object_or_404(Post, pk=pk)
+        tags = list(post.tags.all())
+
         data = request.data
         user = request.user
 
@@ -56,16 +63,12 @@ class PostViewSet(viewsets.GenericViewSet):
         serializer = self.get_serializer(post, data=data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
+        delete_tag(tags)
         return Response(self.get_serializer(post).data, status=status.HTTP_201_CREATED)
 
     def destroy(self, request, pk=None):
         post = get_object_or_404(Post, pk=pk)
-        tags = list(post.tags.all()) # 이렇게 하지 않으면 post.delete() 이후에 tags도 비어있게 됨.
-        print('1', tags)
+        tags = list(post.tags.all())  # 이렇게 하지 않으면 post.delete() 이후에 tags도 비어있게 됨.
         post.delete()
-        print('2', tags)
-        for tag in tags:
-            print(tag.name, tag.posttag_set.count())
-            if tag.posttag_set.count() == 0:
-                tag.delete()
+        delete_tag(tags)
         return Response("%s번 게시글이 삭제되었습니다." % pk, status=status.HTTP_200_OK)
