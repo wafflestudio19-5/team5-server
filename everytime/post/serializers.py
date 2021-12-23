@@ -85,10 +85,10 @@ class PostSerializer(serializers.ModelSerializer):
     def update(self, post, validated_data):
         # 기존 이미지 삭제 후 교체 -> 근데 변경된 이미지만 부분적으로 바꾸거나 추가하는 방법이 있을까?
         image_set = self.context['request'].FILES
-        if image_set is not None:
-            PostImage.objects.filter(post=post).delete()
-            for image_data in image_set.getlist('image'):
-                PostImage.objects.create(post=post, image=image_data)
+        for existing_image in post.postimage_set.all():
+            existing_image.delete()
+        for image_data in image_set.getlist('image'):
+            PostImage.objects.create(post=post, image=image_data)
 
         # 기존 태그에서 사라진 부분은 제거 후 새로 생긴 태그 추가
         new_tags = validated_data.pop('tags') if 'tags' in validated_data else None
