@@ -22,9 +22,10 @@ class CommentViewSet(viewsets.GenericViewSet):
 
     # 댓글 수정 불가
 
+    # 스웨거에 쿼리 param 추가해야함 - 공부하고 넣을게요
     def list(self, request):
         post = request.query_params.get('post')
-        comments = self.get_queryset().filter(post_id=post).all()
+        comments = self.get_queryset().filter(post=post).all()
         return Response(self.get_serializer(comments, many=True).data)
 
     def destroy(self, request, pk=None):
