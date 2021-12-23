@@ -4,6 +4,7 @@ from rest_framework import status, viewsets, permissions, exceptions
 from rest_framework.views import APIView
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from django.core.paginator import Paginator
 
 from .models import Post, Tag
 from .serializers import PostSerializer
@@ -44,10 +45,15 @@ class PostViewSet(viewsets.GenericViewSet):
         post = get_object_or_404(Post, pk=pk)
         return Response(self.get_serializer(post).data, status=status.HTTP_200_OK)
 
+    @swagger_auto_schema(manual_parameters=[openapi.Parameter('board', openapi.IN_QUERY,description="게시판 ID",type=openapi.TYPE_STRING)])
+    #swagger에 쿼리 파라미터는 자동으로 적용이 안되므로, 따로 추가하기.
+    #파라미터 이름, 어떤 부분에 속하는지(QUERY, BODY, PATH 등), 파라미터 설명, 어떤 타입인지를 생성자에 제공
     def list(self, request):
         board = request.query_params.get('board')
-        posts = self.get_queryset().filter(board=board).all()
-        return Response(self.get_serializer(posts, many=True).data)
+        queryset = self.get_queryset().filter(board=board).all()
+        page = self.paginate_queryset(queryset)
+        data = self.get_serializer(page,many=True).data
+        return self.get_paginated_response(data)
 
     def update(self, request, pk=None):
         post = get_object_or_404(Post, pk=pk)
