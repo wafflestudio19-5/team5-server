@@ -34,11 +34,6 @@ class PostViewSet(viewsets.GenericViewSet):
     def create(self, request):
         data = request.data.copy()
 
-        try:
-            data['board'] =request.query_params['board']
-        except:
-            raise exceptions.ValidationError("board를 query parameter로 입력해주세요")
-
         create_tag(data)
 
         serializer = self.get_serializer(data=data)
