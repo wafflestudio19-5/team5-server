@@ -39,9 +39,20 @@ class PostSerializer(serializers.ModelSerializer):
         image = obj.postimage_set.all()
         return PostImageSerializer(instance=image, many=True).data
 
+    # board field 의 input과 output에 다른 field를 사용하기 위한 코드임.
+    def to_internal_value(self, data):
+        self.fields['board'] = serializers.PrimaryKeyRelatedField(queryset=Board.objects.all())
+        internal_value = super().to_internal_value(data)
+        self.fields['board'] = serializers.StringRelatedField(read_only=True)
+
+        return internal_value
+
     def validate(self, data):
+        print(data)
         request = self.context['request']
+
         user = request.user
+        data['writer'] = user
 
         tags = []
         if hasattr(request.data, 'getlist'):
@@ -50,14 +61,6 @@ class PostSerializer(serializers.ModelSerializer):
         if len(tags) != 0:
             data['tags']=tags
 
-        try:
-            board =request.query_params['board']
-        except:
-            raise serializers.ValidationError("board를 query parameter로 입력해주세요")
-        board = Board.objects.get(id=board)
-
-        data['writer'] = user
-        data['board'] = board
         return data
     
     def create(self, validated_data):

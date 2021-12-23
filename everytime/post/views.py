@@ -6,6 +6,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from .models import Post, Tag
+from board.models import Board
 from .serializers import PostSerializer
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
@@ -31,7 +32,12 @@ class PostViewSet(viewsets.GenericViewSet):
     queryset = Post.objects.all()
 
     def create(self, request):
-        data = request.data
+        data = request.data.copy()
+
+        try:
+            data['board'] =request.query_params['board']
+        except:
+            raise exceptions.ValidationError("board를 query parameter로 입력해주세요")
 
         create_tag(data)
 
