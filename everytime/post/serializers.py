@@ -40,8 +40,11 @@ class PostSerializer(serializers.ModelSerializer):
         return PostImageSerializer(instance=image, many=True).data
 
     def validate(self, data):
+        print(data)
         request = self.context['request']
+
         user = request.user
+        data['writer'] = user
 
         tags = []
         if hasattr(request.data, 'getlist'):
@@ -50,17 +53,17 @@ class PostSerializer(serializers.ModelSerializer):
         if len(tags) != 0:
             data['tags']=tags
 
-        try:
-            board =request.query_params['board']
-        except:
-            raise serializers.ValidationError("board를 query parameter로 입력해주세요")
-        board = Board.objects.get(id=board)
-
-        data['writer'] = user
-        data['board'] = board
         return data
     
     def create(self, validated_data):
+        request = self.context['request']
+        try:
+            board = request.query_params['board']
+            board = Board.objects.get(id=board)
+            validated_data['board'] = board
+        except:
+            raise serializers.ValidationError("board를 query parameter로 입력해주세요")
+
         # tags 따로 저장하기
         tags = validated_data.pop('tags') if 'tags' in validated_data else None
 
@@ -85,10 +88,10 @@ class PostSerializer(serializers.ModelSerializer):
     def update(self, post, validated_data):
         # 기존 이미지 삭제 후 교체 -> 근데 변경된 이미지만 부분적으로 바꾸거나 추가하는 방법이 있을까?
         image_set = self.context['request'].FILES
-        if image_set is not None:
-            PostImage.objects.filter(post=post).delete()
-            for image_data in image_set.getlist('image'):
-                PostImage.objects.create(post=post, image=image_data)
+        for existing_image in post.postimage_set.all():
+            existing_image.delete()
+        for image_data in image_set.getlist('image'):
+            PostImage.objects.create(post=post, image=image_data)
 
         # 기존 태그에서 사라진 부분은 제거 후 새로 생긴 태그 추가
         new_tags = validated_data.pop('tags') if 'tags' in validated_data else None

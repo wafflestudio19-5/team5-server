@@ -6,6 +6,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from .models import Post, Tag
+from board.models import Board
 from .serializers import PostSerializer
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
@@ -31,7 +32,7 @@ class PostViewSet(viewsets.GenericViewSet):
     queryset = Post.objects.all()
 
     def create(self, request):
-        data = request.data
+        data = request.data.copy()
 
         create_tag(data)
 
@@ -69,6 +70,8 @@ class PostViewSet(viewsets.GenericViewSet):
     def destroy(self, request, pk=None):
         post = get_object_or_404(Post, pk=pk)
         tags = list(post.tags.all())  # 이렇게 하지 않으면 post.delete() 이후에 tags도 비어있게 됨.
+        for image in post.postimage_set.all():
+            image.delete()
         post.delete()
         delete_tag(tags)
         return Response("%s번 게시글이 삭제되었습니다." % pk, status=status.HTTP_200_OK)

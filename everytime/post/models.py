@@ -36,6 +36,10 @@ class PostImage(models.Model):
     post = models.ForeignKey('Post', on_delete=models.CASCADE)
     image = models.ImageField(upload_to=postimage_upload_func, null=True, blank=True)
 
+    def delete(self, using=None, keep_parents=False):
+        self.image.delete(save=False)
+        super().delete(using, keep_parents)
+
 
 class Tag(models.Model):
     name = models.CharField(max_length=30, blank=False, primary_key=True)
