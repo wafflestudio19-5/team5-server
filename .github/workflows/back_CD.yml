@@ -1,0 +1,26 @@
+name: Team5 Everytime Backend CD
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  deploy:
+
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 4
+      matrix:
+        python-version: [3.8]
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Run scripts in server
+      uses: appleboy/ssh-action@master
+      with:
+        key: ${{ secrets.SSH_KEY }}
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USER}}
+        script: |
+          sh deploy.sh
