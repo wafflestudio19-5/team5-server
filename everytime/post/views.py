@@ -6,6 +6,8 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.core.paginator import Paginator
 
+from comment.models import Comment
+from comment.serializers import CommentSerializer
 from .models import Post, Tag
 from board.models import Board
 from .serializers import PostSerializer
@@ -81,3 +83,31 @@ class PostViewSet(viewsets.GenericViewSet):
         post.delete()
         delete_tag(tags)
         return Response("%s번 게시글이 삭제되었습니다." % pk, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['POST', 'GET', 'DELETE'])
+    def comment(self, request, pk):
+        post = get_object_or_404(Post, pk=pk)
+        user = request.user
+        data = request.data
+        if request.method == 'POST':
+            serializer = CommentSerializer(data=data)
+            serializer.is_valid(raise_exception=True)
+            comment = serializer.save()
+
+            comment.post = post
+            comment.user = user
+            comment.head_comment = None
+            comment.save()
+
+            return Response(CommentSerializer(comment).data, status=status.HTTP_201_CREATED)
+
+        elif request.method == 'GET':
+            comments = Comment.objects().filter(post=post).all()
+            return Response(CommentSerializer(comments, many=True).data)
+
+        else:
+            comment_id = request.query_params.get('comment', -1)    # default 값 뭐 이렇게 줘도 되나 ,,
+            comment = get_object_or_404(Comment, pk=comment_id)
+            comment.is_deleted = True
+            comment.save()
+            return Response("%s번 댓글이 삭제되었습니다." % pk, status=status.HTTP_200_OK)
