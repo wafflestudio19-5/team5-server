@@ -13,6 +13,7 @@ class PostImageSerializer(serializers.ModelSerializer):
 
 
 class PostSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(read_only=True)
     board = serializers.StringRelatedField(read_only=True)
     writer = serializers.StringRelatedField(read_only=True)
     title = serializers.CharField(required=False, max_length=100)
@@ -25,6 +26,7 @@ class PostSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post
         fields = (
+            'id',
             'board',
             'writer',
             'title',
