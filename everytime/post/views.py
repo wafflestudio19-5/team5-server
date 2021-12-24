@@ -90,24 +90,34 @@ class PostViewSet(viewsets.GenericViewSet):
         user = request.user
         data = request.data
         if request.method == 'POST':
+            head_comment_id = data.get('head_comment', None)
+            head_comment = get_object_or_404(Comment, id=head_comment_id) if head_comment_id else None
+            if head_comment is not None and head_comment.head_comment is not None:
+                return Response('답글에 답글을 달 수 없습니다.', status.HTTP_400_BAD_REQUEST)
             serializer = CommentSerializer(data=data)
             serializer.is_valid(raise_exception=True)
             comment = serializer.save()
 
             comment.post = post
             comment.user = user
-            comment.head_comment = None
+            comment.head_comment = head_comment
             comment.save()
-
-            return Response(CommentSerializer(comment).data, status=status.HTTP_201_CREATED)
+            comments = Comment.objects.filter(post=post, head_comment=None).all()
+            return Response(CommentSerializer(comments, many=True).data, status=status.HTTP_201_CREATED)
 
         elif request.method == 'GET':
-            comments = Comment.objects().filter(post=post).all()
+            comments = Comment.objects.filter(post=post, head_comment=None).all()
             return Response(CommentSerializer(comments, many=True).data)
 
         else:
-            comment_id = request.query_params.get('comment', -1)    # default 값 뭐 이렇게 줘도 되나 ,,
+            comment_id = request.data.get('comment', -1)    # default 값 뭐 이렇게 줘도 되나 ,,
             comment = get_object_or_404(Comment, pk=comment_id)
+            if comment.head_comment is not None:
+                comment.delete()
+                comments = Comment.objects.filter(post=post, head_comment=None).all()
+                return Response(CommentSerializer(comments, many=True).data, status=status.HTTP_201_CREATED)
             comment.is_deleted = True
+            comment.content = '삭제된 댓글입니다.'
             comment.save()
-            return Response("%s번 댓글이 삭제되었습니다." % pk, status=status.HTTP_200_OK)
+            comments = Comment.objects.filter(post=post, head_comment=None).all()
+            return Response(CommentSerializer(comments, many=True).data, status=status.HTTP_201_CREATED)

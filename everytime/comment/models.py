@@ -3,12 +3,12 @@ from django.db import models
 
 class Comment(models.Model):
     # 연결된 게시글, 게시글이 삭제되면 댓글도 삭제됨
-    post = models.ForeignKey('Post', on_delete=models.CASCADE)
+    post = models.ForeignKey('post.Post', on_delete=models.CASCADE, null=True)
     # 작성자가 탈퇴해도 글은 남아있으므로 set_null, 작성자가 없으면 (알수없음)으로 뜸
-    writer = models.ForeignKey('User', on_delete=models.SET_NULL, null=True)
+    writer = models.ForeignKey('user.User', on_delete=models.SET_NULL, null=True)
 
-    content = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=True)
+    content = models.TextField(null=True)
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
     num_of_likes = models.PositiveIntegerField(default=0, blank=True)
     is_anonymous = models.BooleanField(default=True)
     is_deleted = models.BooleanField(default=False)

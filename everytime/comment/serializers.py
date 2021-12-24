@@ -5,10 +5,25 @@ from .models import Comment
 
 
 class CommentSerializer(serializers.ModelSerializer):
+    replys = serializers.SerializerMethodField()
+
     class Meta:
         model = Comment
-        fields = '__all__'
-        read_only_fields = ['post', 'writer', 'head_comment', 'num_of_likes', 'is_deleted']
+        fields = (
+            'id',
+            'writer',
+            'content',
+            'replys',
+            'created_at',
+            'num_of_likes',
+            'is_anonymous',
+            'is_deleted',
+        )
+        read_only_fields = ['writer', 'created_at', 'num_of_likes', 'is_deleted']
+
+    def get_replys(self, comment):
+        tail_comments = comment.tail_comments.all()
+        return ReplySerializer(tail_comments, many=True).data
 
     def create(self, validated_data):
 
@@ -25,3 +40,16 @@ class CommentSerializer(serializers.ModelSerializer):
         # content랑 is_anonymous만 일단 validate
         comment = Comment.objects.create(**validated_data)
         return comment
+
+class ReplySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Comment
+        fields = (
+            'id',
+            'writer',
+            'content',
+            'created_at',
+            'num_of_likes',
+            'is_anonymous',
+            'is_deleted'
+        )
