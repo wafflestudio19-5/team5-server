@@ -49,8 +49,6 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
         return Response(self.get_serializer(post).data, status=status.HTTP_201_CREATED)
     
     def retrieve(self, request, pk=None):
-        print(type(self.action))
-        print(getattr(self, "pk", {}))
         post = get_object_or_404(Post, pk=pk)
         return Response(self.get_serializer(post).data, status=status.HTTP_200_OK)
 
