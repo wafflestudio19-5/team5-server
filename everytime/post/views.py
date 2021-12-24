@@ -12,6 +12,8 @@ from .serializers import PostSerializer
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
+from everytime.utils import ViewSetActionPermissionMixin
+
 # request.data안에 새로운 Tag를 찾아서 데이터베이스에 저장
 def create_tag(data):
     if 'tags' in data:
@@ -27,8 +29,12 @@ def delete_tag(tags):
             tag.delete()
 
 
-class PostViewSet(viewsets.GenericViewSet):
+class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
     permission_classes = (permissions.IsAuthenticated, )
+    permission_action_classes = {
+        'retrieve': (permissions.AllowAny, ),
+        'list': (permissions.AllowAny, ),
+    }
     serializer_class = PostSerializer
     queryset = Post.objects.all()
 
