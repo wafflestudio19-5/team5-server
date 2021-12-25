@@ -84,10 +84,14 @@ class PostViewSet(viewsets.GenericViewSet):
         delete_tag(tags)
         return Response("%s번 게시글이 삭제되었습니다." % pk, status=status.HTTP_200_OK)
 
-    @action(detail=True, methods=['POST', 'GET', 'DELETE'])
-    def comment(self, request, pk):
+    @action(
+        detail=True,
+        methods=['POST', 'GET'],
+    )
+    def comment(self, request, pk=None):
         post = get_object_or_404(Post, pk=pk)
         user = request.user
+        print(user)
         data = request.data
         if request.method == 'POST':
             head_comment_id = data.get('head_comment', None)
@@ -99,7 +103,7 @@ class PostViewSet(viewsets.GenericViewSet):
             comment = serializer.save()
 
             comment.post = post
-            comment.user = user
+            comment.writer = user
             comment.head_comment = head_comment
             comment.save()
             comments = Comment.objects.filter(post=post, head_comment=None).all()
@@ -107,17 +111,29 @@ class PostViewSet(viewsets.GenericViewSet):
 
         elif request.method == 'GET':
             comments = Comment.objects.filter(post=post, head_comment=None).all()
-            return Response(CommentSerializer(comments, many=True).data)
+            return Response(CommentSerializer(comments, many=True).data, status=status.HTTP_200_OK)
 
-        else:
-            comment_id = request.data.get('comment', -1)    # default 값 뭐 이렇게 줘도 되나 ,,
-            comment = get_object_or_404(Comment, pk=comment_id)
-            if comment.head_comment is not None:
-                comment.delete()
-                comments = Comment.objects.filter(post=post, head_comment=None).all()
-                return Response(CommentSerializer(comments, many=True).data, status=status.HTTP_201_CREATED)
+    @action(
+        detail=True,
+        methods=['DELETE'],
+        url_path='comment/(?P<comment_id>[^/.]+)'
+    )
+    def destroy_comment(self, request, pk=None, comment_id=-1):
+        post = get_object_or_404(Post, pk=pk)
+        user = request.user
+        comment = get_object_or_404(Comment, pk=comment_id)
+        if comment.writer != user:
+            return Response('작성자가 아닙니다.', status.HTTP_400_BAD_REQUEST)
+        if comment.head_comment is not None:                # 지울려는 댓글이 대댓글인 경우 -> 댓글 삭제
+            comment.delete()
+            if not comment.head_comment.tail_comments.exists() \
+                    and comment.head_comment.is_deleted:    # head comment가 삭제되었고 답글도 모두 지워진 경우 -> head comment 삭제
+                comment.head_comment.delete()
+        elif not comment.tail_comments.exists():            # 지울려는 댓글에 답글이 달리지 않은 경우 -> 댓글 삭제
+            comment.delete()
+        else:                                               # 지울려는 댓글이 대댓글이 아닌 경우 -> is_deleted = True
             comment.is_deleted = True
             comment.content = '삭제된 댓글입니다.'
             comment.save()
-            comments = Comment.objects.filter(post=post, head_comment=None).all()
-            return Response(CommentSerializer(comments, many=True).data, status=status.HTTP_201_CREATED)
+        comments = Comment.objects.filter(post=post, head_comment=None).all()
+        return Response(CommentSerializer(comments, many=True).data, status=status.HTTP_200_OK)

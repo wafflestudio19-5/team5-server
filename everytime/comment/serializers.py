@@ -5,6 +5,7 @@ from .models import Comment
 
 
 class CommentSerializer(serializers.ModelSerializer):
+    writer = serializers.StringRelatedField()
     replys = serializers.SerializerMethodField()
 
     class Meta:
@@ -42,6 +43,8 @@ class CommentSerializer(serializers.ModelSerializer):
         return comment
 
 class ReplySerializer(serializers.ModelSerializer):
+    writer = serializers.StringRelatedField()
+
     class Meta:
         model = Comment
         fields = (
