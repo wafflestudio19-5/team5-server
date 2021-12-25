@@ -36,7 +36,8 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
     permission_action_classes = {
         'retrieve': (permissions.AllowAny, ),
         'list': (permissions.AllowAny, ),
-        'comment': (permissions.AllowAny, )
+        'comment': (permissions.AllowAny, ),
+        'search': (permissions.AllowAny, )
     }
     serializer_class = PostSerializer
     queryset = Post.objects.all()
@@ -145,3 +146,22 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
             comment.save()
         comments = Comment.objects.filter(post=post, head_comment=None).all()
         return Response(CommentSerializer(comments, many=True).data, status=status.HTTP_200_OK)
+
+    @action(
+        detail=False,
+        methods=['GET']
+    )
+    def search(self, request):
+        board = request.query_params.get('board', '')
+        query = request.query_params.get('query', '')
+        if query == '':
+            return Response('검색어를 입력하십시오.', status.HTTP_400_BAD_REQUEST)
+        if board == '':
+            queryset = Post.objects.filter(content__icontains=query) | \
+                       Post.objects.filter(title__icontains=query)
+        else:
+            queryset = Post.objects.filter(content__icontains=query, board_id=board) | \
+                       Post.objects.filter(title__icontains=query, board_id=board)
+        page = self.paginate_queryset(queryset)
+        data = self.get_serializer(page, many=True).data
+        return self.get_paginated_response(data)
