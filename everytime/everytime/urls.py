@@ -32,7 +32,8 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('user/', include('user.urls')),
     path('board/', include('board.urls')),
-    path('post/', include('post.urls'))
+    path('post/', include('post.urls')),
+    # path('comment/', include('comment.urls'))
 ]
 
 if settings.DEBUG_TOOLBAR:
