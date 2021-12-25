@@ -36,6 +36,7 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
     permission_action_classes = {
         'retrieve': (permissions.AllowAny, ),
         'list': (permissions.AllowAny, ),
+        'comment': (permissions.AllowAny, )
     }
     serializer_class = PostSerializer
     queryset = Post.objects.all()
@@ -97,9 +98,10 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
     def comment(self, request, pk=None):
         post = get_object_or_404(Post, pk=pk)
         user = request.user
-        print(user)
         data = request.data
         if request.method == 'POST':
+            if user.id is None:
+                return Response('댓글을 작성하려면 로그인을 하십시오.', status.HTTP_400_BAD_REQUEST)
             head_comment_id = data.get('head_comment', None)
             head_comment = get_object_or_404(Comment, id=head_comment_id) if head_comment_id else None
             if head_comment is not None and head_comment.head_comment is not None:
