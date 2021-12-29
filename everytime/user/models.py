@@ -103,7 +103,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     USERNAME_FIELD = 'username'
     # python manage.py createsuperuser로 사용자를 만들 때 필수로 입력하게 되는 필드 리스트
     # USERNAME_FIELD와 password는 항상 입력이 요구됨
-    REQUIRED_FIELDS = []
+    REQUIRED_FIELDS = ['email', 'nickname']
 
 
     def __str__(self):

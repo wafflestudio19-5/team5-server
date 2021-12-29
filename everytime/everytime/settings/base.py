@@ -78,6 +78,11 @@ INSTALLED_APPS = [
     'post',
     'comment',
     'corsheaders',
+    # allauth
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.naver',
 ]
 
 MIDDLEWARE = [
@@ -209,3 +214,9 @@ CORS_ORIGIN_ALLOW_ALL = True # 임시로 모든 host 허용
 #
 # ]
 
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend'
+)
+
+LOGIN_REDIRECT_URL = '/'

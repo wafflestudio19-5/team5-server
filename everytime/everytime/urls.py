@@ -33,6 +33,7 @@ urlpatterns = [
     path('user/', include('user.urls')),
     path('board/', include('board.urls')),
     path('post/', include('post.urls')),
+    path('accounts/', include('allauth.urls')),
     # path('comment/', include('comment.urls'))
 ]
 
