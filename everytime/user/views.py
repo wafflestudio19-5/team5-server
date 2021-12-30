@@ -1,3 +1,5 @@
+import urllib.parse
+
 from django.db import IntegrityError
 from allauth.socialaccount.providers.naver.views import NaverOAuth2Adapter
 from django.shortcuts import redirect
@@ -13,8 +15,6 @@ from drf_yasg.utils import swagger_auto_schema
 
 from .models import User
 from allauth.socialaccount.models import SocialAccount
-from django.conf import settings
-from allauth.socialaccount.providers.naver import views as naver_view
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 from django.http import JsonResponse
 import requests
@@ -69,12 +69,13 @@ def naver_callback(request):
         f"https://nid.naver.com/oauth2.0/token?grant_type=authorization_code&client_id={CLIENT_ID}&client_secret={CLIENT_SECRET}&code={code}&state={STATE}"
     )
     token_req_json = token_req.json()
-    error = token_req_json.get("error")
+    error = token_req_json.get("error", None)
     if error is not None:
         raise JSONDecodeError(error)
     access_token = token_req_json.get('access_token')
     # access token 바탕으로 정보 가져오기
     # AccessToken 값은 일부 특수문자가 포함되어 있기 때문에 GET Parameter를 통하여 데이터를 전달하는 경우, AccessToken 값을 반드시 URL Encode 처리한 후에 전송하여야합니다.
+    access_token = urllib.parse.quote(access_token)
     email_req = requests.get('https://openapi.naver.com/v1/nid/me', headers={'Authorization': '{} {}'.format('Bearer', access_token)})
     email_req_status = email_req.status_code
     if email_req_status != 200:

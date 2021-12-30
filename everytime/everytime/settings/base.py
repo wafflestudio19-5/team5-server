@@ -237,6 +237,11 @@ SOCIALACCOUNT_AUTO_SIGNUP = False
 ACCOUNT_SIGNUP_FORM_CLASS = 'user.forms.SocialLoginSignupForm'
 # SOCIALACCOUNT_ADAPTER = 'user.adapter.SocialAccountRegisterAdapter'
 
+REST_AUTH_SERIALIZERS = {
+    'USER_DETAILS_SERIALIZER': 'user.serializers.UserCreateSerializer',
+    'LOGIN_SERIALIZER': 'user.serializers.UserLoginSerializer',
+}
+
 # REST_AUTH_REGISTER_SERIALIZERS = {
 #     'REGISTER_SERIALIZER': 'accounts.serializers.NaverRegisterSerializer',
 # }
