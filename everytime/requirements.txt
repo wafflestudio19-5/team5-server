@@ -14,3 +14,4 @@ boto3 # aws s3 접근을 위
 faker
 django-cors-headers
 django-allauth
+django-rest-auth
