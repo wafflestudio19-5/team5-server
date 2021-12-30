@@ -232,7 +232,8 @@ ACCOUNT_AUTHENTICATION_METHOD = 'email'
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
 SOCIALACCOUNT_AUTO_SIGNUP = False
-SOCIALACCOUNT_ADAPTER = 'user.adapter.SocialAccountRegisterAdapter'
+ACCOUNT_SIGNUP_FORM_CLASS = 'user.forms.SocialLoginSignupForm'
+# SOCIALACCOUNT_ADAPTER = 'user.adapter.SocialAccountRegisterAdapter'
 
 # REST_AUTH_REGISTER_SERIALIZERS = {
 #     'REGISTER_SERIALIZER': 'accounts.serializers.NaverRegisterSerializer',

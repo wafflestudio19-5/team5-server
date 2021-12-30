@@ -53,7 +53,7 @@ from rest_framework import status
 from json.decoder import JSONDecodeError
 
 BASE_URL = 'http://127.0.0.1:8000/'
-NAVER_CALLBACK_URI = BASE_URL + 'accounts/naver/callback/'
+NAVER_CALLBACK_URI = BASE_URL + 'accounts/naver/login/callback/'
 
 # def naver_login(request):
 #     scope = "https://www.googleapis.com/auth/userinfo.email"

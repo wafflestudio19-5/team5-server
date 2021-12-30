@@ -58,6 +58,7 @@ class UserCreateSerializer(serializers.Serializer):
         jwt_token = jwt_token_of(user)
         return user, jwt_token
 
+
 class UserLoginSerializer(serializers.Serializer):
     username = serializers.CharField(required=True)
     password = serializers.CharField(write_only=True)
