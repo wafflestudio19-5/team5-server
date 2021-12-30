@@ -229,6 +229,7 @@ REST_USE_JWT = True
 # 소셜 로그인으로 회원가입이 자동으로 되지는 않고 필수 입력 필드를 반드시 입력 후 이메일 인증해야 가입이 완료
 # https://wikidocs.net/9942#_4
 # https://stackoverflow.com/questions/50458134/custom-social-sing-up-form/50813837
+# https://stackoverflow.com/questions/12303478/how-to-customize-user-profile-when-using-django-allauth
 ACCOUNT_AUTHENTICATION_METHOD = 'email'
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
