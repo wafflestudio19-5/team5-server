@@ -6,7 +6,7 @@ User = get_user_model()
 class SocialLoginSignupForm(forms.Form):
     username = forms.CharField(required=True, max_length=100)   # id
     # password는 따로 입력받지 않았음
-    email = forms.EmailField(required=True, max_length=255)
+    email = forms.EmailField(required=True, max_length=255) # email은 자동입력됨
     nickname = forms.CharField(required=True, max_length=30)
     univ = forms.CharField(required=True, max_length=50)
     admission_year = forms.ChoiceField(choices=User.YEAR_CHOICES, required=True)

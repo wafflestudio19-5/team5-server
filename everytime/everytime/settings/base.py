@@ -228,6 +228,7 @@ REST_USE_JWT = True
 # 입력 받은 이메일 주소는 반드시 인증해야 함
 # 소셜 로그인으로 회원가입이 자동으로 되지는 않고 필수 입력 필드를 반드시 입력 후 이메일 인증해야 가입이 완료
 # https://wikidocs.net/9942#_4
+# https://stackoverflow.com/questions/50458134/custom-social-sing-up-form/50813837
 ACCOUNT_AUTHENTICATION_METHOD = 'email'
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
