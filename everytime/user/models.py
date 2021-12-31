@@ -75,6 +75,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     )
 
     email = models.EmailField(max_length=255, unique=True)
+    school_email = models.EmailField(max_length=255, unique=True, null=True)
     username = models.CharField(max_length=100, unique=True)                 # id
     nickname = models.CharField(max_length=30, unique=True)                  # 닉네임
     univ = models.CharField(max_length=50)                                   # 학교

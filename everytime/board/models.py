@@ -19,5 +19,8 @@ class Board(models.Model):
     question_enabled = models.BooleanField(default=False, blank=True)
     notice_enabled = models.BooleanField(default=False, blank=True)
 
+    # 게시판 타입
+    board_type = models.IntegerField(default=1)
+
     def __str__(self):
         return self.title
