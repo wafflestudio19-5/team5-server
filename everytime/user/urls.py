@@ -1,12 +1,13 @@
 from django.urls import path, include
 from rest_framework.routers import SimpleRouter
-from .views import UserSignUpView, UserLoginView
+from .views import UserSignUpView, UserLoginView, KaKaoLoginView, kakao_callback
 
 router = SimpleRouter()
-# router.register('signup', UserSignUpView, basename='signup')
 
+app_name='user'
 urlpatterns = [
     path('signup/', UserSignUpView.as_view(), name='signup'),
     path('login/', UserLoginView.as_view(), name='login'),
-    # path('', include(router.urls), name='auth-user')
+    path('kakao/login/', KaKaoLoginView.as_view(), name='kakao login'),
+    path('kakao/callback/', kakao_callback, name='kakao callback')
 ]
