@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/3.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
-
+import sys
 import datetime
 import os, json
 from pathlib import Path
@@ -23,22 +23,14 @@ try:
     secret_file = os.path.join(BASE_DIR, 'secrets.json')
     with open(secret_file) as f:
         secrets = json.loads(f.read())
-
-    def get_secret(setting, secrets=secrets):
-        try:
-            return secrets[setting]
-        except KeyError:
-            error_msg = "Set the {} environment variable".format(setting)
-            raise ImproperlyConfigured(error_msg)
-
-    AWS_ACCESS_KEY_ID = get_secret("AWS_ACCESS_KEY_ID")  # .csv 파일에 있는 내용을 입력 Access key ID
-    AWS_SECRET_ACCESS_KEY = get_secret("AWS_SECRET_ACCESS_KEY")  # .csv 파일에 있는 내용을 입력 Secret access key
-    SECRET_KEY = get_secret("SECRET_KEY")
+    for key, value in secrets.items():
+        setattr(sys.modules[__name__], key, value)
 
 except FileNotFoundError:
     SECRET_KEY = os.environ["SECRET_KEY"]
     AWS_ACCESS_KEY_ID: os.environ["AWS_ACCESS_KEY_ID"]
     AWS_SECRET_ACCESS_KEY: os.environ["AWS_SECRET_ACCESS_KEY"]
+
 
 
 
