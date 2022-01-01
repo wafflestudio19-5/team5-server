@@ -241,17 +241,3 @@ REST_AUTH_SERIALIZERS = {
     'USER_DETAILS_SERIALIZER': 'user.serializers.UserCreateSerializer',
     'LOGIN_SERIALIZER': 'user.serializers.UserLoginSerializer',
 }
-
-# REST_AUTH_REGISTER_SERIALIZERS = {
-#     'REGISTER_SERIALIZER': 'accounts.serializers.NaverRegisterSerializer',
-# }
-
-# SOCIALACCOUNT_PROVIDERS = {
-#     'naver': {
-#         'APP': {
-#             'client_id': ,
-#             'secret': ,
-#             'key': ''
-#         }
-#     }
-# }
