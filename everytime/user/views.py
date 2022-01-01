@@ -24,7 +24,7 @@ from django.shortcuts import redirect
 from rest_framework_jwt.settings import api_settings
 from .models import User, SocialAccount
 from .serializers import UserCreateSerializer, UserLoginSerializer
-
+from .utils import email_verification_token, message
 
 
 
@@ -141,3 +141,44 @@ def google_callback(request):
         })
 
 
+class VerifyingMailSendView(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def post(self, request):
+        user = request.user
+        data = request.data
+        email = data['email']
+        current_site = get_current_site(request)
+        domain = current_site.domain
+        uidb64 = urlsafe_base64_encode(force_bytes(user.id))
+        emailb64 = urlsafe_base64_encode(force_bytes(email))
+        token = email_verification_token.make_token(user)
+        message_data = message(domain, uidb64, token, emailb64)
+
+        mail_title = "Team5_EveryTime 학교 인증 메일입니다."
+        mail_to = email
+        email = EmailMessage(mail_title, message_data, to=[mail_to])
+        email.send()
+
+        return JsonResponse({"message": "SUCCESS"}, status=200)
+
+
+class VerifyingMailAcceptView(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get(self, request, uidb64, token, emailb64):
+        try:
+            uid = force_text(urlsafe_base64_decode(uidb64))
+            email = force_text(urlsafe_base64_decode(emailb64))
+            user = User.objects.get(pk=uid)
+            if email_verification_token.check_token(user, token):
+                user.school_email = email
+                user.save()
+                return JsonResponse({"verify": "SUCCESS"}, status=200)
+
+            return JsonResponse({"message":"AUTH FAIL"}, status=400)
+
+        except ValidationError:
+            return JsonResponse({"message": "TYPE_ERROR"}, status=400)
+        except KeyError:
+            return JsonResponse({"message": "INVALID_KEY"}, status=400)

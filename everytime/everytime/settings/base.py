@@ -27,9 +27,8 @@ try:
         setattr(sys.modules[__name__], key, value)
 
 except FileNotFoundError:
-    SECRET_KEY = os.environ["SECRET_KEY"]
-    AWS_ACCESS_KEY_ID: os.environ["AWS_ACCESS_KEY_ID"]
-    AWS_SECRET_ACCESS_KEY: os.environ["AWS_SECRET_ACCESS_KEY"]
+    for key, value in os.environ.items():
+        setattr(sys.modules[__name__], key, value)
 
 
 
