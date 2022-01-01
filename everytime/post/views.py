@@ -14,6 +14,8 @@ from .serializers import PostSerializer
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
+import re
+
 from everytime.utils import ViewSetActionPermissionMixin
 
 # request.data안에 새로운 Tag를 찾아서 데이터베이스에 저장
@@ -153,15 +155,20 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
     )
     def search(self, request):
         board = request.query_params.get('board', '')
-        query = request.query_params.get('query', '')
-        if query == '':
+        search_set = request.query_params.get('query', '')
+        search_set = search_set.split(' ')
+        if len(search_set) == 0:
             return Response('검색어를 입력하십시오.', status.HTTP_400_BAD_REQUEST)
         if board == '':
-            queryset = Post.objects.filter(content__icontains=query) | \
-                       Post.objects.filter(title__icontains=query)
+            queryset = Post.objects.all()
+            for query in search_set:
+                queryset = queryset.filter(content__icontains=query) | \
+                           queryset.filter(title__icontains=query)
         else:
-            queryset = Post.objects.filter(content__icontains=query, board_id=board) | \
-                       Post.objects.filter(title__icontains=query, board_id=board)
+            queryset = Post.objects.all()
+            for query in search_set:
+                queryset = queryset.filter(content__icontains=query, board_id=board) | \
+                           queryset.filter(title__icontains=query, board_id=board)
         page = self.paginate_queryset(queryset)
         data = self.get_serializer(page, many=True).data
         return self.get_paginated_response(data)

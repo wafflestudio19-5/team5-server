@@ -75,6 +75,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     )
 
     email = models.EmailField(max_length=255, unique=True)
+    school_email = models.EmailField(max_length=255, unique=True, null=True)
     username = models.CharField(max_length=100, unique=True)                 # id
     nickname = models.CharField(max_length=30, unique=True)                  # 닉네임
     univ = models.CharField(max_length=50)                                   # 학교
@@ -111,3 +112,8 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def get_short_name(self):
         return self.email
+
+class SocialAccount(models.Model):
+    provider = models.CharField(max_length=10, null=True)
+    social_id = models.IntegerField(default=-1)
+    user = models.ForeignKey('user.User', related_name='socialaccount', on_delete=models.CASCADE)
