@@ -60,6 +60,9 @@ CLIENT_SECRET = "mRBFTWOJN2"
 
 
 def naver_login(request):
+    if request.user.is_authenticated:
+        messages.error(request, '이미 로그인된 유저입니다.')
+        return redirect(BASE_URL)
     # Create random state
     STATE = ''.join((random.choice(string.digits)) for x in range(10))
     return redirect(
@@ -80,7 +83,7 @@ def naver_callback(request):
     # token을 제대로 받아오지 못했다면
     if not token_req.ok:
         messages.error(request, token_req_json.get('error'), extra_tags='danger')
-        return redirect('http://127.0.0.1:8000/user/naver/login/') # 로그인하는 화면으로 redirect, 주소는 달라져야할듯?
+        return redirect('user:login')  # 로그인하는 화면으로 redirect, 프론트 주소가 아닌 백주소로 넘겨줘도 되는지 궁금
 
     access_token = token_req_json.get('access_token')
     refresh_token = token_req_json.get('refresh_token')
@@ -95,7 +98,7 @@ def naver_callback(request):
 
     if rescode != 200:
         messages.error(request, "Error Code:" + rescode, extra_tags='danger')
-        return redirect('http://127.0.0.1:8000/user/naver/login/')  # 로그인하는 화면으로 redirect, 주소는 달라져야할듯?
+        return redirect('user:login')  # 로그인하는 화면으로 redirect, 프론트 주소가 아닌 백주소로 넘겨줘도 되는지 궁금
     else:
         profile_req_json = json.loads(response.read().decode('utf-8'))
 
@@ -104,35 +107,13 @@ def naver_callback(request):
     # Sign in 또는 Sign up
     try:
         social_account = SocialAccount.objects.get(id=id, provider='naver')
-        social_user = SocialAccount.objects.get(user=user)
-        if social_user is None:
-            return JsonResponse({'err_msg': 'email exists but not social user'}, status=status.HTTP_400_BAD_REQUEST)
-        if social_user.provider != 'naver':
-            return JsonResponse({'err_msg': 'no matching social type'}, status=status.HTTP_400_BAD_REQUEST)
-        # 기존에 naver로 가입된 유저
-        data = {'access_token': access_token, 'code': code}
-        accept = requests.post(
-            f"{BASE_URL}user/naver/login/finish/", data=data)
-        accept_status = accept.status_code
-        if accept_status != 200:
-            return JsonResponse({'err_msg': 'failed to signin'}, status=accept_status)
-        accept_json = accept.json()
-        accept_json.pop('user', None)
-        return JsonResponse(accept_json)
+
+        # if social_user is None:
+        #     return JsonResponse({'err_msg': 'email exists but not social user'}, status=status.HTTP_400_BAD_REQUEST)
+        # if social_user.provider != 'naver':
+        #     return JsonResponse({'err_msg': 'no matching social type'}, status=status.HTTP_400_BAD_REQUEST)
+        # return JsonResponse(accept_json)
+
     except SocialAccount.DoesNotExist:
         # 기존에 가입된 유저가 없으면 새로 가입
-        data = {'access_token': access_token, 'code': code}
-        accept = requests.post(
-            f"{BASE_URL}user/naver/login/finish/", data=data)
-        accept_status = accept.status_code
-        if accept_status != 200:
-            return JsonResponse({'err_msg': 'failed to signup'}, status=accept_status)
-        accept_json = accept.json()
-        accept_json.pop('user', None)
-        return JsonResponse(accept_json)
-
-
-class SocialLoginException(APIException):
-    status_code = status.HTTP_400_BAD_REQUEST
-    default_code = 'bad_request'
-    default_detail = 'SocialLoginException'
+        # return redirect('가입 페이지')

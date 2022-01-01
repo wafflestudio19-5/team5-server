@@ -78,13 +78,6 @@ INSTALLED_APPS = [
     'post',
     'comment',
     'corsheaders',
-    # allauth
-    'allauth',
-    'allauth.account',
-    'allauth.socialaccount',
-    'allauth.socialaccount.providers.naver',
-    'rest_auth',
-    'rest_auth.registration',
 ]
 
 MIDDLEWARE = [
@@ -214,30 +207,3 @@ CORS_ORIGIN_ALLOW_ALL = True  # 임시로 모든 host 허용
 # CORS_ORIGIN_WHITELIST = [
 #
 # ]
-
-AUTHENTICATION_BACKENDS = (
-    'django.contrib.auth.backends.ModelBackend',
-    'allauth.account.auth_backends.AuthenticationBackend'
-)
-
-LOGIN_REDIRECT_URL = '/'
-
-REST_USE_JWT = True
-
-# 회원가입할 때 이메일과 사용자 이름을 함께 입력 받음
-# 입력 받은 이메일 주소는 반드시 인증해야 함
-# 소셜 로그인으로 회원가입이 자동으로 되지는 않고 필수 입력 필드를 반드시 입력 후 이메일 인증해야 가입이 완료
-# https://wikidocs.net/9942#_4
-# https://stackoverflow.com/questions/50458134/custom-social-sing-up-form/50813837
-# https://stackoverflow.com/questions/12303478/how-to-customize-user-profile-when-using-django-allauth
-ACCOUNT_AUTHENTICATION_METHOD = 'email'
-ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
-SOCIALACCOUNT_AUTO_SIGNUP = False
-ACCOUNT_SIGNUP_FORM_CLASS = 'user.forms.SocialLoginSignupForm'
-# SOCIALACCOUNT_ADAPTER = 'user.adapter.SocialAccountRegisterAdapter'
-
-REST_AUTH_SERIALIZERS = {
-    'USER_DETAILS_SERIALIZER': 'user.serializers.UserCreateSerializer',
-    'LOGIN_SERIALIZER': 'user.serializers.UserLoginSerializer',
-}
