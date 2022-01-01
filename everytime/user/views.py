@@ -99,19 +99,14 @@ def kakao_callback(request):
             # if user.login_method != User.LOGIN_KAKAO:
             #     raise KakaoException()
         except User.DoesNotExist:
-            return HttpResponse('소셜 로그인용 가입 페이지')
-            # user = User.objects.create(
-            #     email=email,
-            #     username=email,
-            #     first_name=nickname,
-            #     login_method=User.LOGIN_KAKAO,
-            #     email_verified=True,
-            # )
-            # user.set_unusable_password()
-            # user.save()
+            return JsonResponse({
+                'login': False,
+                'email': email
+            }) # login이 False면
         return JsonResponse({
-            'username' : user.username,
-            'token' : jwt_token_of(user)
+            'login': True,
+            'username': user.username,
+            'token': jwt_token_of(user)
         })
     except KakaoException:
         return HttpResponse('Login failed')
