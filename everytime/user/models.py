@@ -112,3 +112,8 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def get_short_name(self):
         return self.email
+
+class SocialAccount(models.Model):
+    provider = models.CharField(max_length=10, null=True)
+    social_id = models.IntegerField(default=-1)
+    user = models.ForeignKey('user.User', related_name='socialaccount', on_delete=models.CASCADE)
