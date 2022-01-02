@@ -28,7 +28,6 @@ from .utils import email_verification_token, message
 
 
 
-
 class UserSignUpView(APIView):
     permission_classes = (permissions.AllowAny, )
 
@@ -47,6 +46,7 @@ class UserSignUpView(APIView):
             'token' : jwt_token
         }, status=status.HTTP_201_CREATED)
 
+
 class UserLoginView(APIView):
     permission_classes = (permissions.AllowAny, )
 
@@ -57,7 +57,6 @@ class UserLoginView(APIView):
         token = serializer.validated_data['token']
 
         return Response({'success': True, 'token': token}, status=status.HTTP_200_OK)
-
 
 
 def ping(request):
@@ -115,30 +114,26 @@ def google_callback(request):
     social_id = profile_req_json.get('id')
     email = profile_req_json.get('email')
     name = profile_req_json.get('name')
-    picture = profile_req_json.get('picture')
     """
     Signup or Signin Request
     """
     try:
         social_account = SocialAccount.objects.get(social_id=social_id, provider='google')
         user = social_account.user
-        # 기존에 가입된 유저 email로 확인
         jwt_token = jwt_token_of(user)
         return JsonResponse({
             'login': True,
             'user': user.username,
             'token': jwt_token
-        })
+        },json_dumps_params={'ensure_ascii': False})
 
     except SocialAccount.DoesNotExist:
-        # signup 페이지로 보내기
         return JsonResponse({
             'login': False,
             'social_id': social_id,
             'email': email,
-            'name': name,
-            'picture': picture
-        })
+            'name': name
+        },json_dumps_params={'ensure_ascii': False})
 
 
 class VerifyingMailSendView(APIView):
