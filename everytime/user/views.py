@@ -19,6 +19,16 @@ from .models import User, SocialAccount
 from django.http import JsonResponse
 import requests
 from rest_framework import status
+from rest_framework_jwt.settings import api_settings
+
+JWT_PAYLOAD_HANDLER = api_settings.JWT_PAYLOAD_HANDLER
+JWT_ENCODE_HANDLER = api_settings.JWT_ENCODE_HANDLER
+
+
+def jwt_token_of(user):
+    payload = JWT_PAYLOAD_HANDLER(user)
+    jwt_token = JWT_ENCODE_HANDLER(payload)
+    return jwt_token
 
 
 class UserSignUpView(APIView):
@@ -54,7 +64,7 @@ class UserLoginView(APIView):
 
 # Code chunks below are mostly from https://medium.com/chanjongs-programming-diary/django-rest-framework로-소셜-로그인-api-구현해보기-google-kakao-github-2ccc4d49a781
 BASE_URL = 'http://127.0.0.1:8000/'
-NAVER_CALLBACK_URI = BASE_URL + 'user/naver/callback/'
+NAVER_CALLBACK_URI = BASE_URL + 'user/naver/login/callback/'
 CLIENT_ID = "qlDWX9G2YwKHuTKXttsR"
 CLIENT_SECRET = "mRBFTWOJN2"
 
@@ -64,7 +74,8 @@ def naver_login(request):
         messages.error(request, '이미 로그인된 유저입니다.')
         return redirect(BASE_URL)
     # Create random state
-    STATE = ''.join((random.choice(string.digits)) for x in range(10))
+    STATE = ''.join((random.choice(string.digits)) for x in range(15))
+    request.session['original_state'] = STATE
     return redirect(
         f"https://nid.naver.com/oauth2.0/authorize?response_type=code&client_id={CLIENT_ID}&state={STATE}&redirect_uri={NAVER_CALLBACK_URI}"
     )
@@ -73,6 +84,13 @@ def naver_login(request):
 def naver_callback(request):
     code = request.GET.get('code')
     state = request.GET.get('state')
+    original_state = request.session.get('original_state')
+
+    # state token 검증
+    # https://developers.naver.com/docs/login/web/web.md
+    if state != original_state:
+        messages.error(request, '잘못된 경로로 로그인하셨습니다.', extra_tags='danger')
+        return redirect('user:login')
 
     # access token 받아오기
     token_req = requests.get(
@@ -89,31 +107,34 @@ def naver_callback(request):
     refresh_token = token_req_json.get('refresh_token')
 
     # access token 바탕으로 정보 가져오기
-    header = "Bearer " + access_token
-    url = "https://openapi.naver.com/v1/nid/me"
-    request = urllib.request.Request(url)
-    request.add_header("Authorization", header)
-    response = urllib.request.urlopen(request)
-    rescode = response.getcode()
+    access_token = urllib.parse.quote(access_token)
+    profile_req = requests.get('https://openapi.naver.com/v1/nid/me', headers={'Authorization': '{} {}'.format('Bearer', access_token)})
+    profile_req_status = profile_req.status_code
+    if profile_req_status != 200:
+        messages.error(request, '프로필 정보를 가져오는 데에 실패하였습니다.', extra_tags='danger')
+        return redirect('user:login')
 
-    if rescode != 200:
-        messages.error(request, "Error Code:" + rescode, extra_tags='danger')
-        return redirect('user:login')  # 로그인하는 화면으로 redirect, 프론트 주소가 아닌 백주소로 넘겨줘도 되는지 궁금
-    else:
-        profile_req_json = json.loads(response.read().decode('utf-8'))
-
-    id = profile_req_json.get('id')
+    profile_req_json = profile_req.json()
+    social_id = profile_req_json.get('id')
+    email = profile_req_json.get('email')
+    profile_pic = profile_req_json.get('profile_image', None)
+    nickname = profile_req_json.get('nickname', None)
 
     # Sign in 또는 Sign up
     try:
-        social_account = SocialAccount.objects.get(id=id, provider='naver')
-
-        # if social_user is None:
-        #     return JsonResponse({'err_msg': 'email exists but not social user'}, status=status.HTTP_400_BAD_REQUEST)
-        # if social_user.provider != 'naver':
-        #     return JsonResponse({'err_msg': 'no matching social type'}, status=status.HTTP_400_BAD_REQUEST)
-        # return JsonResponse(accept_json)
-
+        social_account = SocialAccount.objects.get(social_id=social_id, provider='naver')
+        user = social_account.user
+        jwt_token = jwt_token_of(user)
+        return JsonResponse({
+            'login': True,
+            'user': user.username,  # 소셜계정 가입시 아이디를 무엇으로 설정해줄 것인가
+            'token': jwt_token
+        })
     except SocialAccount.DoesNotExist:
-        # 기존에 가입된 유저가 없으면 새로 가입
-        # return redirect('가입 페이지')
+        return JsonResponse({
+            'login': False,
+            'social_id': social_id,
+            'email': email,
+            'profile_pic': profile_pic,
+            'nickname': nickname
+        })

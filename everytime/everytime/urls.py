@@ -32,10 +32,6 @@ urlpatterns = [
     path('user/', include('user.urls')),
     path('board/', include('board.urls')),
     path('post/', include('post.urls')),
-    path('accounts/', include('allauth.urls')),
-    path('rest-auth/', include('rest_auth.urls')),
-    path('rest-auth/registration/', include('rest_auth.registration.urls'))
-    # path('comment/', include('comment.urls'))
 ]
 
 if settings.DEBUG_TOOLBAR:
