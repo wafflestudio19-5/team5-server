@@ -97,7 +97,7 @@ def kakao_callback(request):
     # return HttpResponse('로그인 실패')
     try:
         code = request.GET.get("code")
-        REST_API_KEY = 'SOCIAL_AUTH_KAKAO_SECRET'
+        REST_API_KEY = getattr(settings, 'SOCIAL_AUTH_KAKAO_SECRET')
         REDIRECT_URI = 'http://localhost:8000/user/kakao/callback/'
         token_response = requests.get(
             f"https://kauth.kakao.com/oauth/token?grant_type=authorization_code&client_id={REST_API_KEY}&redirect_uri={REDIRECT_URI}&code={code}"
@@ -116,22 +116,23 @@ def kakao_callback(request):
         )
         profile_json = profile_request.json()
         email = profile_json.get("kakao_account", None).get("email")
-        if email is None:
-            raise KakaoException()
+        social_id = int(profile_json.get('id', -1))
         try:
-            user = User.objects.get(email=email)
-        except User.DoesNotExist:
+            social_account = SocialAccount.objects.get(social_id=social_id, provider='kakao')
+            user = social_account.user
+            jwt_token = jwt_token_of(user)
+        except SocialAccount.DoesNotExist:
             # 가입이 안 된 유저일 때 별도 가입페이지로 redirect하는 처리를 추가로 해줄 예정
-            profile_id = int(profile_json.get('id', -1))
-            SocialAccount.objects.create(provider='kakao', social_id=profile_id)
             return JsonResponse({
                 'login': False,
-                'email': None
+                'social_id': social_id,
+                'email': email,
+                'provider': 'kakao'
             })
         return JsonResponse({
             'login': True,
-            'username': user.username,
-            'token': jwt_token_of(user)
+            'social_user': social_id, # -> username으로 사용
+            'token': jwt_token
         })
     except KakaoException:
         return HttpResponse('Login failed')
@@ -191,7 +192,7 @@ def google_callback(request):
     profile_req_json = profile_req.json()
     social_id = profile_req_json.get('id')
     email = profile_req_json.get('email')
-    name = profile_req_json.get('name')
+
     """
     Signup or Signin Request
     """
@@ -201,24 +202,23 @@ def google_callback(request):
         jwt_token = jwt_token_of(user)
         return JsonResponse({
             'login': True,
-            'user': user.username,
+            'social_user': social_id, # -> username으로 사용
             'token': jwt_token
-        },json_dumps_params={'ensure_ascii': False})
+        })
     except SocialAccount.DoesNotExist:
         return JsonResponse({
             'login': False,
             'social_id': social_id,
             'email': email,
-            'name': name,
             'provider': 'google'
-        },json_dumps_params={'ensure_ascii': False})
+        })
 
       
 # Code chunks below are mostly from https://medium.com/chanjongs-programming-diary/django-rest-framework로-소셜-로그인-api-구현해보기-google-kakao-github-2ccc4d49a781
 BASE_URL = 'http://127.0.0.1:8000/'
 NAVER_CALLBACK_URI = BASE_URL + 'user/naver/login/callback/'
-CLIENT_ID = "qlDWX9G2YwKHuTKXttsR"
-CLIENT_SECRET = "mRBFTWOJN2"
+CLIENT_ID = getattr(settings, 'SOCIAL_AUTH_NAVER_CLIENT_ID')
+CLIENT_SECRET = getattr(settings, 'SOCIAL_AUTH_NAVER_SECRET')
 
 
 def naver_login(request):
@@ -267,8 +267,6 @@ def naver_callback(request):
     profile_req_json = profile_req.json()['response']
     social_id = profile_req_json.get('id')
     email = profile_req_json.get('email')
-    profile_pic = profile_req_json.get('profile_image', None)
-    nickname = profile_req_json.get('nickname', None)
 
     # Sign in 또는 Sign up
     try:
@@ -277,7 +275,7 @@ def naver_callback(request):
         jwt_token = jwt_token_of(user)
         return JsonResponse({
             'login': True,
-            'social_user': social_id,
+            'social_user': social_id, # -> username으로 사용
             'token': jwt_token
         })
     except SocialAccount.DoesNotExist:
@@ -285,9 +283,7 @@ def naver_callback(request):
             'login': False,
             'social_id': social_id,
             'email': email,
-            'profile_pic': profile_pic,
-            'nickname': nickname,
-            'provider' : 'naver'
+            'provider': 'naver'
         })
 
 
