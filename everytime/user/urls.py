@@ -1,7 +1,9 @@
 from django.urls import path, include
+
 from rest_framework.routers import SimpleRouter
 from .views import UserSignUpView, UserLoginView, google_login, google_callback, VerifyingMailSendView, VerifyingMailAcceptView, SocialUserSignUpView, KaKaoLoginView, kakao_callback
 from . import views
+
 
 app_name='user'
 urlpatterns = [

@@ -20,7 +20,8 @@ def jwt_token_of(user):
 
 class UserCreateSerializer(serializers.Serializer):
     username = serializers.CharField(required=True, max_length=100)
-    password = serializers.CharField(required=True)
+    password1 = serializers.CharField(required=True)
+    password2 = serializers.CharField(required=True)
     email = serializers.EmailField(required=True, max_length=255)
     nickname = serializers.CharField(required=True, max_length=30)
     univ = serializers.CharField(required=True, max_length=50)
@@ -29,6 +30,11 @@ class UserCreateSerializer(serializers.Serializer):
 
     def validate(self, data):
         # singup 과정에서 validate 함수 만들기
+        pw1 = data.get('password1')
+        pw2 = data.get('password2')
+        if pw1 != pw2:
+            raise serializers.ValidationError('입력한 두 비밀번호가 다릅니다. 비밀번호를 확인해주세요.')
+
         admission_year = data.get('admission_year')
         if (admission_year, admission_year) not in User.YEAR_CHOICES:
             raise serializers.ValidationError('학번을 올바르게 입력하세요.')
@@ -50,7 +56,7 @@ class UserCreateSerializer(serializers.Serializer):
 
     def create(self, validated_data):
         username = validated_data.get('username')
-        password = validated_data.get('password')
+        password = validated_data.get('password1')
         email = validated_data.get('email')
         nickname = validated_data.get('nickname')
         admission_year = validated_data.get('admission_year')
