@@ -10,7 +10,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.exceptions import APIException
 
-from .models import User
+from .models import User, SocialAccount
 from .serializers import UserCreateSerializer, UserLoginSerializer, jwt_token_of
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
@@ -69,7 +69,7 @@ def kakao_callback(request):
     # return HttpResponse('로그인 실패')
     try:
         code = request.GET.get("code")
-        REST_API_KEY = '4c3c166a3ec7e5a2da86cb7f358a1a17'
+        REST_API_KEY = 'SOCIAL_AUTH_KAKAO_SECRET'
         REDIRECT_URI = 'http://localhost:8000/user/kakao/callback/'
         token_response = requests.get(
             f"https://kauth.kakao.com/oauth/token?grant_type=authorization_code&client_id={REST_API_KEY}&redirect_uri={REDIRECT_URI}&code={code}"
@@ -90,19 +90,16 @@ def kakao_callback(request):
         email = profile_json.get("kakao_account", None).get("email")
         if email is None:
             raise KakaoException()
-        # properties = profile_json.get("properties")
-        # nickname = properties.get("nickname")
-        # profile_image = properties.get("profile_image")
-
         try:
             user = User.objects.get(email=email)
-            # if user.login_method != User.LOGIN_KAKAO:
-            #     raise KakaoException()
         except User.DoesNotExist:
+            # 가입이 안 된 유저일 때 별도 가입페이지로 redirect하는 처리를 추가로 해줄 예정
+            profile_id = int(profile_json.get('id', -1))
+            SocialAccount.objects.create(provider='kakao', social_id=profile_id)
             return JsonResponse({
                 'login': False,
-                'email': email
-            }) # login이 False면
+                'email': None
+            })
         return JsonResponse({
             'login': True,
             'username': user.username,
