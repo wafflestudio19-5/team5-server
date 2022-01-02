@@ -104,7 +104,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     USERNAME_FIELD = 'username'
     # python manage.py createsuperuser로 사용자를 만들 때 필수로 입력하게 되는 필드 리스트
     # USERNAME_FIELD와 password는 항상 입력이 요구됨
-    REQUIRED_FIELDS = []
+    REQUIRED_FIELDS = ['email', 'nickname']
 
 
     def __str__(self):
@@ -115,5 +115,5 @@ class User(AbstractBaseUser, PermissionsMixin):
 
 class SocialAccount(models.Model):
     provider = models.CharField(max_length=10, null=True)
-    social_id = models.IntegerField(default=-1)
+    social_id = models.CharField(max_length=100)
     user = models.ForeignKey('user.User', related_name='socialaccount', on_delete=models.CASCADE)

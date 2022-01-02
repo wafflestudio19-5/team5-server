@@ -9,11 +9,12 @@ https://docs.djangoproject.com/en/3.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
-
+import sys
 import datetime
 import os, json
 from pathlib import Path
 from django.core.exceptions import ImproperlyConfigured
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = os.path.dirname(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -23,23 +24,12 @@ try:
     secret_file = os.path.join(BASE_DIR, 'secrets.json')
     with open(secret_file) as f:
         secrets = json.loads(f.read())
-
-    def get_secret(setting, secrets=secrets):
-        try:
-            return secrets[setting]
-        except KeyError:
-            error_msg = "Set the {} environment variable".format(setting)
-            raise ImproperlyConfigured(error_msg)
-
-    AWS_ACCESS_KEY_ID = get_secret("AWS_ACCESS_KEY_ID")  # .csv 파일에 있는 내용을 입력 Access key ID
-    AWS_SECRET_ACCESS_KEY = get_secret("AWS_SECRET_ACCESS_KEY")  # .csv 파일에 있는 내용을 입력 Secret access key
-    SECRET_KEY = get_secret("SECRET_KEY")
+    for key, value in secrets.items():
+        setattr(sys.modules[__name__], key, value)
 
 except FileNotFoundError:
-    SECRET_KEY = os.environ["SECRET_KEY"]
-    AWS_ACCESS_KEY_ID: os.environ["AWS_ACCESS_KEY_ID"]
-    AWS_SECRET_ACCESS_KEY: os.environ["AWS_SECRET_ACCESS_KEY"]
-
+    for key, value in os.environ.items():
+        setattr(sys.modules[__name__], key, value)
 
 
 # Quick-start development settings - unsuitable for production
@@ -56,7 +46,6 @@ ALLOWED_HOSTS = [
     '127.0.0.1',
     'localhost',
 ]
-
 
 # Application definition
 
@@ -116,7 +105,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'everytime.wsgi.application'
 
-
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 # Password validation
@@ -137,7 +125,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/3.2/topics/i18n/
 
@@ -151,21 +138,19 @@ USE_L10N = True
 
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
 AWS_REGION = 'ap-northeast-2'
 
 ###S3 Storages
-AWS_STORAGE_BUCKET_NAME = 't5backendbucket' # 설정한 버킷 이름
-AWS_S3_CUSTOM_DOMAIN = '%s.s3.%s.amazonaws.com' % (AWS_STORAGE_BUCKET_NAME,AWS_REGION)
+AWS_STORAGE_BUCKET_NAME = 't5backendbucket'  # 설정한 버킷 이름
+AWS_S3_CUSTOM_DOMAIN = '%s.s3.%s.amazonaws.com' % (AWS_STORAGE_BUCKET_NAME, AWS_REGION)
 AWS_S3_OBJECT_PARAMETERS = {
     'CacheControl': 'max-age=86400',
 }
 DEFAULT_FILE_STORAGE = 'everytime.storages.MediaStorage'
 STATICFILES_STORAGE = 'everytime.storages.StaticStorage'
-
 
 STATIC_URL = '/static/'
 MEDIA_URL = '/media/'
@@ -185,8 +170,11 @@ REST_FRAMEWORK = {
     ),
 
     'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.TokenAuthentication',
         'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
     ),
+
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
     'PAGE_SIZE': 10,
 }
@@ -204,8 +192,7 @@ AUTH_USER_MODEL = 'user.User'
 SITE_ID = 1
 
 # CORS 설정
-CORS_ORIGIN_ALLOW_ALL = True # 임시로 모든 host 허용
+CORS_ORIGIN_ALLOW_ALL = True  # 임시로 모든 host 허용
 # CORS_ORIGIN_WHITELIST = [
 #
 # ]
-
