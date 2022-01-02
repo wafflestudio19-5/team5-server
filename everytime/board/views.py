@@ -10,8 +10,8 @@ from .serializers import BoardSerializer
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
-# Create your views here.
-class BoardCreateView(APIView):
+
+class BoardView(APIView):
     permission_classes = (permissions.IsAuthenticated, )
 
     def post(self, request, *args, **kwargs):
@@ -24,3 +24,8 @@ class BoardCreateView(APIView):
         board = serializer.save()
 
         return Response(BoardSerializer(board).data, status.HTTP_201_CREATED)
+
+    def get(self, request):
+        boards = Board.objects.all()
+        serializer = BoardSerializer(boards, many=True)
+        return Response(serializer.data, status.HTTP_200_OK)
