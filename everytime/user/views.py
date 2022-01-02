@@ -1,11 +1,10 @@
-
 from django.http import HttpResponse, JsonResponse
 from django.core.validators import validate_email
 from django.core.mail import EmailMessage
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_text
 from django.conf import settings
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, reverse
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.sites.shortcuts import get_current_site
@@ -72,6 +71,81 @@ class UserLoginView(APIView):
         token = serializer.validated_data['token']
 
         return Response({'success': True, 'token': token}, status=status.HTTP_200_OK)
+
+
+class KaKaoLoginView(APIView):
+    permission_classes = (permissions.AllowAny, )
+    def get(self, request):
+        REST_API_KEY = '4c3c166a3ec7e5a2da86cb7f358a1a17'
+        REDIRECT_URI = 'http://localhost:8000/user/kakao/callback/'
+
+        API_HOST = f'https://kauth.kakao.com/oauth/authorize?client_id={REST_API_KEY}&redirect_uri={REDIRECT_URI}&response_type=code'
+        try:
+            if request.user.is_authenticated:
+                raise SocialLoginException("User already logged in")
+
+            return redirect(API_HOST)
+        except KakaoException as error:
+            messages.error(request, error)
+            return redirect("user:login")
+        except SocialLoginException as error:
+            messages.error(request, error)
+            return redirect("user:login")
+
+
+def kakao_callback(request):
+    # return HttpResponse('로그인 실패')
+    try:
+        code = request.GET.get("code")
+        REST_API_KEY = 'SOCIAL_AUTH_KAKAO_SECRET'
+        REDIRECT_URI = 'http://localhost:8000/user/kakao/callback/'
+        token_response = requests.get(
+            f"https://kauth.kakao.com/oauth/token?grant_type=authorization_code&client_id={REST_API_KEY}&redirect_uri={REDIRECT_URI}&code={code}"
+        )
+        token_json = token_response.json()
+
+        error = token_json.get("error", None)
+        if error is not None:
+            raise KakaoException()
+
+        access_token = token_json.get("access_token")
+
+        profile_request = requests.get(
+            "https://kapi.kakao.com/v2/user/me",
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+        profile_json = profile_request.json()
+        email = profile_json.get("kakao_account", None).get("email")
+        if email is None:
+            raise KakaoException()
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            # 가입이 안 된 유저일 때 별도 가입페이지로 redirect하는 처리를 추가로 해줄 예정
+            profile_id = int(profile_json.get('id', -1))
+            SocialAccount.objects.create(provider='kakao', social_id=profile_id)
+            return JsonResponse({
+                'login': False,
+                'email': None
+            })
+        return JsonResponse({
+            'login': True,
+            'username': user.username,
+            'token': jwt_token_of(user)
+        })
+    except KakaoException:
+        return HttpResponse('Login failed')
+
+
+class KakaoException(APIException):
+    status_code = status.HTTP_400_BAD_REQUEST
+    default_code = 'bad_request'
+    default_detail = 'KakaoException'
+
+class SocialLoginException(APIException):
+    status_code = status.HTTP_400_BAD_REQUEST
+    default_code = 'bad_request'
+    default_detail = 'SocialLoginException'
 
       
 
