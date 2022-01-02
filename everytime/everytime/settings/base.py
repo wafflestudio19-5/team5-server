@@ -14,6 +14,7 @@ import datetime
 import os, json
 from pathlib import Path
 from django.core.exceptions import ImproperlyConfigured
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = os.path.dirname(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -31,8 +32,6 @@ except FileNotFoundError:
         setattr(sys.modules[__name__], key, value)
 
 
-
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
@@ -45,9 +44,8 @@ DEBUG_TOOLBAR = os.getenv('DEBUG_TOOLBAR') in ('true', 'True')
 ALLOWED_HOSTS = [
     '13.125.247.56',
     '127.0.0.1',
-#     'localhost',
+    #     'localhost',
 ]
-
 
 # Application definition
 
@@ -107,7 +105,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'everytime.wsgi.application'
 
-
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 # Password validation
@@ -128,7 +125,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/3.2/topics/i18n/
 
@@ -142,21 +138,19 @@ USE_L10N = True
 
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
 AWS_REGION = 'ap-northeast-2'
 
 ###S3 Storages
-AWS_STORAGE_BUCKET_NAME = 't5backendbucket' # 설정한 버킷 이름
-AWS_S3_CUSTOM_DOMAIN = '%s.s3.%s.amazonaws.com' % (AWS_STORAGE_BUCKET_NAME,AWS_REGION)
+AWS_STORAGE_BUCKET_NAME = 't5backendbucket'  # 설정한 버킷 이름
+AWS_S3_CUSTOM_DOMAIN = '%s.s3.%s.amazonaws.com' % (AWS_STORAGE_BUCKET_NAME, AWS_REGION)
 AWS_S3_OBJECT_PARAMETERS = {
     'CacheControl': 'max-age=86400',
 }
 DEFAULT_FILE_STORAGE = 'everytime.storages.MediaStorage'
 STATICFILES_STORAGE = 'everytime.storages.StaticStorage'
-
 
 STATIC_URL = '/static/'
 MEDIA_URL = '/media/'
@@ -176,8 +170,11 @@ REST_FRAMEWORK = {
     ),
 
     'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.TokenAuthentication',
         'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
     ),
+
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
     'PAGE_SIZE': 10,
 }
@@ -195,8 +192,7 @@ AUTH_USER_MODEL = 'user.User'
 SITE_ID = 1
 
 # CORS 설정
-CORS_ORIGIN_ALLOW_ALL = True # 임시로 모든 host 허용
+CORS_ORIGIN_ALLOW_ALL = True  # 임시로 모든 host 허용
 # CORS_ORIGIN_WHITELIST = [
 #
 # ]
-
