@@ -12,7 +12,7 @@ from rest_framework.exceptions import APIException
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
-from .serializers import UserCreateSerializer, UserLoginSerializer
+from .serializers import UserCreateSerializer, UserLoginSerializer, SocialUserCreateSerializer
 from drf_yasg.utils import swagger_auto_schema
 
 from .models import User, SocialAccount
@@ -89,8 +89,8 @@ def naver_callback(request):
     # state token 검증
     # https://developers.naver.com/docs/login/web/web.md
     if state != original_state:
-        messages.error(request, '잘못된 경로로 로그인하셨습니다.', extra_tags='danger')
-        return redirect('user:login')
+        messages.error(request, '잘못된 경로로 로그인을 시도하셨습니다.', extra_tags='danger')
+        return redirect('user:login') # 로그인하는 화면으로 redirect, 이후 수정
 
     # access token 받아오기
     token_req = requests.get(
@@ -101,11 +101,9 @@ def naver_callback(request):
     # token을 제대로 받아오지 못했다면
     if not token_req.ok:
         messages.error(request, token_req_json.get('error'), extra_tags='danger')
-        return redirect('user:login')  # 로그인하는 화면으로 redirect, 프론트 주소가 아닌 백주소로 넘겨줘도 되는지 궁금
+        return redirect('user:login')
 
     access_token = token_req_json.get('access_token')
-    refresh_token = token_req_json.get('refresh_token')
-
     # access token 바탕으로 정보 가져오기
     access_token = urllib.parse.quote(access_token)
     profile_req = requests.get('https://openapi.naver.com/v1/nid/me', headers={'Authorization': '{} {}'.format('Bearer', access_token)})
@@ -114,7 +112,7 @@ def naver_callback(request):
         messages.error(request, '프로필 정보를 가져오는 데에 실패하였습니다.', extra_tags='danger')
         return redirect('user:login')
 
-    profile_req_json = profile_req.json()
+    profile_req_json = profile_req.json()['response']
     social_id = profile_req_json.get('id')
     email = profile_req_json.get('email')
     profile_pic = profile_req_json.get('profile_image', None)
@@ -127,7 +125,7 @@ def naver_callback(request):
         jwt_token = jwt_token_of(user)
         return JsonResponse({
             'login': True,
-            'user': user.username,  # 소셜계정 가입시 아이디를 무엇으로 설정해줄 것인가
+            'social_user': social_id,
             'token': jwt_token
         })
     except SocialAccount.DoesNotExist:
@@ -136,5 +134,24 @@ def naver_callback(request):
             'social_id': social_id,
             'email': email,
             'profile_pic': profile_pic,
-            'nickname': nickname
+            'nickname': nickname,
+            'provider' : 'naver'
         })
+
+
+class SocialUserSignUpView(APIView):
+    permission_classes = (permissions.AllowAny,)
+
+    def post(self, request, *args, **kwargs):
+        serializer = SocialUserCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        try:
+            user, jwt_token = serializer.save()
+        except IntegrityError:
+            return Response(status=status.HTTP_409_CONFLICT, data='DATABASE ERROR : 서버 관리자에게 문의주세요.')
+
+        return Response({
+            'user': user.username,
+            'token': jwt_token
+        }, status=status.HTTP_201_CREATED)

@@ -115,5 +115,5 @@ class User(AbstractBaseUser, PermissionsMixin):
 
 class SocialAccount(models.Model):
     provider = models.CharField(max_length=10, null=True)
-    social_id = models.IntegerField(default=-1)
+    social_id = models.CharField(max_length=100)
     user = models.ForeignKey('user.User', related_name='socialaccount', on_delete=models.CASCADE)
