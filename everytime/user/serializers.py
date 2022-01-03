@@ -48,7 +48,12 @@ class UserCreateSerializer(serializers.Serializer):
         if queryset.filter(username=username).exists():
             raise serializers.ValidationError('이미 존재하는 아이디입니다.')
         if queryset.filter(email=email).exists():
-            raise serializers.ValidationError('이미 존재하는 이메일입니다.')
+            user = User.objects.get(email=email)
+            if SocialAccount.objects.filter(user=user).exists():
+                # 해당 이메일을 활용하여 소셜로그인/가입을 먼저 한 경우
+                raise serializers.ValidationError('소셜계정으로 가입된 이메일입니다. 소셜로그인을 활용해주세요.')
+            else:
+                raise serializers.ValidationError('이미 존재하는 이메일입니다.')
         if queryset.filter(nickname=nickname).exists():
             raise serializers.ValidationError('이미 존재하는 닉네임입니다.')
 

@@ -297,7 +297,7 @@ class SocialUserSignUpView(APIView):
         social_id = data.get('social_id')
         provider = data.get('provider')
         if SocialAccount.objects.filter(social_id=social_id, provider=provider).exists():
-            return JsonResponse({"error": "이미 존재하는 유저입니다."}, status=status.HTTP_400_BAD_REQUEST)
+            return JsonResponse({"error": "이미 존재하는 소셜 계정 유저입니다."}, status=status.HTTP_400_BAD_REQUEST)
 
         # requests.data의 'email'에 대한 전제사항
         # 소셜로그인 callback 함수에서 JsonResponse로 반환된 email이 None이 아니라면, 그 값을 가짐 (사용자가 따로 입력할 수 없도록 프론트단에서 처리)
