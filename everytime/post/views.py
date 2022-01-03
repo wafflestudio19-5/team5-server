@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from django.core.paginator import Paginator
 
 from comment.models import Comment
-from comment.serializers import CommentSerializer정
+from comment.serializers import CommentSerializer
 from .models import Post, Tag
 from board.models import Board
 from .serializers import PostSerializer
