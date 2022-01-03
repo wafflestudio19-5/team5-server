@@ -1,4 +1,4 @@
-from django.http import HttpResponse
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.utils import timezone
 
@@ -20,9 +20,9 @@ class LikeCommentView(APIView):
         comment = get_object_or_404(Comment, pk=pk)
 
         if request.user in comment.like_users.all():  # 이미 공감을 누른 사람이라면
-            return HttpResponse('이미 공감한 댓글입니다.')  # '이미 공감한 댓글입니다.'를 담은 팝업창이 떠야함
+            return JsonResponse({'response': '이미 공감한 댓글입니다.'})  # '이미 공감한 댓글입니다.'를 담은 팝업창이 떠야함
         elif comment.created_at < (timezone.now() - datetime.timedelta(days=365)):  # 기준은 임의로 정했음, 1년
-            return HttpResponse('오래된 댓글은 공감할 수 없습니다.')
+            return JsonResponse({'response': '오래된 댓글은 공감할 수 없습니다.'})
         else:
             comment.like_users.add(request.user)
             comment.num_of_likes += 1
