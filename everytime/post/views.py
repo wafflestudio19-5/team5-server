@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from django.core.paginator import Paginator
 
 from comment.models import Comment
-from comment.serializers import CommentSerializer
+from comment.serializers import CommentSerializer정
 from .models import Post, Tag
 from board.models import Board
 from .serializers import PostSerializer
@@ -103,20 +103,10 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
         user = request.user
         data = request.data
         if request.method == 'POST':
-            if user.id is None:
-                return Response('댓글을 작성하려면 로그인을 하십시오.', status.HTTP_400_BAD_REQUEST)
-            head_comment_id = data.get('head_comment', None)
-            head_comment = get_object_or_404(Comment, id=head_comment_id) if head_comment_id else None
-            if head_comment is not None and head_comment.head_comment is not None:
-                return Response('답글에 답글을 달 수 없습니다.', status.HTTP_400_BAD_REQUEST)
-            serializer = CommentSerializer(data=data)
+            serializer = CommentSerializer(data=data, context={'post': post, 'user': user})
             serializer.is_valid(raise_exception=True)
-            comment = serializer.save()
+            serializer.save()
 
-            comment.post = post
-            comment.writer = user
-            comment.head_comment = head_comment
-            comment.save()
             comments = Comment.objects.filter(post=post, head_comment=None).all()
             return Response(CommentSerializer(comments, many=True).data, status=status.HTTP_201_CREATED)
 
