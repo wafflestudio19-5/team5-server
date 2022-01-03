@@ -10,6 +10,7 @@ class Comment(models.Model):
     content = models.TextField(null=True)
     created_at = models.DateTimeField(auto_now_add=True, null=True)
     num_of_likes = models.PositiveIntegerField(default=0, blank=True)
+    like_users = models.ManyToManyField('user.User', related_name='like_comments')
     is_anonymous = models.BooleanField(default=True)
     is_deleted = models.BooleanField(default=False)
 
