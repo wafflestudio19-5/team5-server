@@ -77,7 +77,10 @@ class KaKaoLoginView(APIView):
     permission_classes = (permissions.AllowAny, )
     def get(self, request):
         REST_API_KEY = getattr(settings, 'SOCIAL_AUTH_KAKAO_SECRET')
-        REDIRECT_URI = 'http://localhost:8000/user/kakao/callback/'
+        BASE_URL = getattr(settings, 'BASE_URL')
+        if BASE_URL == "http://127.0.0.1:8000/":
+            BASE_URL = 'http://localhost:8000/'
+        REDIRECT_URI = BASE_URL + 'user/kakao/callback/'
 
         API_HOST = f'https://kauth.kakao.com/oauth/authorize?client_id={REST_API_KEY}&redirect_uri={REDIRECT_URI}&response_type=code'
         try:
@@ -156,16 +159,18 @@ class SocialLoginException(APIException):
 
 
 
-def google_login(request):
-    """
-    Code Request
-    """
-    BASE_URL = getattr(settings, 'BASE_URL')
-    GOOGLE_CALLBACK_URI = BASE_URL + 'user/google/login/callback/'
-    scope = "https://www.googleapis.com/auth/userinfo.profile" + \
-            " https://www.googleapis.com/auth/userinfo.email"
-    client_id = getattr(settings, "SOCIAL_AUTH_GOOGLE_CLIENT_ID")
-    return redirect(f"https://accounts.google.com/o/oauth2/v2/auth?client_id={client_id}&response_type=code&redirect_uri={GOOGLE_CALLBACK_URI}&scope={scope}")
+class GoogleLoginView(APIView):
+    permission_classes = (permissions.AllowAny, )
+    def get(self, request):
+        """
+        Code Request
+        """
+        BASE_URL = getattr(settings, 'BASE_URL')
+        GOOGLE_CALLBACK_URI = BASE_URL + 'user/google/login/callback/'
+        scope = "https://www.googleapis.com/auth/userinfo.profile" + \
+                " https://www.googleapis.com/auth/userinfo.email"
+        client_id = getattr(settings, "SOCIAL_AUTH_GOOGLE_CLIENT_ID")
+        return redirect(f"https://accounts.google.com/o/oauth2/v2/auth?client_id={client_id}&response_type=code&redirect_uri={GOOGLE_CALLBACK_URI}&scope={scope}")
 
 
 def google_callback(request):
@@ -222,19 +227,21 @@ def google_callback(request):
 
 
 
-def naver_login(request):
-    BASE_URL = getattr(settings, 'BASE_URL')
-    NAVER_CALLBACK_URI = BASE_URL + 'user/naver/login/callback/'
-    CLIENT_ID = getattr(settings, 'SOCIAL_AUTH_NAVER_CLIENT_ID')
-    if request.user.is_authenticated:
-        messages.error(request, '이미 로그인된 유저입니다.')
-        return redirect(BASE_URL)
-    # Create random state
-    STATE = ''.join((random.choice(string.digits)) for x in range(15))
-    request.session['original_state'] = STATE
-    return redirect(
-        f"https://nid.naver.com/oauth2.0/authorize?response_type=code&client_id={CLIENT_ID}&state={STATE}&redirect_uri={NAVER_CALLBACK_URI}"
-    )
+class NaverLoginView(APIView):
+    permission_classes = (permissions.AllowAny, )
+    def get(self, request):
+        BASE_URL = getattr(settings, 'BASE_URL')
+        NAVER_CALLBACK_URI = BASE_URL + 'user/naver/login/callback/'
+        CLIENT_ID = getattr(settings, 'SOCIAL_AUTH_NAVER_CLIENT_ID')
+        if request.user.is_authenticated:
+            messages.error(request, '이미 로그인된 유저입니다.')
+            return redirect(BASE_URL)
+        # Create random state
+        STATE = ''.join((random.choice(string.digits)) for x in range(15))
+        request.session['original_state'] = STATE
+        return redirect(
+            f"https://nid.naver.com/oauth2.0/authorize?response_type=code&client_id={CLIENT_ID}&state={STATE}&redirect_uri={NAVER_CALLBACK_URI}"
+        )
 
 
 def naver_callback(request):
