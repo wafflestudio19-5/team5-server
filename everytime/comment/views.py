@@ -18,21 +18,22 @@ class LikeCommentView(APIView):
 
     def post(self, request, pk):
         comment = get_object_or_404(Comment, pk=pk)
-        post_id = comment.post_id   # 해당 댓글이 쓰인 게시물 아이디
 
         if request.user in comment.like_users.all():  # 이미 공감을 누른 사람이라면
             return JsonResponse({
-                'response': '이미 공감한 댓글입니다.',
-                'post_id': post_id,
-            })  # '이미 공감한 댓글입니다.'를 담은 팝업창이 떠야함
+                'is_success': False,
+                'error_code': 1     # '이미 공감한 댓글입니다.'를 담은 팝업창이 떠야함
+            })
         elif comment.created_at < (timezone.now() - datetime.timedelta(days=365)):  # 기준은 임의로 정했음, 1년
             return JsonResponse({
-                'response': '오래된 댓글은 공감할 수 없습니다.',
-                'post_id': post_id,
+                'is_success': False,
+                'error_code': 2     # '오래된 댓글은 공감할 수 없습니다.'
             })
         else:
             comment.like_users.add(request.user)
             comment.num_of_likes += 1
             comment.save()
-            return_address = 'http://waffle-minkyu.shop/post/'+str(post_id)+'/'  # 해당 댓글을 갖고있는 게시물을 가져오는 API
-            return redirect(return_address)
+            return JsonResponse({
+                'is_success': True,
+                'value': comment.num_of_likes
+            })
