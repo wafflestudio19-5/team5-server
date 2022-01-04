@@ -11,5 +11,5 @@ class EmailVerificationTokenGenerator(PasswordResetTokenGenerator):
 
 email_verification_token = EmailVerificationTokenGenerator()
 
-def message(domain, uidb64, token, emailb64):
-    return f"아래 링크를 클릭하면 학교 인증이 완료됩니다.\n\n학교인증 링크 : http://{domain}/user/verify/accepted/{uidb64}/{token}/{emailb64}/\n\n감사합니다."
+def message(uidb64, token, emailb64):
+    return f"아래 링크를 클릭하면 학교 인증이 완료됩니다.\n\n학교인증 링크 : https://waffle-minkyu.shop/user/verify/accepted/{uidb64}/{token}/{emailb64}/\n\n감사합니다."
