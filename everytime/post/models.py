@@ -19,13 +19,15 @@ class Post(models.Model):
     # 작성자가 탈퇴해도 글은 남아있으므로 set_null, 작성자가 없으면 (알수없음)으로 뜸
     writer = models.ForeignKey('user.User', on_delete=models.SET_NULL, null=True)
     title = models.CharField(max_length=100)    # 게시판에 따라 title 유무가 다름 --> 어떻게 구현?
-    content = models.TextField()
+    content = models.TextField(null=False)
 
     # on_delete 옵션이 없으므로 view에서 구현
     tags = models.ManyToManyField('post.Tag', related_name='posts', through='PostTag')
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    anonymous_comment_num = models.IntegerField(default=1)
     num_of_likes = models.PositiveIntegerField(default=0, blank=True)
     num_of_scrap = models.PositiveIntegerField(default=0, blank=True)
     is_anonymous = models.BooleanField(default=True, blank=True)

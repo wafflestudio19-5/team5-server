@@ -7,11 +7,13 @@ class Comment(models.Model):
     # 작성자가 탈퇴해도 글은 남아있으므로 set_null, 작성자가 없으면 (알수없음)으로 뜸
     writer = models.ForeignKey('user.User', on_delete=models.SET_NULL, null=True)
 
+    nickname = models.CharField(max_length=30, null=True)
     content = models.TextField(null=True)
     created_at = models.DateTimeField(auto_now_add=True, null=True)
     num_of_likes = models.PositiveIntegerField(default=0, blank=True)
     like_users = models.ManyToManyField('user.User', related_name='like_comments')
-    is_anonymous = models.BooleanField(default=True)
+    is_anonymous = models.BooleanField(default=False)
+
     is_deleted = models.BooleanField(default=False)
 
     # 대댓글 기능
