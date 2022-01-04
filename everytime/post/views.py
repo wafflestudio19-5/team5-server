@@ -134,6 +134,7 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
             comment.delete()
         else:                                               # 지울려는 댓글이 대댓글이 아닌 경우 -> is_deleted = True
             comment.is_deleted = True
+            comment.nickname = '(삭제)'
             comment.content = '삭제된 댓글입니다.'
             comment.save()
         comments = Comment.objects.filter(post=post, head_comment=None).all()

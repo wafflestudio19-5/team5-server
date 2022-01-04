@@ -11,7 +11,7 @@ class Comment(models.Model):
     content = models.TextField(null=True)
     created_at = models.DateTimeField(auto_now_add=True, null=True)
     num_of_likes = models.PositiveIntegerField(default=0, blank=True)
-    is_anonymous = models.BooleanField(default=True)
+    is_anonymous = models.BooleanField(default=False)
     is_deleted = models.BooleanField(default=False)
 
     # 대댓글 기능

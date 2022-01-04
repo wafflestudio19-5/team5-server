@@ -21,7 +21,7 @@ class CommentSerializer(serializers.ModelSerializer):
             'is_deleted',
             'replys',
         )
-        read_only_fields = ['writer', 'created_at', 'num_of_likes', 'is_deleted']
+        read_only_fields = ['created_at', 'num_of_likes', 'is_deleted']
 
     def get_replys(self, comment):
         tail_comments = comment.tail_comments.all()
@@ -40,21 +40,16 @@ class CommentSerializer(serializers.ModelSerializer):
         return data
 
     def create(self, validated_data):
-        # Comment API를 Post API의 하위 API로 만들지 않으면 아래와 같은 처리를 post, writer, head_comment에 해줘야할 것
-        # request = self.context['request']
-        # try:
-        #     post = request.query_params['post']
-        #     post = Post.objects.get(id=post)
-        #     validated_data['post'] = post
-        # except:
-        #     raise serializers.ValidationError("post를 query parameter로 입력해주세요")
-
-        # Post API의 하위 API로 만든다면 post, writer, head_comment 등은 view에서 다 처리하므로 일단은 아래로도 충분한듯 (충분한가,,?)
-        # content랑 is_anonymous만 일단 validate
         comment = Comment.objects.create(**validated_data)
+        current_comment = comment.id
+        comment_set = comment.post.comment_set  # 지금 작성한 댓글이 쓰인 게시글의 모든 댓글 set, 지금 작성한 댓글도 포함되어 있을것
         if comment.is_anonymous:
             if comment.writer == comment.post.writer:
                 nickname = '익명(글쓴이)'
+                comment.nickname = nickname
+            # 댓글 작성자가 이전에 이미 익명으로 그 글에 댓글을 작성했었을때
+            elif comment_set.filter(is_anonymous=True, writer=comment.writer).exclude(id=current_comment).exists():
+                nickname = comment_set.filter(is_anonymous=True, writer=comment.writer).exclude(id=current_comment)[0].nickname
                 comment.nickname = nickname
             else:
                 nickname = f'익명{comment.post.anonymous_comment_num}'
