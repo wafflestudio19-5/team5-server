@@ -76,7 +76,7 @@ class UserLoginView(APIView):
 class KaKaoLoginView(APIView):
     permission_classes = (permissions.AllowAny, )
     def get(self, request):
-        REST_API_KEY = '4c3c166a3ec7e5a2da86cb7f358a1a17'
+        REST_API_KEY = getattr(settings, 'SOCIAL_AUTH_KAKAO_SECRET')
         REDIRECT_URI = 'http://localhost:8000/user/kakao/callback/'
 
         API_HOST = f'https://kauth.kakao.com/oauth/authorize?client_id={REST_API_KEY}&redirect_uri={REDIRECT_URI}&response_type=code'
@@ -98,7 +98,10 @@ def kakao_callback(request):
     try:
         code = request.GET.get("code")
         REST_API_KEY = getattr(settings, 'SOCIAL_AUTH_KAKAO_SECRET')
-        REDIRECT_URI = 'http://localhost:8000/user/kakao/callback/'
+        BASE_URL = getattr(settings, 'BASE_URL')
+        if BASE_URL == "http://127.0.0.1:8000/":
+            BASE_URL = 'http://localhost:8000/'
+        REDIRECT_URI = BASE_URL + 'user/kakao/callback/'
         token_response = requests.get(
             f"https://kauth.kakao.com/oauth/token?grant_type=authorization_code&client_id={REST_API_KEY}&redirect_uri={REDIRECT_URI}&code={code}"
         )
@@ -150,9 +153,6 @@ class SocialLoginException(APIException):
 
       
 
-state = getattr(settings, 'STATE')
-BASE_URL = 'http://127.0.0.1:8000/'
-GOOGLE_CALLBACK_URI = BASE_URL + 'user/google/login/callback/'
 
 
 
@@ -160,6 +160,8 @@ def google_login(request):
     """
     Code Request
     """
+    BASE_URL = getattr(settings, 'BASE_URL')
+    GOOGLE_CALLBACK_URI = BASE_URL + 'user/google/login/callback/'
     scope = "https://www.googleapis.com/auth/userinfo.profile" + \
             " https://www.googleapis.com/auth/userinfo.email"
     client_id = getattr(settings, "SOCIAL_AUTH_GOOGLE_CLIENT_ID")
@@ -167,7 +169,9 @@ def google_login(request):
 
 
 def google_callback(request):
-
+    state = getattr(settings, 'STATE')
+    BASE_URL = getattr(settings, 'BASE_URL')
+    GOOGLE_CALLBACK_URI = BASE_URL + 'user/google/login/callback/'
     client_id = getattr(settings, "SOCIAL_AUTH_GOOGLE_CLIENT_ID")
     client_secret = getattr(settings, "SOCIAL_AUTH_GOOGLE_SECRET")
     code = request.GET.get('code')
@@ -215,13 +219,13 @@ def google_callback(request):
 
       
 # Code chunks below are mostly from https://medium.com/chanjongs-programming-diary/django-rest-framework로-소셜-로그인-api-구현해보기-google-kakao-github-2ccc4d49a781
-BASE_URL = 'http://127.0.0.1:8000/'
-NAVER_CALLBACK_URI = BASE_URL + 'user/naver/login/callback/'
-CLIENT_ID = getattr(settings, 'SOCIAL_AUTH_NAVER_CLIENT_ID')
-CLIENT_SECRET = getattr(settings, 'SOCIAL_AUTH_NAVER_SECRET')
+
 
 
 def naver_login(request):
+    BASE_URL = getattr(settings, 'BASE_URL')
+    NAVER_CALLBACK_URI = BASE_URL + 'user/naver/login/callback/'
+    CLIENT_ID = getattr(settings, 'SOCIAL_AUTH_NAVER_CLIENT_ID')
     if request.user.is_authenticated:
         messages.error(request, '이미 로그인된 유저입니다.')
         return redirect(BASE_URL)
@@ -234,6 +238,8 @@ def naver_login(request):
 
 
 def naver_callback(request):
+    CLIENT_ID = getattr(settings, 'SOCIAL_AUTH_NAVER_CLIENT_ID')
+    CLIENT_SECRET = getattr(settings, 'SOCIAL_AUTH_NAVER_SECRET')
     code = request.GET.get('code')
     state = request.GET.get('state')
     original_state = request.session.get('original_state')
