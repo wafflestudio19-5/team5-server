@@ -21,6 +21,7 @@ class CommentSerializer(serializers.ModelSerializer):
             'is_deleted',
             'replys',
         )
+        read_only_fields = ['writer', 'created_at', 'num_of_likes', 'is_deleted']
 
     def get_replys(self, comment):
         tail_comments = comment.tail_comments.all()
