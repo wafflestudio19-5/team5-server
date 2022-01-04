@@ -325,12 +325,10 @@ class VerifyingMailSendView(APIView):
         user = request.user
         data = request.data
         email = data['email']
-        current_site = get_current_site(request)
-        domain = current_site.domain
         uidb64 = urlsafe_base64_encode(force_bytes(user.id))
         emailb64 = urlsafe_base64_encode(force_bytes(email))
         token = email_verification_token.make_token(user)
-        message_data = message(domain, uidb64, token, emailb64)
+        message_data = message(uidb64, token, emailb64)
 
         mail_title = "Team5_EveryTime 학교 인증 메일입니다."
         mail_to = email

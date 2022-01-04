@@ -51,3 +51,4 @@ jobs:
         EMAIL_HOST_PASSWORD: ${{ secrets.EMAIL_HOST_PASSWORD }}
         SERVER_EMAIL: ${{ secrets.SERVER_EMAIL }}
         REDIRECT_PAGE: ${{ secrets.REDIRECT_PAGE }}
+        BASE_URL: ${{ secrets.BASE_URL }}
