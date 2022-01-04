@@ -287,12 +287,42 @@ def naver_callback(request):
         })
 
 
+
 class SocialUserSignUpView(APIView):
     permission_classes = (permissions.AllowAny,)
 
     def post(self, request, *args, **kwargs):
+        # 해당 소셜 계정으로 이미 가입이 되어있는지 체크 - 사실 정상적인 경로를 통해 유입되었다면 이 signup이 아니라 login으로 연결되었을 것
+        data = request.data
+        social_id = data.get('social_id')
+        provider = data.get('provider')
+        if SocialAccount.objects.filter(social_id=social_id, provider=provider).exists():
+            return JsonResponse({"error": "이미 존재하는 소셜 계정 유저입니다."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # requests.data의 'email'에 대한 전제사항
+        # 소셜로그인 callback 함수에서 JsonResponse로 반환된 email이 None이 아니라면, 그 값을 가짐 (사용자가 따로 입력할 수 없도록 프론트단에서 처리)
+        # None이었다면 사용자에게 입력을 받은 이메일 값을 가짐
+
+        # 이메일 중복 처리 - 소셜계정의 이메일로 이미 일반 회원가입을 한 상태일 때, 소셜 계정을 기존회원정보와 연동
+        social_email = data.get('email')
+        if not social_email:
+            return JsonResponse({"email": "이메일을 입력하세요."}, status=status.HTTP_400_BAD_REQUEST)
+        if User.objects.filter(email=social_email).exists():
+            user = User.objects.get(email=social_email)
+            SocialAccount.objects.create(social_id=social_id, provider=provider, user=user)
+            return Response({
+                'notice': '동일한 이메일로 가입한 이력이 존재하여 기존 계정과 소셜 계정을 연동하였습니다. 기존 로그인과 소셜로그인을 모두 활용할 수 있습니다.',
+                'user': user.username,
+                'social_id': social_id,
+                'token': jwt_token_of(user)
+            }, status=status.HTTP_201_CREATED)
+
+        # 이메일이 중복되지 않는 경우 (해당 이메일로 아예 처음 가입하는 경우)
         serializer = SocialUserCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        serializer.validated_data['social_id'] = data.get('social_id')
+        serializer.validated_data['provider'] = data.get('provider')
+        serializer.validated_data['email'] = data.get('email')
 
         try:
             user, jwt_token = serializer.save()
@@ -300,7 +330,7 @@ class SocialUserSignUpView(APIView):
             return Response(status=status.HTTP_409_CONFLICT, data='DATABASE ERROR : 서버 관리자에게 문의주세요.')
 
         return Response({
-            'user': user.username,
+            'social_user': user.username,   # social_id 값임
             'token': jwt_token
         }, status=status.HTTP_201_CREATED)
 
