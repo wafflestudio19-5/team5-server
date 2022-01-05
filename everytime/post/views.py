@@ -1,10 +1,14 @@
+import datetime
+
 from django.shortcuts import render, get_object_or_404
+# from django.core.paginator import Paginator
+from django.http import JsonResponse
+from django.utils import timezone
 
 from rest_framework import status, viewsets, permissions, exceptions
 from rest_framework.views import APIView
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from django.core.paginator import Paginator
 
 from comment.models import Comment
 from comment.serializers import CommentSerializer
@@ -62,6 +66,7 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
     #swagger에 쿼리 파라미터는 자동으로 적용이 안되므로, 따로 추가하기.
     #파라미터 이름, 어떤 부분에 속하는지(QUERY, BODY, PATH 등), 파라미터 설명, 어떤 타입인지를 생성자에 제공
     def list(self, request):
+        print(request.scheme + '://' + request.get_host() + request.path)
         board = request.query_params.get('board')
         queryset = self.get_queryset().filter(board=board).all()
         page = self.paginate_queryset(queryset)
@@ -163,3 +168,70 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
         page = self.paginate_queryset(queryset)
         data = self.get_serializer(page, many=True).data
         return self.get_paginated_response(data)
+
+    @action(
+        detail=True,
+        methods=['POST']
+    )
+    def like(self, request, pk):
+        post = get_object_or_404(Post, pk=pk)
+        user = request.user
+
+        if post in user.like_post.all(): # 이미 공감한 게시글입니다.
+            return JsonResponse({
+                'is_success': False,
+                'error_code': 1
+            })
+        elif post.created_at < (timezone.now() - datetime.timedelta(days=365)): # 오래된 글은 공감할 수 없습니다.
+            return JsonResponse({
+                'is_success': False,
+                'error_code': 2
+            })
+        else:
+            post.num_of_likes += 1
+            post.save()
+            user.like_post.add(post)
+            user.save()
+            return JsonResponse({
+                'is_success': True,
+                'value': post.num_of_likes
+            })
+
+    @action(
+        detail=True,
+        methods=['POST', 'DELETE']
+    )
+    def scrap(self, request, pk):
+        if request.method == 'POST':
+            post = get_object_or_404(Post, pk=pk)
+            user = request.user
+
+            if post in user.scrap_post.all(): # 이미 스크랩한 글입니다.
+                return JsonResponse({
+                    'is_success': False,
+                    'error_code': 1
+                })
+            else:
+                post.num_of_scrap += 1
+                user.scrap_post.add(post)
+                post.save()
+                user.save()
+                return JsonResponse({
+                    'is_success': True,
+                    'value': post.num_of_scrap
+                })
+        else:
+            user = request.user
+
+            try:
+                post = user.scrap_post.get(id=pk)
+                post.num_of_scrap -= 1
+                user.scrap_post.remove(post)
+                post.save()
+                user.save()
+                return JsonResponse({
+                    'is_success': True,
+                    'value': post.num_of_scrap
+                })
+            except:
+                raise exceptions.NotFound('게시글을 찾을 수 없습니다.')
