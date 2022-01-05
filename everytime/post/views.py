@@ -108,11 +108,11 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
             serializer.save()
 
             comments = Comment.objects.filter(post=post, head_comment=None).all()
-            return Response(CommentSerializer(comments, many=True).data, status=status.HTTP_201_CREATED)
+            return Response(CommentSerializer(comments, many=True, context={'post': post, 'user': user}).data, status=status.HTTP_201_CREATED)
 
         elif request.method == 'GET':
             comments = Comment.objects.filter(post=post, head_comment=None).all()
-            return Response(CommentSerializer(comments, many=True).data, status=status.HTTP_200_OK)
+            return Response(CommentSerializer(comments, many=True, context={'post': post, 'user': user}).data, status=status.HTTP_200_OK)
 
     @action(
         detail=True,

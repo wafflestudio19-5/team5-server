@@ -8,24 +8,46 @@ class CommentSerializer(serializers.ModelSerializer):
     content = serializers.CharField(required=True)
     is_anonymous = serializers.BooleanField(default=False)
     replys = serializers.SerializerMethodField()
+    writer = serializers.SerializerMethodField()
+    is_mine = serializers.SerializerMethodField()
+    user_type = serializers.SerializerMethodField()
 
     class Meta:
         model = Comment
         fields = (
             'id',
+            'writer',
             'nickname',
             'content',
             'created_at',
+            'user_type',
+            'head_comment',
             'num_of_likes',
             'is_anonymous',
             'is_deleted',
+            'is_mine',
             'replys',
         )
-        read_only_fields = ['created_at', 'num_of_likes', 'is_deleted']
+        read_only_fields = ['nickname', 'created_at', 'num_of_likes', 'is_deleted']
 
     def get_replys(self, comment):
         tail_comments = comment.tail_comments.all()
-        return ReplySerializer(tail_comments, many=True).data
+        return ReplySerializer(tail_comments, many=True, context={'post': self.context['post'], 'user': self.context['user']}).data
+
+    def get_writer(self, comment):
+        if comment.is_anonymous:
+            return 0
+        return comment.writer.id
+
+    def get_is_mine(self, comment):
+        if comment.writer == self.context['user']:
+            return True
+        return False
+
+    def get_user_type(self, comment):
+        if comment.writer == comment.post.writer:
+            return '글쓴이'
+        return ''
 
     def validate(self, data):
         data['writer'] = self.context['user']
@@ -64,16 +86,36 @@ class CommentSerializer(serializers.ModelSerializer):
 
 
 class ReplySerializer(serializers.ModelSerializer):
+    writer = serializers.SerializerMethodField()
+    is_mine = serializers.SerializerMethodField()
+    user_type = serializers.SerializerMethodField()
 
     class Meta:
         model = Comment
         fields = (
             'id',
+            'writer',
             'nickname',
             'content',
             'created_at',
+            'user_type',
             'num_of_likes',
             'is_anonymous',
             'is_deleted',
+            'is_mine',
         )
 
+    def get_writer(self, comment):
+        if comment.is_anonymous:
+            return 0
+        return comment.writer.id
+
+    def get_is_mine(self, comment):
+        if comment.writer == self.context['user']:
+            return True
+        return False
+
+    def get_user_type(self, comment):
+        if comment.writer == comment.post.writer:
+            return '글쓴이'
+        return ''
