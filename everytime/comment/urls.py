@@ -1,10 +1,7 @@
-# from rest_framework.routers import SimpleRouter
-# from django.urls import include, path
-# from comment.views import CommentViewSet
-#
-# router = SimpleRouter()
-# router.register('', CommentViewSet, basename='comment')
-#
-# urlpatterns = [
-#     path('', include(router.urls))
-# ]
+from django.urls import path
+
+from comment.views import LikeCommentView
+
+urlpatterns = [
+    path('like/<int:pk>/', LikeCommentView.as_view(), name='like_comment'),
+]

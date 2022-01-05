@@ -1,40 +1,39 @@
-from django.shortcuts import render
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, redirect
+from django.utils import timezone
 
-# Create your views here.
-from drf_yasg.utils import swagger_auto_schema
-from rest_framework.response import Response
-from rest_framework import viewsets, permissions, status
-from django.shortcuts import get_object_or_404
+from rest_framework import permissions
+from rest_framework.views import APIView
+
+import datetime
+
 from comment.models import Comment
-from comment.serializers import CommentSerializer
 
 
+# '공감'버튼을 누르면 '이 댓글에 공감하십니까?'라는 팝업창이뜨고, '확인' 버튼을 누르면 호출될 API
+# 삭제된 댓글은 공감버튼 자체가 없음
+# (알수없음)의 댓글은 공감가능
+class LikeCommentView(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
 
-######### POST API 하위 API로 넘어가면서 아래는 수정/보완 없이 그냥 놔둠, 제대로 구현 안했으니 무시할 것 ###########
+    def post(self, request, pk):
+        comment = get_object_or_404(Comment, pk=pk)
 
-
-# class CommentViewSet(viewsets.GenericViewSet):
-#     permission_classes = (permissions.IsAuthenticated,)
-#     serializer_class = CommentSerializer
-#     queryset = Comment.objects.all()
-#
-#     def create(self, request):
-#         serializer = self.get_serializer(data=request.data)
-#         serializer.is_valid(raise_exception=True)
-#         comment = serializer.save()
-#         # foreign key 참조 할 거 query param으로 처리해야하나 고민중이었는데 그냥 post 하위 API로 넘어감
-#         return Response(self.get_serializer(comment).data, status=status.HTTP_201_CREATED)
-#
-#     # 댓글 수정 불가
-#
-#     # 스웨거에 쿼리 param 추가해야함
-#     def list(self, request):
-#         post = request.query_params.get('post')
-#         comments = self.get_queryset().filter(post=post).all()
-#         return Response(self.get_serializer(comments, many=True).data)
-#
-#     def destroy(self, request, pk=None):
-#         comment = get_object_or_404(Comment, pk=pk)
-#         comment.is_deleted = True
-#         comment.save()
-#         return Response("%s번 댓글이 삭제되었습니다." % pk, status=status.HTTP_200_OK)
+        if request.user in comment.like_users.all():  # 이미 공감을 누른 사람이라면
+            return JsonResponse({
+                'is_success': False,
+                'error_code': 1     # '이미 공감한 댓글입니다.'를 담은 팝업창이 떠야함
+            })
+        elif comment.created_at < (timezone.now() - datetime.timedelta(days=365)):  # 기준은 임의로 정했음, 1년
+            return JsonResponse({
+                'is_success': False,
+                'error_code': 2     # '오래된 댓글은 공감할 수 없습니다.'
+            })
+        else:
+            comment.like_users.add(request.user)
+            comment.num_of_likes += 1
+            comment.save()
+            return JsonResponse({
+                'is_success': True,
+                'value': comment.num_of_likes
+            })
