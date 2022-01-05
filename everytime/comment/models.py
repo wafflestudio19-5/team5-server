@@ -13,9 +13,7 @@ class Comment(models.Model):
     num_of_likes = models.PositiveIntegerField(default=0, blank=True)
     like_users = models.ManyToManyField('user.User', related_name='like_comments')
     is_anonymous = models.BooleanField(default=False)
-
     is_deleted = models.BooleanField(default=False)
-
     # 대댓글 기능
     # 하나의 댓글 당 하나의 윗 댓글을 가질 수 있음. 아래의 예시에서 B, C 모두 A에 종속되는 댓글임. A 는 윗 댓글이 없고 B, C는 윗댓글이 A임.
     # ex. A (댓글)
