@@ -405,11 +405,11 @@ class UserScrapView(APIView):
 
         current_url = request.scheme + '://' + request.get_host() + request.path
         if offset + limit < count:
-            next = current_url + f'?limit={limit}&offset={offset + 10}'
+            next = current_url + f'?limit={limit}&offset={offset + limit}'
         else:
             next = None
-        if offset > 10:
-            previous = current_url + f'?limit={limit}&offset={offset - 10}'
+        if offset > limit:
+            previous = current_url + f'?limit={limit}&offset={offset - limit}'
         elif offset == 0:
             previous = None
         else:
