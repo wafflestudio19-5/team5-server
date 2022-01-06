@@ -75,8 +75,16 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
 
     def update(self, request, pk=None):
         post = get_object_or_404(Post, pk=pk)
-        tags = list(post.tags.all())
+        # 게시글이 질문 글이고 댓글이 존재한다면,
+        # 수정 가능한 화면이 뜨고 글 내용을 수정할 수는 있지만 '수정'버튼을 누르면
+        # '댓글이 달린 이후에는 글을 수정 및 삭제할 수 없습니다. 그래도 작성하시겠습니까?'라는 팝업메시지 이후
+        # '질문 글은 댓글이 달린 이후에는 수정할 수 없습니다.'메시지가 뜸
+        if post.is_question and post.comment_set.exists():
+            return JsonResponse({
+                'is_success': False
+            })
 
+        tags = list(post.tags.all())
         data = request.data
         user = request.user
 
@@ -88,16 +96,28 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         delete_tag(tags)
-        return Response(self.get_serializer(post).data, status=status.HTTP_201_CREATED)
+
+        return Response({
+            'is_success': True,
+            'updated_post': self.get_serializer(post).data},
+            status=status.HTTP_201_CREATED
+        )
 
     def destroy(self, request, pk=None):
         post = get_object_or_404(Post, pk=pk)
+        if post.is_question and post.comment_set.exists():  # 게시글이 질문 글이고 댓글이 존재한다면
+            return JsonResponse({
+                'is_success': False # '질문 글은 댓글이 달린 이후에는 삭제할 수 없습니다.' 팝업메시지
+            })
+
         tags = list(post.tags.all())  # 이렇게 하지 않으면 post.delete() 이후에 tags도 비어있게 됨.
         for image in post.postimage_set.all():
             image.delete()
         post.delete()
         delete_tag(tags)
-        return Response("%s번 게시글이 삭제되었습니다." % pk, status=status.HTTP_200_OK)
+        return JsonResponse({
+            'is_success': True  # 아무 팝업메시지없이 그냥 삭제되고 게시글 목록이 뜸
+        })
 
     @action(
         detail=True,
