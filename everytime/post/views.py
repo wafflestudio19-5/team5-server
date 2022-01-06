@@ -88,7 +88,7 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
         if post.is_question and post.comment_set.exists():
             return JsonResponse({
                 'is_success': False
-            })
+            }, status=status.HTTP_400_BAD_REQUEST)
 
         tags = list(post.tags.all())
         data = request.data
@@ -103,7 +103,7 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
         serializer.save()
         delete_tag(tags)
 
-        return Response({
+        return JsonResponse({
             'is_success': True,
             'updated_post': self.get_serializer(post).data},
             status=status.HTTP_201_CREATED
@@ -161,7 +161,9 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
         user = request.user
         comment = get_object_or_404(Comment, pk=comment_id)
         if comment.writer != user:
-            return Response('작성자가 아닙니다.', status.HTTP_400_BAD_REQUEST)
+            return JsonResponse({
+                'is_success': False
+            }, status=status.HTTP_400_BAD_REQUEST)
         if comment.head_comment is not None:                # 지울려는 댓글이 대댓글인 경우 -> 댓글 삭제
             comment.delete()
             if not comment.head_comment.tail_comments.exists() \
@@ -175,7 +177,10 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
             comment.content = '삭제된 댓글입니다.'
             comment.save()
         comments = Comment.objects.filter(post=post, head_comment=None).all()
-        return Response(CommentSerializer(comments, many=True).data, status=status.HTTP_200_OK)
+        return JsonResponse({
+            'is_success': True,
+            'comments': CommentSerializer(comments, many=True).data
+        }, status=status.HTTP_200_OK)
 
     @action(
         detail=False,
