@@ -15,7 +15,7 @@ class PostImageSerializer(serializers.ModelSerializer):
 class PostSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
     board = serializers.StringRelatedField(read_only=True)
-    writer = serializers.StringRelatedField(read_only=True)
+    writer = serializers.SerializerMethodField(read_only=True)
     title = serializers.CharField(required=False, max_length=100)
     content = serializers.CharField()
     tags = serializers.PrimaryKeyRelatedField(queryset=Tag.objects.all(), many=True)
@@ -36,7 +36,12 @@ class PostSerializer(serializers.ModelSerializer):
             'is_anonymous',
             'is_question',
         )
-    
+
+    def get_writer(self, post):
+        if post.is_anonymous:
+            return '익명'
+        return post.writer.nickname
+
     def get_images(self, obj):
         image = obj.postimage_set.all()
         return PostImageSerializer(instance=image, many=True).data
