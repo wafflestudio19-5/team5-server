@@ -75,6 +75,12 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
 
     def update(self, request, pk=None):
         post = get_object_or_404(Post, pk=pk)
+        # 자신이 쓴 글이 아니면 프론트에서 수정 버튼이 존재하지 않을테지만,
+        if post.writer != request.user:
+            return JsonResponse({
+                'is_success': False
+            }, status=status.HTTP_400_BAD_REQUEST)
+
         # 게시글이 질문 글이고 댓글이 존재한다면,
         # 수정 가능한 화면이 뜨고 글 내용을 수정할 수는 있지만 '수정'버튼을 누르면
         # '댓글이 달린 이후에는 글을 수정 및 삭제할 수 없습니다. 그래도 작성하시겠습니까?'라는 팝업메시지 이후
@@ -105,10 +111,16 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
 
     def destroy(self, request, pk=None):
         post = get_object_or_404(Post, pk=pk)
+        # 자신이 쓴 글이 아니면 프론트에서 삭제 버튼이 존재하지 않을테지만,
+        if post.writer != request.user:
+            return JsonResponse({
+                'is_success': False
+            }, status=status.HTTP_400_BAD_REQUEST)
+
         if post.is_question and post.comment_set.exists():  # 게시글이 질문 글이고 댓글이 존재한다면
             return JsonResponse({
                 'is_success': False # '질문 글은 댓글이 달린 이후에는 삭제할 수 없습니다.' 팝업메시지
-            })
+            }, status=status.HTTP_400_BAD_REQUEST )
 
         tags = list(post.tags.all())  # 이렇게 하지 않으면 post.delete() 이후에 tags도 비어있게 됨.
         for image in post.postimage_set.all():
