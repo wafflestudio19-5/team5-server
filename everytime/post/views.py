@@ -66,11 +66,12 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
     #swagger에 쿼리 파라미터는 자동으로 적용이 안되므로, 따로 추가하기.
     #파라미터 이름, 어떤 부분에 속하는지(QUERY, BODY, PATH 등), 파라미터 설명, 어떤 타입인지를 생성자에 제공
     def list(self, request):
-        print(request.scheme + '://' + request.get_host() + request.path)
         board = request.query_params.get('board')
+        if board is None:
+            return Response('board를 query parameter로 입력해주세요.', status=status.HTTP_400_BAD_REQUEST)
         queryset = self.get_queryset().filter(board=board).all()
         page = self.paginate_queryset(queryset)
-        data = self.get_serializer(page,many=True).data
+        data = self.get_serializer(page, many=True).data
         return self.get_paginated_response(data)
 
     def update(self, request, pk=None):
