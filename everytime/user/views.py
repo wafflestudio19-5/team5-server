@@ -1,6 +1,7 @@
 from django.http import HttpResponse, JsonResponse
 from django.core.validators import validate_email
 from django.core.mail import EmailMessage
+from django.core.paginator import Paginator
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_text
 from django.conf import settings
@@ -30,6 +31,8 @@ from json.decoder import JSONDecodeError
 from .models import User, SocialAccount
 from .serializers import UserCreateSerializer, UserLoginSerializer, SocialUserCreateSerializer
 from .utils import email_verification_token, message
+
+from post.serializers import PostSerializer
 
 
 JWT_PAYLOAD_HANDLER = api_settings.JWT_PAYLOAD_HANDLER
@@ -387,3 +390,36 @@ class VerifyingMailAcceptView(APIView):
             return JsonResponse({"message": "TYPE_ERROR"}, status=400)
         except KeyError:
             return JsonResponse({"message": "INVALID_KEY"}, status=400)
+
+class UserScrapView(APIView):
+    permission_classes = (permissions.IsAuthenticated, )
+
+    def get(self, request):
+        user = request.user
+        query_params = request.query_params
+        limit = int(query_params.get('limit', 10))
+        offset = int(query_params.get('offset', 0))
+
+        scrap_posts = user.scrap_post.all()
+        count = len(scrap_posts)
+
+        current_url = request.scheme + '://' + request.get_host() + request.path
+        if offset + limit < count:
+            next = current_url + f'?limit={limit}&offset={offset + limit}'
+        else:
+            next = None
+        if offset > limit:
+            previous = current_url + f'?limit={limit}&offset={offset - limit}'
+        elif offset == 0:
+            previous = None
+        else:
+            previous = current_url + f'?limit={limit}'
+
+        results = PostSerializer(scrap_posts[offset:offset+limit], many=True).data
+
+        return JsonResponse({
+            'count': count,
+            'next': next,
+            'previous': previous,
+            'results': results
+        })

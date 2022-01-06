@@ -18,4 +18,5 @@ urlpatterns = [
     path('verify/send/', views.VerifyingMailSendView.as_view(), name='email_verify_send'),
     path('verify/accepted/<str:uidb64>/<str:token>/<str:emailb64>/', views.VerifyingMailAcceptView.as_view(),
          name='email_verify_accept'),
+    path('myscrap/', views.UserScrapView.as_view(), name='myscrap')
 ]
