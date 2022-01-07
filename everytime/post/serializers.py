@@ -13,13 +13,13 @@ class PostImageSerializer(serializers.ModelSerializer):
 
 
 class PostSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField()
+    id = serializers.IntegerField(required=False)
     board = serializers.StringRelatedField()
     writer = serializers.SerializerMethodField()
     title = serializers.CharField(required=False, max_length=100)
     content = serializers.CharField()
     num_of_comments = serializers.SerializerMethodField()
-    tags = serializers.PrimaryKeyRelatedField(queryset=Tag.objects.all(), many=True)
+    tags = serializers.PrimaryKeyRelatedField(queryset=Tag.objects.all(), many=True, required=False)
     images = serializers.SerializerMethodField()
     is_anonymous = serializers.BooleanField(default=False)
     is_question = serializers.BooleanField(default=False)
