@@ -93,7 +93,8 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
               queryset = self.get_queryset().filter(board=board)
         
         elif board == 'hot':  # hot 게시판
-            queryset = HotBoard.objects.all().values('post')
+            hot_posts = HotBoard.objects.all().values('post')
+            queryset = Post.objects.filter(id__in=hot_posts)
         
         else:                 # best 게시판
             try:
@@ -102,7 +103,9 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
             # query param으로 int/bool 변환가능한 값이 입력되지 않는 경우를 대비하여
             except ValueError:
                 return Response('query parameter의 year 또는 first_half 값을 확인해주세요.', status=status.HTTP_400_BAD_REQUEST)
-            queryset = Post.objects.filter(id__in=BestBoard.objects.filter(year=year, first_half=first_half).values('post')).order_by('-num_of_likes')
+            best_posts = BestBoard.objects.filter(year=year, first_half=first_half).values('post')
+            queryset = Post.objects.filter(id__in=best_posts).order_by('-num_of_likes')
+            
         page = self.paginate_queryset(queryset)
         data = self.get_serializer(page, many=True).data
         return self.get_paginated_response(data)
