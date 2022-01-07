@@ -24,3 +24,11 @@ class Board(models.Model):
 
     def __str__(self):
         return self.title
+
+class HotBoard(models.Model):
+    post = models.ForeignKey('post.Post', on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+class BestBoard(models.Model):
+    post = models.ForeignKey('post.Post', on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
