@@ -180,7 +180,7 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
         comments = Comment.objects.filter(post=post, head_comment=None).all()
         return JsonResponse({
             'is_success': True,
-            'comments': CommentSerializer(comments, many=True).data
+            'comments': CommentSerializer(comments, many=True, context={'post': post, 'user': user}).data
         }, status=status.HTTP_200_OK)
 
     @action(
