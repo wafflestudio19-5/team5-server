@@ -5,7 +5,7 @@ pytz==2021.1
 sqlparse==0.4.1
 django-debug-toolbar==2.2
 djangorestframework==3.11.1
-djangorestframework-jwt
+djangorestframework_simplejwt
 django-rest-authtoken
 Pillow  # profile picture 관련, 이미지처리
 drf-yasg

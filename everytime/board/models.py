@@ -22,5 +22,17 @@ class Board(models.Model):
     # 게시판 타입
     board_type = models.IntegerField(default=1)
 
+    # sub_board 구현
+    # head_board가 있으면(null이 아니면) 하위 게시판이 아닌 일반 게시판임
+    # 일반 게시판이 사라지면 하위게시판도 삭제될 것이므로 on_delete는 CASCADE
+    head_board = models.ForeignKey('self', related_name='sub_boards', on_delete=models.CASCADE, null=True, default=None)
+
     def __str__(self):
         return self.title
+
+# <게시판 - 하위게시판>
+# 새내기게시판 - 22학번, 21학번 이전 (해마다 교체)
+# 장터 - 팝니다, 삽니다, 나눔, 원룸
+# 동아리학회 - 교내, 연합
+# 취업 진로 - 자유, 꿀팁, 후기
+# 하드코딩으로 11개 넣어줘야할 듯
