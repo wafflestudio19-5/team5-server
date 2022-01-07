@@ -66,17 +66,32 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
     #swagger에 쿼리 파라미터는 자동으로 적용이 안되므로, 따로 추가하기.
     #파라미터 이름, 어떤 부분에 속하는지(QUERY, BODY, PATH 등), 파라미터 설명, 어떤 타입인지를 생성자에 제공
     def list(self, request):
-        print(request.scheme + '://' + request.get_host() + request.path)
         board = request.query_params.get('board')
+        if board is None:
+            return Response('board를 query parameter로 입력해주세요.', status=status.HTTP_400_BAD_REQUEST)
         queryset = self.get_queryset().filter(board=board).all()
         page = self.paginate_queryset(queryset)
-        data = self.get_serializer(page,many=True).data
+        data = self.get_serializer(page, many=True).data
         return self.get_paginated_response(data)
 
     def update(self, request, pk=None):
         post = get_object_or_404(Post, pk=pk)
-        tags = list(post.tags.all())
+        # 자신이 쓴 글이 아니면 프론트에서 수정 버튼이 존재하지 않을테지만,
+        if post.writer != request.user:
+            return JsonResponse({
+                'is_success': False
+            }, status=status.HTTP_400_BAD_REQUEST)
 
+        # 게시글이 질문 글이고 댓글이 존재한다면,
+        # 수정 가능한 화면이 뜨고 글 내용을 수정할 수는 있지만 '수정'버튼을 누르면
+        # '댓글이 달린 이후에는 글을 수정 및 삭제할 수 없습니다. 그래도 작성하시겠습니까?'라는 팝업메시지 이후
+        # '질문 글은 댓글이 달린 이후에는 수정할 수 없습니다.'메시지가 뜸
+        if post.is_question and post.comment_set.exists():
+            return JsonResponse({
+                'is_success': False
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        tags = list(post.tags.all())
         data = request.data
         user = request.user
 
@@ -88,16 +103,34 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         delete_tag(tags)
-        return Response(self.get_serializer(post).data, status=status.HTTP_201_CREATED)
+
+        return JsonResponse({
+            'is_success': True,
+            'updated_post': self.get_serializer(post).data},
+            status=status.HTTP_201_CREATED
+        )
 
     def destroy(self, request, pk=None):
         post = get_object_or_404(Post, pk=pk)
+        # 자신이 쓴 글이 아니면 프론트에서 삭제 버튼이 존재하지 않을테지만,
+        if post.writer != request.user:
+            return JsonResponse({
+                'is_success': False
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        if post.is_question and post.comment_set.exists():  # 게시글이 질문 글이고 댓글이 존재한다면
+            return JsonResponse({
+                'is_success': False # '질문 글은 댓글이 달린 이후에는 삭제할 수 없습니다.' 팝업메시지
+            }, status=status.HTTP_400_BAD_REQUEST )
+
         tags = list(post.tags.all())  # 이렇게 하지 않으면 post.delete() 이후에 tags도 비어있게 됨.
         for image in post.postimage_set.all():
             image.delete()
         post.delete()
         delete_tag(tags)
-        return Response("%s번 게시글이 삭제되었습니다." % pk, status=status.HTTP_200_OK)
+        return JsonResponse({
+            'is_success': True  # 아무 팝업메시지없이 그냥 삭제되고 게시글 목록이 뜸
+        })
 
     @action(
         detail=True,
@@ -129,7 +162,9 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
         user = request.user
         comment = get_object_or_404(Comment, pk=comment_id)
         if comment.writer != user:
-            return Response('작성자가 아닙니다.', status.HTTP_400_BAD_REQUEST)
+            return JsonResponse({
+                'is_success': False
+            }, status=status.HTTP_400_BAD_REQUEST)
         if comment.head_comment is not None:                # 지울려는 댓글이 대댓글인 경우 -> 댓글 삭제
             comment.delete()
             if not comment.head_comment.tail_comments.exists() \
@@ -143,7 +178,10 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
             comment.content = '삭제된 댓글입니다.'
             comment.save()
         comments = Comment.objects.filter(post=post, head_comment=None).all()
-        return Response(CommentSerializer(comments, many=True).data, status=status.HTTP_200_OK)
+        return JsonResponse({
+            'is_success': True,
+            'comments': CommentSerializer(comments, many=True).data
+        }, status=status.HTTP_200_OK)
 
     @action(
         detail=False,
