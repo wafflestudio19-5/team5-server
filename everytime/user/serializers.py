@@ -7,6 +7,8 @@ from rest_framework import serializers
 # from rest_framework_jwt.settings import api_settings
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from datetime import date
+
 from user.models import SocialAccount
 
 User = get_user_model()
@@ -149,7 +151,12 @@ class UserProfileUpdateSerializer(serializers.Serializer):
             user.email = email
             
         if nickname is not None:
+            if hasattr(user, 'last_nickname_update'):
+                time = date.today() - user.last_nickname_update
+                if time.days < 30:
+                    raise serializers.ValidationError('닉네임을 변경한지 30일이 지나지 않았습니다.')
             user.nickname = nickname
+            user.last_nickname_update = date.today()
 
         user.save()
         return user
