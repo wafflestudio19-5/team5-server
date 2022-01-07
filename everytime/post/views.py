@@ -73,7 +73,7 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
         if board not in ['hot', 'best']:
             queryset = self.get_queryset().filter(board=board).all()
         elif board == 'hot':
-            queryset = HotBoard.objects.all()
+            queryset = HotBoard.objects.all().values('post')
         else: # board == 'best'
             year = int(request.query_params.get('year', datetime.datetime.now().year))
             first_half = bool(request.query_params.get('first_half', (datetime.datetime.now().month < 7)))
