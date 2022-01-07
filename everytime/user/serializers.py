@@ -7,6 +7,7 @@ from rest_framework import serializers
 # from rest_framework_jwt.settings import api_settings
 from rest_framework_simplejwt.tokens import RefreshToken
 
+import re
 from datetime import date
 
 from user.models import SocialAccount
@@ -28,6 +29,16 @@ def jwt_token_of(user):
     }
     return jwt_token
 
+def validated_password(password):
+    if len(password) < 8 or len(password) > 20:
+        return False
+    match_num, match_alpha, match_special = re.search('[0-9]', password), re.search('[a-zA-z]', password), re.search('\W', password)
+    if not match_num:
+        if match_alpha and match_special:
+            return True
+    elif match_alpha or match_special:
+        return True
+    return False
 
 class UserCreateSerializer(serializers.Serializer):
     username = serializers.CharField(required=True, max_length=100)
@@ -45,6 +56,9 @@ class UserCreateSerializer(serializers.Serializer):
         pw2 = data.get('password2')
         if pw1 != pw2:
             raise serializers.ValidationError('입력한 두 비밀번호가 다릅니다. 비밀번호를 확인해주세요.')
+
+        if not validated_password(pw1):
+            raise serializers.ValidationError('영어, 숫자, 특문이 두종류 이상 조합된 8~20자의 비밀번호만 가능합니다.')
 
         admission_year = data.get('admission_year')
         if (admission_year, admission_year) not in User.YEAR_CHOICES:
@@ -123,6 +137,8 @@ class UserProfileUpdateSerializer(serializers.Serializer):
                 raise serializers.ValidationError('입력하신 두 비밀번호가 일치하지 않습니다.')
             if new_password1 == origin_password:
                 raise serializers.ValidationError('새 비밀번호가 기존 비밀번호와 같습니다.')
+            if not validated_password(new_password1):
+                raise serializers.ValidationError('영어, 숫자, 특문이 두종류 이상 조합된 8~20자의 비밀번호만 가능합니다.')
             data['new_password'] = new_password1
         if user.email == email:
             raise serializers.ValidationError('새 이메일이 기존 이메일과 같습니다.')
