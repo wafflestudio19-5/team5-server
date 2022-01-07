@@ -129,15 +129,17 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/3.2/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'ko-kr'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Seoul'
+# 변경된 한국 시간대를 사용하려면 naive datetime 개체인 datetime.datetime.now() 를 사용하는 대신 django.utils.timezone.now() 를 사용해야함
+# 혹시 한국 시간대가 반영이 안된다면 datetime을 사용하지 않았는지 체크해볼것
 
 USE_I18N = True
 
 USE_L10N = True
 
-USE_TZ = True
+USE_TZ = False
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
