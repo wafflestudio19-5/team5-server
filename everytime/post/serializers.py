@@ -19,7 +19,7 @@ class PostSerializer(serializers.ModelSerializer):
     title = serializers.CharField(required=False, max_length=100)
     content = serializers.CharField()
     num_of_comments = serializers.SerializerMethodField()
-    tags = serializers.PrimaryKeyRelatedField(queryset=Tag.objects.all(), many=True, required=False)
+    tags = serializers.PrimaryKeyRelatedField(queryset=Tag.objects.all(), many=True)
     images = serializers.SerializerMethodField()
     is_anonymous = serializers.BooleanField(default=False)
     is_question = serializers.BooleanField(default=False)
