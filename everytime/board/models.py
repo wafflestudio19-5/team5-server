@@ -30,6 +30,22 @@ class Board(models.Model):
     def __str__(self):
         return self.title
 
+      
+class HotBoard(models.Model):
+    post = models.ForeignKey('post.Post', on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
+class BestBoard(models.Model):
+    post = models.ForeignKey('post.Post', on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    year = models.SmallIntegerField(null=True)
+    first_half = models.BooleanField(default=True)
+
+    def get_post(self):
+        return self.post
+
+    
 # <게시판 - 하위게시판>
 # 새내기게시판 - 22학번, 21학번 이전 (해마다 교체)
 # 장터 - 팝니다, 삽니다, 나눔, 원룸

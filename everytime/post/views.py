@@ -1,3 +1,4 @@
+import pytz
 from django.shortcuts import render, get_object_or_404
 # from django.core.paginator import Paginator
 from django.http import JsonResponse
@@ -11,7 +12,7 @@ from rest_framework.response import Response
 from comment.models import Comment
 from comment.serializers import CommentSerializer
 from .models import Post, Tag
-from board.models import Board
+from board.models import Board, HotBoard, BestBoard
 from .serializers import PostSerializer
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
@@ -69,27 +70,42 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
         board = request.query_params.get('board')
         if board is None:
             return Response('board를 query parameter로 입력해주세요.', status=status.HTTP_400_BAD_REQUEST)
+        
+        elif board not in ['hot', 'best']:  # hot, best를 제외한 게시판은 여기서 처리
+          try:
+              board = Board.objects.get(id=board)
+          except Board.DoesNotExist:
+              return Response("존재하지 않는 게시판입니다. board를 확인해주세요.", status=status.HTTP_400_BAD_REQUEST)
 
-        try:
-            board = Board.objects.get(id=board)
-        except Board.DoesNotExist:
-            return Response("존재하지 않는 게시판입니다. board를 확인해주세요.", status=status.HTTP_400_BAD_REQUEST)
-
-        # 하위게시판이 아닌 일반 게시판의 글을 불러오길 원한다면
-        if board.head_board is None:
-            # 1. 하위 게시판을 가지지 않은 게시판일 때,
-            if not board.sub_boards.exists():
-                queryset = self.get_queryset().filter(board=board)
-            # 2. 하위 게시판을 가지고 있다면, 하위 게시판들의 글을 다 불러와야 함
-            else:
-                sub_boards = board.sub_boards.all()
-                queryset = Post.objects.none()
-                for sub_board in sub_boards:
-                    queryset |= self.get_queryset().filter(board=sub_board)
-        # 하위 게시판의 글을 불러오길 원한다면
-        else:
-            queryset = self.get_queryset().filter(board=board)
-
+          # 하위게시판이 아닌 일반 게시판의 글을 불러오길 원한다면
+          if board.head_board is None:
+              # 1. 하위 게시판을 가지지 않은 게시판일 때,
+              if not board.sub_boards.exists():
+                  queryset = self.get_queryset().filter(board=board)
+              # 2. 하위 게시판을 가지고 있다면, 하위 게시판들의 글을 다 불러와야 함
+              else:
+                  sub_boards = board.sub_boards.all()
+                  queryset = Post.objects.none()
+                  for sub_board in sub_boards:
+                      queryset |= self.get_queryset().filter(board=sub_board)
+          # 하위 게시판의 글을 불러오길 원한다면
+          else:
+              queryset = self.get_queryset().filter(board=board)
+        
+        elif board == 'hot':  # hot 게시판
+            hot_posts = HotBoard.objects.all().values('post')
+            queryset = Post.objects.filter(id__in=hot_posts)
+        
+        else:                 # best 게시판
+            try:
+                year = int(request.query_params.get('year', datetime.datetime.now().year))
+                first_half = bool(request.query_params.get('first_half', (datetime.datetime.now().month < 7)))
+            # query param으로 int/bool 변환가능한 값이 입력되지 않는 경우를 대비하여
+            except ValueError:
+                return Response('query parameter의 year 또는 first_half 값을 확인해주세요.', status=status.HTTP_400_BAD_REQUEST)
+            best_posts = BestBoard.objects.filter(year=year, first_half=first_half).values('post')
+            queryset = Post.objects.filter(id__in=best_posts).order_by('-num_of_likes')
+            
         page = self.paginate_queryset(queryset)
         data = self.get_serializer(page, many=True).data
         return self.get_paginated_response(data)
@@ -250,6 +266,15 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
             post.save()
             user.like_post.add(post)
             user.save()
+
+            # 좋아요가 10개가 되면 핫게시물 선정
+            if post.num_of_likes == 10:
+                HotBoard.objects.create(post=post)
+                # 알림 어떻게 가게 하지?
+            # 좋아요 100개가 되면 베스트 게시물 선정
+            elif post.num_of_likes == 100:
+                BestBoard.objects.create(post=post, year=post.created_at.year, first_half=(post.created_at.month < 7))
+                # 마찬가지로.. 알림 어떻게 보내지?
             return JsonResponse({
                 'is_success': True,
                 'value': post.num_of_likes
@@ -300,7 +325,8 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
         methods=['GET'],
     )
     def livetop(self, request):
-        now = datetime.datetime.utcnow().replace(tzinfo=utc)
+        now = datetime.datetime.now().astimezone(tz=pytz.timezone(zone='Asia/Seoul')) # settings 에 timezone이 서울로 설정되어있으면 상관없는데 어차피 이거 settings의 timezone이랑 같으면 return self 하니까 혹시 몰라서 넣어둠
         yesterday = now - datetime.timedelta(days=1)
         queryset = Post.objects.filter(created_at__gt=yesterday).order_by('-num_of_likes')[:2]
         return Response(PostSerializer(queryset, many=True).data, status=status.HTTP_200_OK)
+
