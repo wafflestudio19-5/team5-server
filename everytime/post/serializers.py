@@ -47,7 +47,6 @@ class PostSerializer(serializers.ModelSerializer):
         return PostImageSerializer(instance=image, many=True).data
 
     def validate(self, data):
-        print(data)
         request = self.context['request']
 
         user = request.user
@@ -64,12 +63,17 @@ class PostSerializer(serializers.ModelSerializer):
     
     def create(self, validated_data):
         request = self.context['request']
+
+        # board 검증
+        board = request.query_params.get('board')
+        if board is None:
+            raise serializers.ValidationError("board를 query parameter로 입력해주세요.")
+
         try:
-            board = request.query_params['board']
             board = Board.objects.get(id=board)
             validated_data['board'] = board
-        except:
-            raise serializers.ValidationError("board를 query parameter로 입력해주세요")
+        except Board.DoesNotExist:
+            raise serializers.ValidationError("존재하지 않는 게시판입니다. board를 확인해주세요.")
 
         # tags 따로 저장하기
         tags = validated_data.pop('tags') if 'tags' in validated_data else None
