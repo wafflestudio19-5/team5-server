@@ -94,6 +94,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     like_post = models.ManyToManyField('post.Post', related_name='like_user')      # 좋아한 게시물
     scrap_post = models.ManyToManyField('post.Post', related_name='scrap_user')    # 스크랩한 게시물
     reported_cnt = models.PositiveSmallIntegerField(default=0, blank=True)  # 신고당한 횟수
+    last_nickname_update = models.DateField(default=None, null=True)
 
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
