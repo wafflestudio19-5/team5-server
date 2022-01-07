@@ -77,7 +77,7 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
         else: # board == 'best'
             year = int(request.query_params.get('year', datetime.datetime.now().year))
             first_half = bool(request.query_params.get('first_half', (datetime.datetime.now().month < 7)))
-            queryset = BestBoard.objects.filter(year=year, first_half=first_half).values('post')
+            queryset = BestBoard.objects.filter(year=year, first_half=first_half).values('post').order_by('-num_of_likes')
         page = self.paginate_queryset(queryset)
         data = self.get_serializer(page, many=True).data
         return self.get_paginated_response(data)
