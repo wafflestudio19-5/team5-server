@@ -95,8 +95,8 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
             queryset = queryset.order_by('-id')
 
         elif board == 'hot':  # hot 게시판
-            hot_posts = HotBoard.objects.order_by('-created_at').values('post')
-            queryset = Post.objects.filter(id__in=hot_posts)
+            hot_posts = HotBoard.objects.all().values('post')
+            queryset = Post.objects.filter(id__in=hot_posts).order_by('-hotboard__created_at')
         
         else:                 # best 게시판
             try:
