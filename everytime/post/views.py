@@ -75,8 +75,12 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
         elif board == 'hot':
             queryset = HotBoard.objects.all().values('post')
         else: # board == 'best'
-            year = int(request.query_params.get('year', datetime.datetime.now().year))
-            first_half = bool(request.query_params.get('first_half', (datetime.datetime.now().month < 7)))
+            try:
+                year = int(request.query_params.get('year', datetime.datetime.now().year))
+                first_half = bool(request.query_params.get('first_half', (datetime.datetime.now().month < 7)))
+            # query param으로 int/bool 변환가능한 값이 입력되지 않는 경우를 대비하여
+            except ValueError:
+                return Response('query parameter의 year 또는 first_half 값을 확인해주세요.', status=status.HTTP_400_BAD_REQUEST)
             queryset = BestBoard.objects.filter(year=year, first_half=first_half).values('post').order_by('-num_of_likes')
         page = self.paginate_queryset(queryset)
         data = self.get_serializer(page, many=True).data
