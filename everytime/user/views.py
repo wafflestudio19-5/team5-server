@@ -22,27 +22,17 @@ from rest_framework import status, viewsets, permissions
 from rest_framework.exceptions import APIException
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework_jwt.settings import api_settings
+# from rest_framework_jwt.settings import api_settings
 
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
 from json.decoder import JSONDecodeError
 from .models import User, SocialAccount
-from .serializers import UserCreateSerializer, UserLoginSerializer, SocialUserCreateSerializer
+from .serializers import UserCreateSerializer, UserLoginSerializer, SocialUserCreateSerializer, jwt_token_of
 from .utils import email_verification_token, message
 
 from post.serializers import PostSerializer
-
-
-JWT_PAYLOAD_HANDLER = api_settings.JWT_PAYLOAD_HANDLER
-JWT_ENCODE_HANDLER = api_settings.JWT_ENCODE_HANDLER
-
-
-def jwt_token_of(user):
-    payload = JWT_PAYLOAD_HANDLER(user)
-    jwt_token = JWT_ENCODE_HANDLER(payload)
-    return jwt_token
 
 
 class UserSignUpView(APIView):
