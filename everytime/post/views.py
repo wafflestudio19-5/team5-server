@@ -11,7 +11,7 @@ from rest_framework.response import Response
 from comment.models import Comment
 from comment.serializers import CommentSerializer
 from .models import Post, Tag
-from board.models import Board
+from board.models import HotBoard, BestBoard
 from .serializers import PostSerializer
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
@@ -230,6 +230,15 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
             post.save()
             user.like_post.add(post)
             user.save()
+
+            # 좋아요가 10개가 되면 핫게시물 선정
+            if post.num_of_likes == 10:
+                HotBoard.objects.create(post=post)
+                # 알림 어떻게 가게 하지?
+            # 좋아요 100개가 되면 베스트 게시물 선정
+            elif post.num_of_likes == 100:
+                BestBoard.objects.create(post=post, year=post.created_at.year, first_half=(post.created_at.month < 7))
+                # 마찬가지로.. 알림 어떻게 보내지?
             return JsonResponse({
                 'is_success': True,
                 'value': post.num_of_likes

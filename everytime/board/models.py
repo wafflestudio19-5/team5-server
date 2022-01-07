@@ -29,6 +29,9 @@ class HotBoard(models.Model):
     post = models.ForeignKey('post.Post', on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
 
+
 class BestBoard(models.Model):
     post = models.ForeignKey('post.Post', on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
+    year = models.SmallIntegerField(null=True)
+    first_half = models.BooleanField(default=True)
