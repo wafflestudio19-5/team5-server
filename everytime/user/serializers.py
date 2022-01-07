@@ -3,18 +3,27 @@ from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import update_last_login
 from django.core.validators import RegexValidator
 from rest_framework import serializers
-from rest_framework_jwt.settings import api_settings
+# 더 이상 안 쓰는 API임 (simple JWT로 변경함)
+# from rest_framework_jwt.settings import api_settings
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from user.models import SocialAccount
 
 User = get_user_model()
-JWT_PAYLOAD_HANDLER = api_settings.JWT_PAYLOAD_HANDLER
-JWT_ENCODE_HANDLER = api_settings.JWT_ENCODE_HANDLER
+# 더 이상 안 쓰는 API임 (simple JWT로 변경함)
+# JWT_PAYLOAD_HANDLER = api_settings.JWT_PAYLOAD_HANDLER
+# JWT_ENCODE_HANDLER = api_settings.JWT_ENCODE_HANDLER
 
 
 def jwt_token_of(user):
-    payload = JWT_PAYLOAD_HANDLER(user)
-    jwt_token = JWT_ENCODE_HANDLER(payload)
+    # 더 이상 안 쓰는 API임 (simple JWT로 변경함)
+    # payload = JWT_PAYLOAD_HANDLER(user)
+    # jwt_token = JWT_ENCODE_HANDLER(payload)
+    refresh = RefreshToken.for_user(user)
+    jwt_token = {
+        'refresh': str(refresh),
+        'access': str(refresh.access_token)
+    }
     return jwt_token
 
 

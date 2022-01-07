@@ -22,7 +22,7 @@ from django.conf.urls.static import static
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
-
+from rest_framework_simplejwt.views import TokenRefreshView
 from .views import ping
 
 
@@ -32,7 +32,8 @@ urlpatterns = [
     path('user/', include('user.urls')),
     path('board/', include('board.urls')),
     path('post/', include('post.urls')),
-    path('comment/', include('comment.urls'))
+    path('comment/', include('comment.urls')),
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 ]
 
 if settings.DEBUG_TOOLBAR:
