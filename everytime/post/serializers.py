@@ -13,11 +13,12 @@ class PostImageSerializer(serializers.ModelSerializer):
 
 
 class PostSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField(read_only=True)
-    board = serializers.StringRelatedField(read_only=True)
-    writer = serializers.SerializerMethodField(read_only=True)
+    id = serializers.IntegerField()
+    board = serializers.StringRelatedField()
+    writer = serializers.SerializerMethodField()
     title = serializers.CharField(required=False, max_length=100)
     content = serializers.CharField()
+    num_of_comments = serializers.SerializerMethodField()
     tags = serializers.PrimaryKeyRelatedField(queryset=Tag.objects.all(), many=True)
     images = serializers.SerializerMethodField()
     is_anonymous = serializers.BooleanField(default=False)
@@ -31,11 +32,15 @@ class PostSerializer(serializers.ModelSerializer):
             'writer',
             'title',
             'content',
+            'num_of_likes',
+            'num_of_scrap',
+            'num_of_comments',
             'tags',
             'images',
             'is_anonymous',
             'is_question',
         )
+        read_only_fields = ['id', 'board', 'writer', 'num_of_likes', 'num_of_scrap', 'num_of_comments']
 
     def get_writer(self, post):
         if post.is_anonymous:
@@ -45,6 +50,9 @@ class PostSerializer(serializers.ModelSerializer):
     def get_images(self, obj):
         image = obj.postimage_set.all()
         return PostImageSerializer(instance=image, many=True).data
+
+    def get_num_of_comments(self, obj):
+        return obj.comment_set.count()
 
     def validate(self, data):
         print(data)
