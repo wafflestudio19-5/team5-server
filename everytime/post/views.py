@@ -72,29 +72,31 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
             return Response('board를 query parameter로 입력해주세요.', status=status.HTTP_400_BAD_REQUEST)
         
         elif board not in ['hot', 'best']:  # hot, best를 제외한 게시판은 여기서 처리
-          try:
-              board = Board.objects.get(id=board)
-          except Board.DoesNotExist:
-              return Response("존재하지 않는 게시판입니다. board를 확인해주세요.", status=status.HTTP_400_BAD_REQUEST)
+            try:
+                board = Board.objects.get(id=board)
+            except Board.DoesNotExist:
+                return Response("존재하지 않는 게시판입니다. board를 확인해주세요.", status=status.HTTP_400_BAD_REQUEST)
 
-          # 하위게시판이 아닌 일반 게시판의 글을 불러오길 원한다면
-          if board.head_board is None:
-              # 1. 하위 게시판을 가지지 않은 게시판일 때,
-              if not board.sub_boards.exists():
-                  queryset = self.get_queryset().filter(board=board)
-              # 2. 하위 게시판을 가지고 있다면, 하위 게시판들의 글을 다 불러와야 함
-              else:
-                  sub_boards = board.sub_boards.all()
-                  queryset = Post.objects.none()
-                  for sub_board in sub_boards:
-                      queryset |= self.get_queryset().filter(board=sub_board)
-          # 하위 게시판의 글을 불러오길 원한다면
-          else:
-              queryset = self.get_queryset().filter(board=board)
-        
+            # 하위게시판이 아닌 일반 게시판의 글을 불러오길 원한다면
+            if board.head_board is None:
+                # 1. 하위 게시판을 가지지 않은 게시판일 때,
+                if not board.sub_boards.exists():
+                    queryset = self.get_queryset().filter(board=board)
+                # 2. 하위 게시판을 가지고 있다면, 하위 게시판들의 글을 다 불러와야 함
+                else:
+                    sub_boards = board.sub_boards.all()
+                    queryset = Post.objects.none()
+                    for sub_board in sub_boards:
+                        queryset |= self.get_queryset().filter(board=sub_board)
+            # 하위 게시판의 글을 불러오길 원한다면
+            else:
+                queryset = self.get_queryset().filter(board=board)
+
+            queryset = queryset.order_by('-id')
+
         elif board == 'hot':  # hot 게시판
             hot_posts = HotBoard.objects.all().values('post')
-            queryset = Post.objects.filter(id__in=hot_posts)
+            queryset = Post.objects.filter(id__in=hot_posts).order_by('-hotboard__created_at')
         
         else:                 # best 게시판
             try:
@@ -230,7 +232,7 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
         if len(search_set) == 0:
             return Response('검색어를 입력하십시오.', status.HTTP_400_BAD_REQUEST)
         if board == '':
-            queryset = Post.objects.all()
+            queryset = Post.objects.all().order_by('-id')
             for query in search_set:
                 queryset = queryset.filter(content__icontains=query) | \
                            queryset.filter(title__icontains=query)
