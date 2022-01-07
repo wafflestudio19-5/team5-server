@@ -70,11 +70,32 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
         board = request.query_params.get('board')
         if board is None:
             return Response('board를 query parameter로 입력해주세요.', status=status.HTTP_400_BAD_REQUEST)
-        if board not in ['hot', 'best']:
-            queryset = self.get_queryset().filter(board=board).all()
-        elif board == 'hot':
+        
+        elif board not in ['hot', 'best']:  # hot, best를 제외한 게시판은 여기서 처리
+          try:
+              board = Board.objects.get(id=board)
+          except Board.DoesNotExist:
+              return Response("존재하지 않는 게시판입니다. board를 확인해주세요.", status=status.HTTP_400_BAD_REQUEST)
+
+          # 하위게시판이 아닌 일반 게시판의 글을 불러오길 원한다면
+          if board.head_board is None:
+              # 1. 하위 게시판을 가지지 않은 게시판일 때,
+              if not board.sub_boards.exists():
+                  queryset = self.get_queryset().filter(board=board)
+              # 2. 하위 게시판을 가지고 있다면, 하위 게시판들의 글을 다 불러와야 함
+              else:
+                  sub_boards = board.sub_boards.all()
+                  queryset = Post.objects.none()
+                  for sub_board in sub_boards:
+                      queryset |= self.get_queryset().filter(board=sub_board)
+          # 하위 게시판의 글을 불러오길 원한다면
+          else:
+              queryset = self.get_queryset().filter(board=board)
+        
+        elif board == 'hot': # hot 게시판
             queryset = HotBoard.objects.all().values('post')
-        else: # board == 'best'
+        
+        else:                # best 게시판
             try:
                 year = int(request.query_params.get('year', datetime.datetime.now().year))
                 first_half = bool(request.query_params.get('first_half', (datetime.datetime.now().month < 7)))
@@ -192,7 +213,7 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
         comments = Comment.objects.filter(post=post, head_comment=None).all()
         return JsonResponse({
             'is_success': True,
-            'comments': CommentSerializer(comments, many=True).data
+            'comments': CommentSerializer(comments, many=True, context={'post': post, 'user': user}).data
         }, status=status.HTTP_200_OK)
 
     @action(

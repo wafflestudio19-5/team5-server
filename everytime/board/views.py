@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 
 from rest_framework import status, viewsets, permissions, exceptions
 from rest_framework.views import APIView
@@ -26,6 +26,18 @@ class BoardView(APIView):
         return Response(BoardSerializer(board).data, status.HTTP_201_CREATED)
 
     def get(self, request):
-        boards = Board.objects.all()
+        # 하위 게시판이 아닌 일반 게시판만 불러옴
+        boards = Board.objects.filter(head_board=None)
         serializer = BoardSerializer(boards, many=True)
+        return Response(serializer.data, status.HTTP_200_OK)
+
+
+class SubBoardView(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    # 특정 게시판의 하위 게시판들을 불러옴
+    def get(self, request, pk=None):
+        board = get_object_or_404(Board, pk=pk)
+        sub_boards = board.sub_boards.all()
+        serializer = BoardSerializer(sub_boards, many=True)
         return Response(serializer.data, status.HTTP_200_OK)
