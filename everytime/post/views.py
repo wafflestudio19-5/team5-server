@@ -1,3 +1,4 @@
+import pytz
 from django.shortcuts import render, get_object_or_404
 # from django.core.paginator import Paginator
 from django.http import JsonResponse
@@ -69,7 +70,14 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
         board = request.query_params.get('board')
         if board is None:
             return Response('board를 query parameter로 입력해주세요.', status=status.HTTP_400_BAD_REQUEST)
-        queryset = self.get_queryset().filter(board=board).all()
+        if board not in ['hot', 'best']:
+            queryset = self.get_queryset().filter(board=board).all()
+        elif board == 'hot':
+            queryset = HotBoard.objects.all()
+        else: # board == 'best'
+            year = int(request.query_params.get('year', datetime.datetime.now().year))
+            first_half = bool(request.query_params.get('first_half', (datetime.datetime.now().month < 7)))
+            queryset = BestBoard.objects.filter(year=year, first_half=first_half).values('post')
         page = self.paginate_queryset(queryset)
         data = self.get_serializer(page, many=True).data
         return self.get_paginated_response(data)
@@ -289,7 +297,8 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
         methods=['GET'],
     )
     def livetop(self, request):
-        now = datetime.datetime.utcnow().replace(tzinfo=utc)
+        now = datetime.datetime.now().astimezone(tz=pytz.timezone(zone='Asia/Seoul')) # settings 에 timezone이 서울로 설정되어있으면 상관없는데 어차피 이거 settings의 timezone이랑 같으면 return self 하니까 혹시 몰라서 넣어둠
         yesterday = now - datetime.timedelta(days=1)
         queryset = Post.objects.filter(created_at__gt=yesterday).order_by('-num_of_likes')[:2]
         return Response(PostSerializer(queryset, many=True).data, status=status.HTTP_200_OK)
+
