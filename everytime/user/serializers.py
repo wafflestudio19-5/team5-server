@@ -100,6 +100,76 @@ class UserLoginSerializer(serializers.Serializer):
         }
 
 
+class UserProfileUpdateSerializer(serializers.Serializer):
+    origin_password = serializers.CharField(required=False)
+    email = serializers.EmailField(required=False, max_length=255)
+    nickname = serializers.CharField(required=False, max_length=30)
+    new_password1 = serializers.CharField(required=False)
+    new_password2 = serializers.CharField(required=False)
+    profile_picture = serializers.ImageField(required=False)
+
+    def validate(self, data):
+        user = self.context['user']
+        origin_password = data.get('origin_password')
+        new_password1 = data.get('new_password1')
+        new_password2 = data.get('new_password2')
+        email = data.get('email')
+        nickname = data.get('nickname')
+
+        if new_password1 is not None or new_password2 is not None:
+            if new_password1 != new_password2:
+                raise serializers.ValidationError('입력하신 두 비밀번호가 일치하지 않습니다.')
+            if new_password1 == origin_password:
+                raise serializers.ValidationError('새 비밀번호가 기존 비밀번호와 같습니다.')
+            data['new_password'] = new_password1
+        if user.email == email:
+            raise serializers.ValidationError('새 이메일이 기존 이메일과 같습니다.')
+        if user.nickname == nickname:
+            raise serializers.ValidationError('새 닉네임이 기존 닉네임과 같습니다.')
+
+        return data
+
+    def update(self, user, validated_data):
+        origin_password = validated_data.get('origin_password')
+        new_password = validated_data.get('new_password')
+        email = validated_data.get('email')
+        nickname = validated_data.get('nickname')
+        username = user.username
+
+        if new_password is not None:
+            user_pwcheck = authenticate(username=username, password=origin_password)
+            if user_pwcheck is None:
+                raise serializers.ValidationError('계정 비밀번호가 올바르지 않아요.(origin_password field)')
+            user.set_password(new_password)
+            
+        if email is not None:
+            user_pwcheck = authenticate(username=username, password=origin_password)
+            if user_pwcheck is None:
+                raise serializers.ValidationError('계정 비밀번호가 올바르지 않아요.(origin_password field)')
+            user.email = email
+            
+        if nickname is not None:
+            user.nickname = nickname
+
+        user.save()
+        return user
+
+
+class UserProfileSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = User
+        fields = (
+            'id',
+            'username',
+            'email',
+            'nickname',
+            'univ',
+            'admission_year',
+            'profile_picture',
+        )
+
+
 class SocialUserCreateSerializer(serializers.Serializer):
     nickname = serializers.CharField(required=True, max_length=30)
     univ = serializers.CharField(required=True, max_length=50)
