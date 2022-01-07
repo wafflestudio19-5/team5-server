@@ -33,7 +33,7 @@ urlpatterns = [
     path('board/', include('board.urls')),
     path('post/', include('post.urls')),
     path('comment/', include('comment.urls')),
-    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 ]
 
 if settings.DEBUG_TOOLBAR:
