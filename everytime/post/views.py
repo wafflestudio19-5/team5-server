@@ -12,7 +12,7 @@ from rest_framework.response import Response
 from comment.models import Comment
 from comment.serializers import CommentSerializer
 from .models import Post, Tag
-from board.models import HotBoard, BestBoard
+from board.models import Board, HotBoard, BestBoard
 from .serializers import PostSerializer
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
