@@ -42,6 +42,9 @@ class BestBoard(models.Model):
     year = models.SmallIntegerField(null=True)
     first_half = models.BooleanField(default=True)
 
+    def get_post(self):
+        return self.post
+
     
 # <게시판 - 하위게시판>
 # 새내기게시판 - 22학번, 21학번 이전 (해마다 교체)
