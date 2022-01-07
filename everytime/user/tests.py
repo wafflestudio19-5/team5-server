@@ -14,8 +14,8 @@ class UserSignupTestCase(TestCase):
     def setUpTestData(cls):
         cls.correct_data = {
             'username' : 'test',
-            'password1' : '1234',
-            'password2': '1234',
+            'password1' : 'test1234',
+            'password2': 'test1234',
             'email' : 'test@test.com',
             'nickname' : 'testnick',
             'admission_year' : '20학번',

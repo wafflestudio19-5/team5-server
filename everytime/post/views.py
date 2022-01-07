@@ -1,5 +1,3 @@
-import datetime
-
 from django.shortcuts import render, get_object_or_404
 # from django.core.paginator import Paginator
 from django.http import JsonResponse
@@ -18,7 +16,9 @@ from .serializers import PostSerializer
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
+import datetime
 import re
+from pytz import utc
 
 from everytime.utils import ViewSetActionPermissionMixin
 
@@ -293,3 +293,14 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
                 })
             except:
                 raise exceptions.NotFound('게시글을 찾을 수 없습니다.')
+
+
+    @action(
+        detail=False,
+        methods=['GET'],
+    )
+    def livetop(self, request):
+        now = datetime.datetime.utcnow().replace(tzinfo=utc)
+        yesterday = now - datetime.timedelta(days=1)
+        queryset = Post.objects.filter(created_at__gt=yesterday).order_by('-num_of_likes')[:2]
+        return Response(PostSerializer(queryset, many=True).data, status=status.HTTP_200_OK)

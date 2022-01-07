@@ -29,7 +29,7 @@ from drf_yasg.utils import swagger_auto_schema
 
 from json.decoder import JSONDecodeError
 from .models import User, SocialAccount
-from .serializers import UserCreateSerializer, UserLoginSerializer, SocialUserCreateSerializer, jwt_token_of
+from .serializers import UserCreateSerializer, UserLoginSerializer, SocialUserCreateSerializer, UserProfileSerializer, UserProfileUpdateSerializer, jwt_token_of
 from .utils import email_verification_token, message
 
 from post.serializers import PostSerializer
@@ -64,6 +64,26 @@ class UserLoginView(APIView):
         token = serializer.validated_data['token']
 
         return Response({'success': True, 'token': token}, status=status.HTTP_200_OK)
+
+
+class UserProfileView(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get(self, request):
+        user = request.user
+        return Response(UserProfileSerializer(user).data, status=200)
+
+    def patch(self, request):
+        user = request.user
+        data = request.data
+        serializer = UserProfileUpdateSerializer(user, data=data, context={'user':user})
+        serializer.is_valid(raise_exception=True)
+        try:
+            user = serializer.save()
+        except IntegrityError as e:
+            return Response(data=f'error: {e}', status=400)
+
+        return Response(UserProfileSerializer(user).data, status=200)
 
 
 class KaKaoLoginView(APIView):
@@ -346,6 +366,9 @@ class VerifyingMailSendView(APIView):
 
     def post(self, request):
         user = request.user
+        if hasattr(user,school_email):
+            return JsonResponse({"message": "이미 학교 인증을 마친 계정입니다."}, status=400)
+
         data = request.data
         email = data['email']
         uidb64 = urlsafe_base64_encode(force_bytes(user.id))
