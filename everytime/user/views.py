@@ -366,6 +366,9 @@ class VerifyingMailSendView(APIView):
 
     def post(self, request):
         user = request.user
+        if hasattr(user,school_email):
+            return JsonResponse({"message": "이미 학교 인증을 마친 계정입니다."}, status=400)
+
         data = request.data
         email = data['email']
         uidb64 = urlsafe_base64_encode(force_bytes(user.id))
