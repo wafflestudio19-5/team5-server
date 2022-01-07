@@ -91,8 +91,6 @@ class KaKaoLoginView(APIView):
     def get(self, request):
         REST_API_KEY = getattr(settings, 'SOCIAL_AUTH_KAKAO_SECRET')
         BASE_URL = getattr(settings, 'BASE_URL')
-        if BASE_URL == "http://127.0.0.1:8000/":
-            BASE_URL = 'http://localhost:8000/'
         REDIRECT_URI = BASE_URL + 'user/kakao/callback/'
 
         API_HOST = f'https://kauth.kakao.com/oauth/authorize?client_id={REST_API_KEY}&redirect_uri={REDIRECT_URI}&response_type=code'
@@ -115,8 +113,6 @@ def kakao_callback(request):
         code = request.GET.get("code")
         REST_API_KEY = getattr(settings, 'SOCIAL_AUTH_KAKAO_SECRET')
         BASE_URL = getattr(settings, 'BASE_URL')
-        if BASE_URL == "http://127.0.0.1:8000/":
-            BASE_URL = 'http://localhost:8000/'
         REDIRECT_URI = BASE_URL + 'user/kakao/callback/'
         token_response = requests.get(
             f"https://kauth.kakao.com/oauth/token?grant_type=authorization_code&client_id={REST_API_KEY}&redirect_uri={REDIRECT_URI}&code={code}"
@@ -134,12 +130,17 @@ def kakao_callback(request):
             headers={"Authorization": f"Bearer {access_token}"},
         )
         profile_json = profile_request.json()
-        email = profile_json.get("kakao_account", None).get("email")
+        email = profile_json.get("kakao_account").get("email")
         social_id = int(profile_json.get('id', -1))
         try:
             social_account = SocialAccount.objects.get(social_id=social_id, provider='kakao')
             user = social_account.user
             jwt_token = jwt_token_of(user)
+            return JsonResponse({
+                'login': True,
+                'social_user': social_id, # -> username으로 사용
+                'token': jwt_token
+            })
         except SocialAccount.DoesNotExist:
             # 가입이 안 된 유저일 때 별도 가입페이지로 redirect하는 처리를 추가로 해줄 예정
             return JsonResponse({
@@ -148,11 +149,6 @@ def kakao_callback(request):
                 'email': email,
                 'provider': 'kakao'
             })
-        return JsonResponse({
-            'login': True,
-            'social_user': social_id, # -> username으로 사용
-            'token': jwt_token
-        })
     except KakaoException:
         return HttpResponse('Login failed')
 
