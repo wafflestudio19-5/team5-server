@@ -409,7 +409,7 @@ class UserScrapView(APIView):
         limit = int(query_params.get('limit', 10))
         offset = int(query_params.get('offset', 0))
 
-        scrap_posts = user.scrap_post.all()
+        scrap_posts = user.scrap_post.order_by('-id')
         count = len(scrap_posts)
 
         current_url = request.scheme + '://' + request.get_host() + request.path
