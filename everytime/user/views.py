@@ -235,12 +235,11 @@ def google_callback(request):
 # Code chunks below are mostly from https://medium.com/chanjongs-programming-diary/django-rest-framework로-소셜-로그인-api-구현해보기-google-kakao-github-2ccc4d49a781
 
 
-
 class NaverLoginView(APIView):
     permission_classes = (permissions.AllowAny, )
     def get(self, request):
         BASE_URL = getattr(settings, 'BASE_URL')
-        NAVER_CALLBACK_URI = BASE_URL + 'user/naver/login/callback/'
+        NAVER_CALLBACK_URI = 'http://localhost:3000/social/naver'
         CLIENT_ID = getattr(settings, 'SOCIAL_AUTH_NAVER_CLIENT_ID')
         if request.user.is_authenticated:
             messages.error(request, '이미 로그인된 유저입니다.')
@@ -256,8 +255,8 @@ class NaverLoginView(APIView):
 def naver_callback(request):
     CLIENT_ID = getattr(settings, 'SOCIAL_AUTH_NAVER_CLIENT_ID')
     CLIENT_SECRET = getattr(settings, 'SOCIAL_AUTH_NAVER_SECRET')
-    code = request.GET.get('code')
-    state = request.GET.get('state')
+    code = request.data.get('code')
+    state = request.data.get('state')
     original_state = request.session.get('original_state')
 
     # state token 검증
@@ -307,7 +306,6 @@ def naver_callback(request):
             'email': email,
             'provider': 'naver'
         })
-
 
 
 class SocialUserSignUpView(APIView):
