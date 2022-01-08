@@ -91,8 +91,8 @@ class KaKaoLoginView(APIView):
     permission_classes = (permissions.AllowAny, )
     def get(self, request):
         REST_API_KEY = getattr(settings, 'SOCIAL_AUTH_KAKAO_SECRET')
-        BASE_URL = getattr(settings, 'BASE_URL')
-        REDIRECT_URI = BASE_URL + 'user/kakao/callback/'
+        # BASE_URL = getattr(settings, 'BASE_URL')
+        REDIRECT_URI = 'http://d2hw7p0vhygoha.cloudfront.net/social/kakao'
 
         API_HOST = f'https://kauth.kakao.com/oauth/authorize?client_id={REST_API_KEY}&redirect_uri={REDIRECT_URI}&response_type=code'
         try:
@@ -113,8 +113,8 @@ def kakao_callback(request):
     try:
         code = request.GET.get("code")
         REST_API_KEY = getattr(settings, 'SOCIAL_AUTH_KAKAO_SECRET')
-        BASE_URL = getattr(settings, 'BASE_URL')
-        REDIRECT_URI = BASE_URL + 'user/kakao/callback/'
+        # BASE_URL = getattr(settings, 'BASE_URL')
+        REDIRECT_URI = 'http://d2hw7p0vhygoha.cloudfront.net/social/kakao'
         token_response = requests.get(
             f"https://kauth.kakao.com/oauth/token?grant_type=authorization_code&client_id={REST_API_KEY}&redirect_uri={REDIRECT_URI}&code={code}"
         )
