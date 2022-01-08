@@ -13,7 +13,7 @@ class PostImageSerializer(serializers.ModelSerializer):
 
 
 class PostSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField()
+    id = serializers.IntegerField(required=False)
     board = serializers.StringRelatedField()
     writer = serializers.SerializerMethodField()
     title = serializers.CharField(required=False, max_length=100)
