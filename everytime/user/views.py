@@ -19,6 +19,7 @@ import random
 
 
 from rest_framework import status, viewsets, permissions
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.exceptions import APIException
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -90,8 +91,8 @@ class KaKaoLoginView(APIView):
     permission_classes = (permissions.AllowAny, )
     def get(self, request):
         REST_API_KEY = getattr(settings, 'SOCIAL_AUTH_KAKAO_SECRET')
-        BASE_URL = getattr(settings, 'BASE_URL')
-        REDIRECT_URI = BASE_URL + 'user/kakao/callback/'
+        # BASE_URL = getattr(settings, 'BASE_URL')
+        REDIRECT_URI = 'http://d2hw7p0vhygoha.cloudfront.net/social/kakao'
 
         API_HOST = f'https://kauth.kakao.com/oauth/authorize?client_id={REST_API_KEY}&redirect_uri={REDIRECT_URI}&response_type=code'
         try:
@@ -106,14 +107,15 @@ class KaKaoLoginView(APIView):
             messages.error(request, error)
             return redirect("user:login")
 
-
+@api_view(["POST"])
+@permission_classes([permissions.AllowAny])
 def kakao_callback(request):
     # return HttpResponse('로그인 실패')
     try:
-        code = request.GET.get("code")
+        code = request.data.get("code")
         REST_API_KEY = getattr(settings, 'SOCIAL_AUTH_KAKAO_SECRET')
-        BASE_URL = getattr(settings, 'BASE_URL')
-        REDIRECT_URI = BASE_URL + 'user/kakao/callback/'
+        # BASE_URL = getattr(settings, 'BASE_URL')
+        REDIRECT_URI = 'http://d2hw7p0vhygoha.cloudfront.net/social/kakao'
         token_response = requests.get(
             f"https://kauth.kakao.com/oauth/token?grant_type=authorization_code&client_id={REST_API_KEY}&redirect_uri={REDIRECT_URI}&code={code}"
         )
@@ -175,20 +177,21 @@ class GoogleLoginView(APIView):
         Code Request
         """
         BASE_URL = getattr(settings, 'BASE_URL')
-        GOOGLE_CALLBACK_URI = BASE_URL + 'user/google/login/callback/'
+        GOOGLE_CALLBACK_URI = 'http://d2hw7p0vhygoha.cloudfront.net/social/google'
         scope = "https://www.googleapis.com/auth/userinfo.profile" + \
                 " https://www.googleapis.com/auth/userinfo.email"
         client_id = getattr(settings, "SOCIAL_AUTH_GOOGLE_CLIENT_ID")
         return redirect(f"https://accounts.google.com/o/oauth2/v2/auth?client_id={client_id}&response_type=code&redirect_uri={GOOGLE_CALLBACK_URI}&scope={scope}")
 
-
+@api_view(["POST"])
+@permission_classes([permissions.AllowAny])
 def google_callback(request):
     state = getattr(settings, 'STATE')
     BASE_URL = getattr(settings, 'BASE_URL')
-    GOOGLE_CALLBACK_URI = BASE_URL + 'user/google/login/callback/'
+    GOOGLE_CALLBACK_URI = 'http://d2hw7p0vhygoha.cloudfront.net/social/google'
     client_id = getattr(settings, "SOCIAL_AUTH_GOOGLE_CLIENT_ID")
     client_secret = getattr(settings, "SOCIAL_AUTH_GOOGLE_SECRET")
-    code = request.GET.get('code')
+    code = request.data.get('code')
     """ 
     Access Token Request
     """
@@ -235,12 +238,11 @@ def google_callback(request):
 # Code chunks below are mostly from https://medium.com/chanjongs-programming-diary/django-rest-framework로-소셜-로그인-api-구현해보기-google-kakao-github-2ccc4d49a781
 
 
-
 class NaverLoginView(APIView):
     permission_classes = (permissions.AllowAny, )
     def get(self, request):
         BASE_URL = getattr(settings, 'BASE_URL')
-        NAVER_CALLBACK_URI = BASE_URL + 'user/naver/login/callback/'
+        NAVER_CALLBACK_URI = 'http://d2hw7p0vhygoha.cloudfront.net/social/naver'
         CLIENT_ID = getattr(settings, 'SOCIAL_AUTH_NAVER_CLIENT_ID')
         if request.user.is_authenticated:
             messages.error(request, '이미 로그인된 유저입니다.')
@@ -253,18 +255,20 @@ class NaverLoginView(APIView):
         )
 
 
+@api_view(["POST"])
+@permission_classes([permissions.AllowAny])
 def naver_callback(request):
     CLIENT_ID = getattr(settings, 'SOCIAL_AUTH_NAVER_CLIENT_ID')
     CLIENT_SECRET = getattr(settings, 'SOCIAL_AUTH_NAVER_SECRET')
-    code = request.GET.get('code')
-    state = request.GET.get('state')
-    original_state = request.session.get('original_state')
+    code = request.data.get('code')
+    state = request.data.get('state')
+    # original_state = request.session.get('original_state')
 
-    # state token 검증
+    # state token 검증 - 수정필요
     # https://developers.naver.com/docs/login/web/web.md
-    if state != original_state:
-        messages.error(request, '잘못된 경로로 로그인을 시도하셨습니다.', extra_tags='danger')
-        return redirect('user:login') # 로그인하는 화면으로 redirect, 이후 수정
+    # if state != original_state:
+    #     messages.error(request, '잘못된 경로로 로그인을 시도하셨습니다.', extra_tags='danger')
+    #     return redirect('user:login') # 로그인하는 화면으로 redirect, 이후 수정
 
     # access token 받아오기
     token_req = requests.get(
@@ -278,6 +282,7 @@ def naver_callback(request):
         return redirect('user:login')
 
     access_token = token_req_json.get('access_token')
+    print(access_token)
     # access token 바탕으로 정보 가져오기
     access_token = urllib.parse.quote(access_token)
     profile_req = requests.get('https://openapi.naver.com/v1/nid/me', headers={'Authorization': '{} {}'.format('Bearer', access_token)})
@@ -307,7 +312,6 @@ def naver_callback(request):
             'email': email,
             'provider': 'naver'
         })
-
 
 
 class SocialUserSignUpView(APIView):
