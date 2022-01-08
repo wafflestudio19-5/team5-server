@@ -107,11 +107,12 @@ class KaKaoLoginView(APIView):
             messages.error(request, error)
             return redirect("user:login")
 
-
+@api_view(["POST"])
+@permission_classes([permissions.AllowAny])
 def kakao_callback(request):
     # return HttpResponse('로그인 실패')
     try:
-        code = request.GET.get("code")
+        code = request.data.get("code")
         REST_API_KEY = getattr(settings, 'SOCIAL_AUTH_KAKAO_SECRET')
         # BASE_URL = getattr(settings, 'BASE_URL')
         REDIRECT_URI = 'http://d2hw7p0vhygoha.cloudfront.net/social/kakao'
@@ -176,20 +177,21 @@ class GoogleLoginView(APIView):
         Code Request
         """
         BASE_URL = getattr(settings, 'BASE_URL')
-        GOOGLE_CALLBACK_URI = BASE_URL + 'user/google/login/callback/'
+        GOOGLE_CALLBACK_URI = 'http://d2hw7p0vhygoha.cloudfront.net/social/google'
         scope = "https://www.googleapis.com/auth/userinfo.profile" + \
                 " https://www.googleapis.com/auth/userinfo.email"
         client_id = getattr(settings, "SOCIAL_AUTH_GOOGLE_CLIENT_ID")
         return redirect(f"https://accounts.google.com/o/oauth2/v2/auth?client_id={client_id}&response_type=code&redirect_uri={GOOGLE_CALLBACK_URI}&scope={scope}")
 
-
+@api_view(["POST"])
+@permission_classes([permissions.AllowAny])
 def google_callback(request):
     state = getattr(settings, 'STATE')
     BASE_URL = getattr(settings, 'BASE_URL')
-    GOOGLE_CALLBACK_URI = BASE_URL + 'user/google/login/callback/'
+    GOOGLE_CALLBACK_URI = 'http://d2hw7p0vhygoha.cloudfront.net/social/google'
     client_id = getattr(settings, "SOCIAL_AUTH_GOOGLE_CLIENT_ID")
     client_secret = getattr(settings, "SOCIAL_AUTH_GOOGLE_SECRET")
-    code = request.GET.get('code')
+    code = request.data.get('code')
     """ 
     Access Token Request
     """
@@ -240,7 +242,7 @@ class NaverLoginView(APIView):
     permission_classes = (permissions.AllowAny, )
     def get(self, request):
         BASE_URL = getattr(settings, 'BASE_URL')
-        NAVER_CALLBACK_URI = 'http://localhost:3000/social/naver'
+        NAVER_CALLBACK_URI = 'http://d2hw7p0vhygoha.cloudfront.net/social/naver'
         CLIENT_ID = getattr(settings, 'SOCIAL_AUTH_NAVER_CLIENT_ID')
         if request.user.is_authenticated:
             messages.error(request, '이미 로그인된 유저입니다.')
