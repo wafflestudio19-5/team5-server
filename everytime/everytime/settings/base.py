@@ -129,7 +129,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/3.2/topics/i18n/
 
-LANGUAGE_CODE = 'ko-kr'
+LANGUAGE_CODE = 'en-us'
 
 TIME_ZONE = 'Asia/Seoul'
 # 변경된 한국 시간대를 사용하려면 naive datetime 개체인 datetime.datetime.now() 를 사용하는 대신 django.utils.timezone.now() 를 사용해야함

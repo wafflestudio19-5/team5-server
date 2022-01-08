@@ -19,6 +19,7 @@ import random
 
 
 from rest_framework import status, viewsets, permissions
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.exceptions import APIException
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -252,18 +253,20 @@ class NaverLoginView(APIView):
         )
 
 
+@api_view(["GET"])
+@permission_classes([permissions.AllowAny])
 def naver_callback(request):
     CLIENT_ID = getattr(settings, 'SOCIAL_AUTH_NAVER_CLIENT_ID')
     CLIENT_SECRET = getattr(settings, 'SOCIAL_AUTH_NAVER_SECRET')
     code = request.data.get('code')
     state = request.data.get('state')
-    original_state = request.session.get('original_state')
+    # original_state = request.session.get('original_state')
 
-    # state token 검증
+    # state token 검증 - 수정필요
     # https://developers.naver.com/docs/login/web/web.md
-    if state != original_state:
-        messages.error(request, '잘못된 경로로 로그인을 시도하셨습니다.', extra_tags='danger')
-        return redirect('user:login') # 로그인하는 화면으로 redirect, 이후 수정
+    # if state != original_state:
+    #     messages.error(request, '잘못된 경로로 로그인을 시도하셨습니다.', extra_tags='danger')
+    #     return redirect('user:login') # 로그인하는 화면으로 redirect, 이후 수정
 
     # access token 받아오기
     token_req = requests.get(
@@ -277,6 +280,7 @@ def naver_callback(request):
         return redirect('user:login')
 
     access_token = token_req_json.get('access_token')
+    print(access_token)
     # access token 바탕으로 정보 가져오기
     access_token = urllib.parse.quote(access_token)
     profile_req = requests.get('https://openapi.naver.com/v1/nid/me', headers={'Authorization': '{} {}'.format('Bearer', access_token)})
