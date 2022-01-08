@@ -253,7 +253,7 @@ class NaverLoginView(APIView):
         )
 
 
-@api_view(["GET"])
+@api_view(["POST"])
 @permission_classes([permissions.AllowAny])
 def naver_callback(request):
     CLIENT_ID = getattr(settings, 'SOCIAL_AUTH_NAVER_CLIENT_ID')
