@@ -27,10 +27,11 @@ from everytime.utils import ViewSetActionPermissionMixin
 def create_tag(data):
     if 'tags' in data:
         all_tag = Tag.objects.all()
-        for tag_name in data.getlist('tags'):
-            tag_name = tag_name.upper()
-            if not all_tag.filter(name__iexact=tag_name).exists():
-                Tag.objects.create(name=tag_name)
+        if hasattr(data, 'getlist'):
+            for tag_name in data.getlist('tags'):
+                tag_name = tag_name.upper()
+                if not all_tag.filter(name__iexact=tag_name).exists():
+                    Tag.objects.create(name=tag_name)
 
 def delete_tag(tags):
     for tag in tags:
