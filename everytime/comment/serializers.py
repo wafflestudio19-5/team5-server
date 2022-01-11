@@ -58,7 +58,7 @@ class CommentSerializer(serializers.ModelSerializer):
         if comment.is_anonymous:
             if comment.writer == comment.post.writer:
                 return '익명(글쓴이)'
-            return comment.writer.userpost_set.get(user=self.context['user'],post=self.context['post']).anonymous_nickname
+            return comment.writer.userpost_set.get(post=comment.post).anonymous_nickname
         return comment.writer.nickname
 
     def validate(self, data):
@@ -134,5 +134,5 @@ class ReplySerializer(serializers.ModelSerializer):
         if comment.is_anonymous:
             if comment.writer == comment.post.writer:
                 return '익명(글쓴이)'
-            return comment.writer.userpost_set.get(user=self.context['user'],post=self.context['post']).anonymous_nickname
+            return comment.writer.userpost_set.get(post=comment.post).anonymous_nickname
         return comment.writer.nickname
