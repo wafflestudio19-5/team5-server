@@ -45,6 +45,8 @@ class PostSerializer(serializers.ModelSerializer):
     def get_writer(self, post):
         if post.is_anonymous:
             return '익명'
+        if post.writer is None:
+            return None
         return post.writer.nickname
 
     def get_images(self, obj):

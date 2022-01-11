@@ -53,12 +53,17 @@ class Tag(models.Model):
             self.name = self.name.upper()
             super(Tag, self).save(*args, **kwargs)
 
+
 class PostTag(models.Model):
     post = models.ForeignKey('Post', on_delete=models.CASCADE)
     tag = models.ForeignKey('Tag', on_delete=models.CASCADE)
 
-            
-            
+
+class UserPost(models.Model):
+    post = models.ForeignKey('Post', on_delete=models.CASCADE)
+    user = models.ForeignKey('user.User', on_delete=models.CASCADE)
+    anonymous_nickname = models.CharField(max_length=10, null=True)
+
 # class Report(models.Model):
 #     TYPE_CHOICES = (
 #         ('게시판 성격에 부적절함', '게시판 성격에 부적절함'),
