@@ -80,5 +80,4 @@ class UserPost(models.Model):
 #     reported_post = models.ForeignKey('Post', related_name='report', null=True)
 #     # 위 둘 중 하나는 무조건 있어야 하는데 둘 다 null=True로 해둬서, 이후 validation 에서 둘 중 하나 값은 갖는지 따로 체크해줘야할듯
 #     type = models.CharField(max_length=50, choices=TYPE_CHOICES)
-
-
+#     댓글, 강의평, 시험정보도 모두 신고 가능 --> 반영할 것이면 report 모델 수정 필요
