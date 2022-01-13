@@ -21,7 +21,6 @@ class Lecture(models.Model):
     lecture = models.SmallIntegerField()  # 뭘 의미하는지 모르겠음
     laboratory = models.SmallIntegerField()
     type = models.CharField(max_length=30, blank=True)
-    location = models.CharField(max_length=100, blank=True)
     cart = models.IntegerField()
     quota = models.IntegerField()
     remark = models.TextField(null=True)
