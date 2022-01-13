@@ -25,7 +25,7 @@ class Lecture(models.Model):
     quota = models.IntegerField()
     remark = models.TextField(null=True)
     language = models.CharField(max_length=4)
-    semester = models.ForeignKey('lecture.Semester')
+    semester = models.ForeignKey('lecture.Semester', on_delete=models.CASCADE)
     self_made = models.BooleanField(default=False)
 
 class LectureTime(models.Model):
@@ -67,15 +67,15 @@ class Semester(models.Model):
 
 class TimeTable(models.Model):
     PRIVATE_CHOICES=(
-        ('전체공개', '전채공개')
-        ('친구공개', '친구공개')
+        ('전체공개', '전채공개'),
+        ('친구공개', '친구공개'),
         ('비공개', '비공개')
     )
     user = models.ForeignKey('user.User', on_delete=models.CASCADE, null=False)
     lecture = models.ManyToManyField('lecture.Lecture', null=True)
     semester = models.ForeignKey('lecture.Semester', on_delete=models.CASCADE)
     name = models.CharField(max_length=30)
-    is_default = models.BooleanField(dafualt=False)
+    is_default = models.BooleanField(default=False)
     private = models.CharField(max_length=5, choices=PRIVATE_CHOICES)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
