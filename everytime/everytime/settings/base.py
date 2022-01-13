@@ -67,7 +67,9 @@ INSTALLED_APPS = [
     'board',
     'post',
     'comment',
+    'lecture',
     'corsheaders',
+    'multiselectfield',
 ]
 
 MIDDLEWARE = [

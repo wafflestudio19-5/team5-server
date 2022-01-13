@@ -29,6 +29,8 @@ from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
 from json.decoder import JSONDecodeError
+
+from lecture.models import Point
 from .models import User, SocialAccount
 from .serializers import UserCreateSerializer, UserLoginSerializer, SocialUserCreateSerializer, UserProfileSerializer, UserProfileUpdateSerializer, jwt_token_of
 from .utils import email_verification_token, message
@@ -48,6 +50,8 @@ class UserSignUpView(APIView):
             user, jwt_token = serializer.save()
         except IntegrityError:
             return Response(status=status.HTTP_409_CONFLICT, data='DATABASE ERROR : 서버 관리자에게 문의주세요.')
+
+        Point.objects.create(user=user, reason='기본 포인트 지급', point=20)
 
         return Response({
             'user': user.username,
