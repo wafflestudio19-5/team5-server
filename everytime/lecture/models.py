@@ -10,6 +10,15 @@ class Course(models.Model):
     semester = models.CharField(max_length=255)  # 현재까지 개설학기, Lecture 모델에 semester 정보 저장할 필요는 없는가?
 
 
+class College(models.Model):
+    name = models.CharField(max_length=30, unique=True)
+
+
+class Department(models.Model):
+    college = models.ForeignKey('lecture.College', on_delete=models.CASCADE, null=False)
+    name = models.CharField(max_length=30, unique=True)
+
+
 class LectureEvaluation(models.Model):
     AMOUNT_CHOICES = [
         (2, '많음'),
@@ -44,7 +53,7 @@ class LectureEvaluation(models.Model):
     ]
 
     course = models.ForeignKey('Course', on_delete=models.CASCADE)
-    writer = models.ForeignKey('user.User', on_delete=models.SET_NULL)
+    writer = models.ForeignKey('user.User', on_delete=models.SET_NULL, null=True)
 
     # 성적반영관련 (grading)
     assignment = models.SmallIntegerField(default=1, choices=AMOUNT_CHOICES)
@@ -88,7 +97,7 @@ class ExamInfo(models.Model):
     ]
 
     course = models.ForeignKey('Course', on_delete=models.CASCADE)
-    writer = models.ForeignKey('user.User', on_delete=models.SET_NULL)
+    writer = models.ForeignKey('user.User', on_delete=models.SET_NULL, null=True)
     # 강의평을 읽을 수 있는 유저
     readable_users = models.ManyToManyField('user.User', related_name='readable_evaluations')
 
@@ -107,7 +116,7 @@ class ExamInfo(models.Model):
 
 # 강의평가 서비스에서 사용되는 포인트
 class Point(models.Model):
-    user = models.ManyToManyField('user.User')
+    user = models.ForeignKey('user.User', on_delete=models.CASCADE)
     reason = models.CharField(max_length=30)
     point = models.SmallIntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
