@@ -5,8 +5,10 @@ from django.db import models
 # AAA 교수의 BBB 강의 를 하나의 course로 본다.
 class Course(models.Model):
     title = models.CharField(max_length=35)
-    instructor = models.CharField(max_length=50, null=True)
+    instructor = models.CharField(max_length=50, blank=True)
     department = models.ForeignKey('lecture.Department', on_delete=models.SET_NULL, null=True)
+    self_made = models.BooleanField(default=False)
+
 
 class Lecture(models.Model):
     course = models.ForeignKey('lecture.Course', on_delete=models.CASCADE)
@@ -18,13 +20,14 @@ class Lecture(models.Model):
     credits = models.SmallIntegerField()
     lecture = models.SmallIntegerField()  # 뭘 의미하는지 모르겠음
     laboratory = models.SmallIntegerField()
-    type = models.CharField(max_length=30, null=True)
-    location = models.CharField(max_length=100, null=True)
+    type = models.CharField(max_length=30, blank=True)
+    location = models.CharField(max_length=100, blank=True)
     cart = models.IntegerField()
     quota = models.IntegerField()
     remark = models.TextField(null=True)
     language = models.CharField(max_length=4)
-    semester = models.CharField(max_length=10)
+    semester = models.ForeignKey('lecture.Semester')
+    self_made = models.BooleanField(default=False)
 
 class LectureTime(models.Model):
     DAY_CHOICES = (
@@ -39,6 +42,7 @@ class LectureTime(models.Model):
     day = models.CharField(max_length=1, choices=DAY_CHOICES)
     start = models.IntegerField()
     end = models.IntegerField()
+    location = models.CharField(max_length=30, blank=True)
 
 class College(models.Model):
     name = models.CharField(max_length=30, unique=True)
@@ -46,3 +50,17 @@ class College(models.Model):
 class Department(models.Model):
     college = models.ForeignKey('lecture.College', on_delete=models.CASCADE, null=False)
     name = models.CharField(max_length=30, unique=True)
+
+class Semester(models.Model):
+    SEMESTER_CHOICES = (
+        ('2022년 1학기', '2022년 1학기'),
+        ('2021년 겨울학기', '2021년 겨울학기'),
+        ('2021년 2학기', '2021년 2학기'),
+        ('2021년 여름학기', '2021년 여름학기'),
+        ('2021년 1학기', '2021년 1학기'),
+        ('2020년 겨울학기', '2020년 겨울학기'),
+        ('2020년 2학기', '2020년 2학기'),
+        ('2020년 여름학기', '2020년 여름학기'),
+        ('2020년 1학기', '2020년 1학기')
+    )
+    name = models.CharField(max_length=12, choices=SEMESTER_CHOICES)
