@@ -24,6 +24,7 @@ class Lecture(models.Model):
     quota = models.IntegerField()
     remark = models.TextField(null=True)
     language = models.CharField(max_length=4)
+    semester = models.CharField(max_length=10)
 
 class LectureTime(models.Model):
     DAY_CHOICES = (
