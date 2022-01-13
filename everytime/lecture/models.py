@@ -49,7 +49,7 @@ class College(models.Model):
 
 class Department(models.Model):
     college = models.ForeignKey('lecture.College', on_delete=models.CASCADE, null=False)
-    name = models.CharField(max_length=30, unique=True)
+    name = models.CharField(max_length=30)
 
 class Semester(models.Model):
     SEMESTER_CHOICES = (
