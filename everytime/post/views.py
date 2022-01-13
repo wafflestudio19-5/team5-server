@@ -42,10 +42,11 @@ def delete_tag(tags):
 class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
     permission_classes = (permissions.IsAuthenticated, )
     permission_action_classes = {
-        'retrieve': (permissions.AllowAny, ),
-        'list': (permissions.AllowAny, ),
-        'comment': (permissions.AllowAny, ),
-        'search': (permissions.AllowAny, )
+        # 'retrieve': (permissions.AllowAny, ),
+        # 'list': (permissions.AllowAny, ),
+        # 'comment': (permissions.AllowAny, ),
+        # 'search': (permissions.AllowAny, )
+        # 추후 메인화면에서 쓰일 simple list API 들에게 AllowAny 할당 예정
     }
     serializer_class = PostSerializer
     queryset = Post.objects.all()

@@ -5,10 +5,43 @@ from multiselectfield import MultiSelectField
 # AAA 교수의 BBB 강의를 하나의 course로 본다.
 class Course(models.Model):
     title = models.CharField(max_length=35)
-    instructor = models.CharField(max_length=50, null=True)
+    instructor = models.CharField(max_length=50, blank=True)
     department = models.ForeignKey('lecture.Department', on_delete=models.SET_NULL, null=True)
-    semester = models.CharField(max_length=255)  # 현재까지 개설학기, Lecture 모델에 semester 정보 저장할 필요는 없는가?
+    self_made = models.BooleanField(default=False)
 
+
+class Lecture(models.Model):
+    course = models.ForeignKey('lecture.Course', on_delete=models.CASCADE)
+    classification = models.CharField(max_length=3)
+    degree = models.CharField(max_length=5)
+    grade = models.SmallIntegerField(null=True)
+    course_code = models.CharField(max_length=15)
+    lecture_code = models.IntegerField()
+    credits = models.SmallIntegerField()
+    lecture = models.SmallIntegerField()  # 뭘 의미하는지 모르겠음
+    laboratory = models.SmallIntegerField()
+    type = models.CharField(max_length=30, blank=True)
+    cart = models.IntegerField()
+    quota = models.IntegerField()
+    remark = models.TextField(null=True)
+    language = models.CharField(max_length=4)
+    semester = models.ForeignKey('lecture.Semester')
+    self_made = models.BooleanField(default=False)
+
+class LectureTime(models.Model):
+    DAY_CHOICES = (
+        ('월', '월'),
+        ('화', '화'),
+        ('수', '수'),
+        ('목', '목'),
+        ('금', '금'),
+        ('토', '토'),
+    )
+    lecture = models.ForeignKey('lecture.Lecture', on_delete=models.CASCADE)
+    day = models.CharField(max_length=1, choices=DAY_CHOICES)
+    start = models.IntegerField()
+    end = models.IntegerField()
+    location = models.CharField(max_length=30, blank=True)
 
 class College(models.Model):
     name = models.CharField(max_length=30, unique=True)
@@ -18,7 +51,35 @@ class Department(models.Model):
     college = models.ForeignKey('lecture.College', on_delete=models.CASCADE, null=False)
     name = models.CharField(max_length=30, unique=True)
 
+class Semester(models.Model):
+    SEMESTER_CHOICES = (
+        ('2022년 1학기', '2022년 1학기'),
+        ('2021년 겨울학기', '2021년 겨울학기'),
+        ('2021년 2학기', '2021년 2학기'),
+        ('2021년 여름학기', '2021년 여름학기'),
+        ('2021년 1학기', '2021년 1학기'),
+        ('2020년 겨울학기', '2020년 겨울학기'),
+        ('2020년 2학기', '2020년 2학기'),
+        ('2020년 여름학기', '2020년 여름학기'),
+        ('2020년 1학기', '2020년 1학기')
+    )
+    name = models.CharField(max_length=12, choices=SEMESTER_CHOICES)
 
+class TimeTable(models.Model):
+    PRIVATE_CHOICES=(
+        ('전체공개', '전채공개')
+        ('친구공개', '친구공개')
+        ('비공개', '비공개')
+    )
+    user = models.ForeignKey('user.User', on_delete=models.CASCADE, null=False)
+    lecture = models.ManyToManyField('lecture.Lecture', null=True)
+    semester = models.ForeignKey('lecture.Semester', on_delete=models.CASCADE)
+    name = models.CharField(max_length=30)
+    is_default = models.BooleanField(dafualt=False)
+    private = models.CharField(max_length=5, choices=PRIVATE_CHOICES)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
 class LectureEvaluation(models.Model):
     AMOUNT_CHOICES = [
         (2, '많음'),
@@ -120,65 +181,3 @@ class Point(models.Model):
     reason = models.CharField(max_length=30)
     point = models.SmallIntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
-
-
-# UserLecture Model
-# class UserLecture(models.Model):
-#     USER_LECTURE_CHOICES = [
-#         ('2022-1', '2022년 1학기'),
-#         ('2021-w', '2021년 겨울학기'),
-#         ('2021-2', '2021년 2학기'),
-#         ('2021-s', '2021년 여름학기'),
-#         ('2021-1', '2021년 1학기'),
-#         ('2020-w', '2020년 겨울학기'),
-#         ('2020-2', '2020년 2학기'),
-#         ('2020-s', '2020년 여름학기'),
-#         ('2020-1', '2020년 1학기'),
-#         ('2019-w', '2019년 겨울학기'),
-#         ('2019-2', '2019년 2학기'),
-#         ('2019-s', '2019년 여름학기'),
-#         ('2019-1', '2019년 1학기'),
-#         ('2018-w', '2018년 겨울학기'),
-#         ('2018-2', '2018년 2학기'),
-#         ('2018-s', '2018년 여름학기'),
-#         ('2018-1', '2018년 1학기'),
-#         ('2017-w', '2017년 겨울학기'),
-#         ('2017-2', '2017년 2학기'),
-#         ('2017-s', '2017년 여름학기'),
-#         ('2017-1', '2017년 1학기'),
-#         ('2016-w', '2016년 겨울학기'),
-#         ('2016-2', '2016년 2학기'),
-#         ('2016-s', '2016년 여름학기'),
-#         ('2016-1', '2016년 1학기'),
-#         ('2015-w', '2015년 겨울학기'),
-#         ('2015-2', '2015년 2학기'),
-#         ('2015-s', '2015년 여름학기'),
-#         ('2015-1', '2015년 1학기'),
-#         ('2014-w', '2014년 겨울학기'),
-#         ('2014-2', '2014년 2학기'),
-#         ('2014-s', '2014년 여름학기'),
-#         ('2014-1', '2014년 1학기'),
-#         ('2013-w', '2013년 겨울학기'),
-#         ('2013-2', '2013년 2학기'),
-#         ('2013-s', '2013년 여름학기'),
-#         ('2013-1', '2013년 1학기'),
-#         ('2012-w', '2012년 겨울학기'),
-#         ('2012-2', '2012년 2학기'),
-#         ('2012-s', '2012년 여름학기'),
-#         ('2012-1', '2012년 1학기'),
-#         ('2011-w', '2011년 겨울학기'),
-#         ('2011-2', '2011년 2학기'),
-#         ('2011-s', '2011년 여름학기'),
-#         ('2011-1', '2011년 1학기'),
-#         ('2010-w', '2010년 겨울학기'),
-#         ('2010-2', '2010년 2학기'),
-#         ('2010-s', '2010년 여름학기'),
-#         ('2010-1', '2010년 1학기'),
-#     ]
-#
-#     name = models.CharField(max_length=50, unique=True)
-#     user = models.ForeignKey('user.User', on_delete=models.CASCADE)
-#     lecture = models.ForeignKey('Lecture', on_delete=models.CASCADE)
-#     # 2010년도 1학기부터 계절학기 포함해서 2022년도 1학기까지 존재
-#     semester = models.CharField(max_length=5, choices=USER_LECTURE_CHOICES)
-#     # 근데 이거 하다보니 timetable이랑 같아질 것 같아서 완성하지 않고 일단 그냥 놔둠
