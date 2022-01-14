@@ -15,7 +15,7 @@ faker
 django-cors-headers
 django-multiselectfield
 django-extensions
-"ipython[notebook]"
+ipython[notebook]
 numpy==1.22.0
 pandas==1.3.5
 xlrd==2.0.1
