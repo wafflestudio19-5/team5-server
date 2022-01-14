@@ -125,7 +125,7 @@ class LectureEvaluation(models.Model):
 
     # 총평 섹션
     rating = models.SmallIntegerField(default=3, choices=RATING_CHOICES)
-    semester = models.CharField(max_length=10)
+    semester = models.ForeignKey('lecture.Semester', on_delete=models.CASCADE)
 
     # 평가내용
     content = models.TextField()
@@ -163,7 +163,7 @@ class ExamInfo(models.Model):
     readable_users = models.ManyToManyField('user.User', related_name='readable_evaluations')
 
     exam = models.SmallIntegerField(default=0, choices=EXAM_CHOICES)    # 응시한 시험 종류
-    semester = models.CharField(max_length=10)
+    semester = models.ForeignKey('lecture.Semester', on_delete=models.CASCADE)
     strategy = models.TextField()
     type = MultiSelectField(choices=EXAM_TYPE_CHOICES, null=True)  # 문제유형, 필수 아님
     examples = models.TextField()   # tab으로 나뉘어지도록 할 수 있으면 좋을듯
