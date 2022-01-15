@@ -117,14 +117,14 @@ class LectureEvaluation(models.Model):
     writer = models.ForeignKey('user.User', on_delete=models.SET_NULL, null=True)
 
     # 성적반영관련 (grading)
-    assignment = models.SmallIntegerField(default=1, choices=AMOUNT_CHOICES)
-    team_project = models.SmallIntegerField(default=1, choices=AMOUNT_CHOICES)
-    grade = models.SmallIntegerField(default=2, choices=GRADE_CHOICES)
-    attendance = models.SmallIntegerField(default=3, choices=ATTENDANCE_CHOICES)
-    exam = models.SmallIntegerField(default=2, choices=EXAM_FREQUENCY_CHOICES)
+    assignment = models.SmallIntegerField(choices=AMOUNT_CHOICES)
+    team_project = models.SmallIntegerField(choices=AMOUNT_CHOICES)
+    grade = models.SmallIntegerField(choices=GRADE_CHOICES)
+    attendance = models.SmallIntegerField(choices=ATTENDANCE_CHOICES)
+    exam = models.SmallIntegerField(choices=EXAM_FREQUENCY_CHOICES)
 
     # 총평 섹션
-    rating = models.SmallIntegerField(default=3, choices=RATING_CHOICES)
+    rating = models.SmallIntegerField(choices=RATING_CHOICES)
     semester = models.ForeignKey('lecture.Semester', on_delete=models.CASCADE)
 
     # 평가내용
@@ -162,7 +162,7 @@ class ExamInfo(models.Model):
     # 강의평을 읽을 수 있는 유저
     readable_users = models.ManyToManyField('user.User', related_name='readable_evaluations')
 
-    exam = models.SmallIntegerField(default=0, choices=EXAM_CHOICES)    # 응시한 시험 종류
+    exam = models.SmallIntegerField(choices=EXAM_CHOICES)    # 응시한 시험 종류
     semester = models.ForeignKey('lecture.Semester', on_delete=models.CASCADE)
     strategy = models.TextField()
     type = MultiSelectField(choices=EXAM_TYPE_CHOICES, null=True)  # 문제유형, 필수 아님
