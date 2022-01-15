@@ -9,25 +9,19 @@ from lecture.models import Course, LectureEvaluation, Semester
 from lecture.serializers import CourseForEvalSerializer, EvalListSerializer, EvalCreateSerializer
 
 
-# class CourseInfoForEvalView(APIView):
-#     permission_classes = (permissions.IsAuthenticated,)
+class CourseInfoForEvalView(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
 
-    # def get(self, request, pk=None):
-    # course = get_object_or_404(Course, pk=pk)
-    #
-    # semesters = course.semester.split(',')
-    # sem_options = []
-    #
-    # for sem in semesters:
-    #     sem = sem.strip()
-    #     split = sem.split('-')
-    #     option = split[0]+'년 '+split[1]+'학기'
-    #     sem_options.append(option)
-    #
-    # return JsonResponse({
-    #     'course': CourseForEvalSerializer(course).data,
-    #     'semester_option': sem_options,
-    # }, status=status.HTTP_200_OK)
+    def get(self, request, pk=None):
+        course = get_object_or_404(Course, pk=pk)
+
+        course_sem = set()
+        for obj in course.lecture_set.all():
+            course_sem.add(obj.semester.name)
+
+        course_sem = sorted(list(course_sem), reverse=True)
+        serializer = CourseForEvalSerializer(course, context={'sem': course_sem})
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class RecentEvalView(APIView):

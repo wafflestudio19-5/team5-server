@@ -1,16 +1,37 @@
 from rest_framework import serializers
 
+import re
+
 from lecture.models import Course, LectureEvaluation
 
 
 class CourseForEvalSerializer(serializers.ModelSerializer):
+    semester = serializers.SerializerMethodField()
+    sem_options = serializers.SerializerMethodField()
+
     class Meta:
         model = Course
         fields = (
             'title',
             'instructor',
             'semester',
+            'sem_options',
         )
+
+    def get_semester(self, course):
+        semester = ""
+        sem = self.context['sem']
+        for i in range(len(sem)-1):
+            num = re.findall(r'\d+', sem[i])
+            semester += (num[0]+"-"+num[1]+", ")
+
+        num = re.findall(r'\d+', sem[len(sem)-1])
+        semester += (num[0]+"-"+num[1])
+
+        return semester
+
+    def get_sem_options(self, course):
+        return self.context['sem']
 
 
 class EvalListSerializer(serializers.ModelSerializer):
