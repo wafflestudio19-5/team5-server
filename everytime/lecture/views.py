@@ -1,3 +1,4 @@
+from django.db.models import Avg, Count
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 
@@ -73,8 +74,44 @@ class EvaluationView(APIView):
 #     pass
 #
 #
-# class EvalSummaryView:
-#     pass
+class EvalSummaryView(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get(self, request, pk):
+        course = get_object_or_404(Course, pk=pk)
+        evals = LectureEvaluation.objects.filter(course=course)
+
+        if not evals.exists():
+            return JsonResponse({
+                'has_evals': False,
+            }, status=status.HTTP_200_OK)
+
+
+        avg_rating = round(evals.aggregate(Avg('rating')).get('rating__avg'), 2)
+        # 아래 다섯개의 값은 most common 값을 들고오도록 함
+        assignment = evals.values_list('assignment', flat=True).annotate(count=Count('assignment')).order_by("-count")[0]
+        team = evals.values_list('team_project', flat=True).annotate(count=Count('team_project')).order_by("-count")[0]
+        grade = evals.values_list('grade', flat=True).annotate(count=Count('grade')).order_by("-count")[0]
+        attendance = evals.values_list('attendance', flat=True).annotate(count=Count('attendance')).order_by("-count")[0]
+        exam_freq = evals.values_list('exam', flat=True).annotate(count=Count('exam')).order_by("-count")[0]
+
+        # key에 해당하는 위의 값들을 value로 변환
+        dict_AMOUNT_CHOICE = dict(LectureEvaluation.AMOUNT_CHOICES)
+        assignment = dict_AMOUNT_CHOICE[assignment]
+        team = dict_AMOUNT_CHOICE[team]
+        grade = dict(LectureEvaluation.GRADE_CHOICES)[grade]
+        attendance = dict(LectureEvaluation.ATTENDANCE_CHOICES)[attendance]
+        exam_freq = dict(LectureEvaluation.EXAM_FREQUENCY_CHOICES)[exam_freq]
+
+        return JsonResponse({
+            'has_evals': True,
+            'rating': avg_rating,
+            'assignment': assignment,
+            'team': team,
+            'grade': grade,
+            'attendance': attendance,
+            'exam_freq': exam_freq,
+        }, status=status.HTTP_200_OK)
 #
 #
 # class ExamInfoView:
