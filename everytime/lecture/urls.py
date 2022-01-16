@@ -4,7 +4,7 @@ from lecture import views
 
 urlpatterns = [
     path('recent/', views.RecentEvalView.as_view(), name='recent_evaluation_list'), # 스크롤 구현해야함
-    # path('mine/', views.MyCourseView.as_view(), name='my_course_list'),
+    path('mine/', views.MyCourseView.as_view(), name='my_course_list'),
     path('<int:pk>/', views.CourseInfoForEvalView.as_view(), name='course_info'),
     path('<int:pk>/summary/', views.EvalSummaryView.as_view(), name='evaluation_summary'),
     path('<int:pk>/eval/', views.EvaluationView.as_view(), name='get_or_create_evaluation'),

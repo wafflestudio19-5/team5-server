@@ -107,5 +107,23 @@ class CourseSearchSerializer(serializers.ModelSerializer):
         return avg_rating
 
 
+class MyCourseSerializer(serializers.ModelSerializer):
+    is_evaluated = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Course
+        fields = (
+            'id',
+            'title',
+            'instructor',
+            'is_evaluated',
+        )
+
+    def get_is_evaluated(self, course):
+        if course.lectureevaluation_set.filter(writer=self.context['user']).exists():
+            return True
+        else:
+            return False
+
 # class ExamInfoSerializer(serializers.Modelserializer):
 #     is_mine = serializers.SerializerMethodField()

@@ -1,14 +1,15 @@
-from django.db.models import Avg, Count, Q
+from django.db.models import Avg, Count, Q, Sum
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 
 from rest_framework import permissions, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
-from lecture.models import Course, LectureEvaluation, Semester, TimeTable
+from lecture.models import Course, LectureEvaluation, Semester, TimeTable, Point
 from lecture.serializers import CourseForEvalSerializer, EvalListSerializer, EvalCreateSerializer, \
-    CourseSearchSerializer
+    CourseSearchSerializer, MyCourseSerializer
 
 
 class CourseInfoForEvalView(APIView):
@@ -16,6 +17,8 @@ class CourseInfoForEvalView(APIView):
 
     def get(self, request, pk=None):
         course = get_object_or_404(Course, pk=pk)
+        if course.self_made:
+            return Response('자신이 직접 추가한 강의에는 강의평가가 불가합니다.', status=status.HTTP_400_BAD_REQUEST)
 
         if not course.lecture_set.exists():
             course_sem = None
@@ -46,6 +49,10 @@ class EvaluationView(APIView):
 
         if course.self_made:
             return Response('자신이 직접 추가한 강의에는 강의평을 추가할 수 없습니다.', status=status.HTTP_400_BAD_REQUEST)
+        if course.lectureevaluation_set.filter(writer=request.user).exists():
+            return JsonResponse({
+                'is_success': False     # "이미 강의평을 등록한 과목입니다.\n한 과목당 한 개의 강의평만 등록할 수 있습니다."
+            })
 
         data = request.data.copy()
         sem = data.get('semester')  # string 값이 들어왔다 치면
@@ -69,7 +76,10 @@ class EvaluationView(APIView):
 
         evals = LectureEvaluation.objects.filter(course=course).order_by('-created_at')
         serializer = EvalListSerializer(evals, many=True, context={'user': request.user})
-        return Response(serializer.data, status.HTTP_201_CREATED)
+        return JsonResponse({
+            'is_success': True,
+            'evaluations': serializer.data,
+        }, status.HTTP_201_CREATED)
 
     def get(self, request, pk=None):
         course = get_object_or_404(Course, pk=pk)
@@ -81,11 +91,40 @@ class EvaluationView(APIView):
         return Response(serializer.data, status.HTTP_200_OK)
 
 
-# class MyCourseView(APIView):
-#     permission_classes = (permissions.IsAuthenticated,)
-#
-#     def get(self, request):
-#         timetable = TimeTable.objects.get(user=request.user, is_default=True, )
+class MyCourseView(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get(self, request):
+        # 강의평가 탭의 '내 강의평'에 뜨는 강의들이 언제 새학기 걸로 바뀌는지 모르겠어서
+        # 9월~2월은 2학기의 기본시간표 리스트가 뜨고, 3월~8월은 1학기의 기본 시간표 리스트가 뜬다고 가정
+
+        # semester 처리
+        date = str(timezone.now())[:10].split('-')
+        year = int(date[0])
+        month = int(date[1])
+
+        if month in range(3, 9):
+            sem = str(year)+'년 1학기'
+        elif month in range(1, 3):
+            sem = str(year-1)+'년 2학기'
+        else:
+            sem = str(year)+'년 2학기'
+
+        sem_id = Semester.objects.get(name=sem).id
+
+        if TimeTable.objects.filter(user=request.user, is_default=True, semester=sem_id).exists():
+            timetable = TimeTable.objects.get(user=request.user, is_default=True, semester=sem_id)
+            my_course_ids = timetable.lecture.values_list('course')
+            my_courses = Course.objects.filter(id__in=my_course_ids, self_made=False)
+        else:
+            my_courses = None
+
+        point = Point.objects.filter(user=request.user).aggregate(Sum('point'))
+
+        return JsonResponse({
+            'point': point.get('point__sum'),
+            'courses': MyCourseSerializer(my_courses, many=True, context={'user': request.user}).data
+        }, status=status.HTTP_200_OK)
 
 
 class EvalSummaryView(APIView):
