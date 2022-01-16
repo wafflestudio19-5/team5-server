@@ -1,4 +1,4 @@
-from django.db.models import Avg, Count
+from django.db.models import Avg, Count, Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 
@@ -7,7 +7,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 
 from lecture.models import Course, LectureEvaluation, Semester, TimeTable
-from lecture.serializers import CourseForEvalSerializer, EvalListSerializer, EvalCreateSerializer
+from lecture.serializers import CourseForEvalSerializer, EvalListSerializer, EvalCreateSerializer, \
+    CourseSearchSerializer
 
 
 class CourseInfoForEvalView(APIView):
@@ -16,11 +17,14 @@ class CourseInfoForEvalView(APIView):
     def get(self, request, pk=None):
         course = get_object_or_404(Course, pk=pk)
 
-        course_sem = set()
-        for obj in course.lecture_set.all():
-            course_sem.add(obj.semester.name)
+        if not course.lecture_set.exists():
+            course_sem = None
+        else:
+            course_sem = set()
+            for obj in course.lecture_set.all():
+                course_sem.add(obj.semester.name)
+            course_sem = sorted(list(course_sem), reverse=True)
 
-        course_sem = sorted(list(course_sem), reverse=True)
         serializer = CourseForEvalSerializer(course, context={'sem': course_sem})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -39,6 +43,10 @@ class EvaluationView(APIView):
 
     def post(self, request, pk=None):
         course = get_object_or_404(Course, pk=pk)
+
+        if course.self_made:
+            return Response('자신이 직접 추가한 강의에는 강의평을 추가할 수 없습니다.', status=status.HTTP_400_BAD_REQUEST)
+
         data = request.data.copy()
         sem = data.get('semester')  # string 값이 들어왔다 치면
         # semester validation은 따로
@@ -65,6 +73,9 @@ class EvaluationView(APIView):
 
     def get(self, request, pk=None):
         course = get_object_or_404(Course, pk=pk)
+        if course.self_made:
+            return Response('자신이 직접 추가한 강의에는 강의평이 존재하지 않습니다.', status=status.HTTP_400_BAD_REQUEST)
+
         evals = LectureEvaluation.objects.filter(course=course).order_by('-created_at')
         serializer = EvalListSerializer(evals, many=True, context={'user': request.user})
         return Response(serializer.data, status.HTTP_200_OK)
@@ -82,13 +93,14 @@ class EvalSummaryView(APIView):
 
     def get(self, request, pk):
         course = get_object_or_404(Course, pk=pk)
+        if course.self_made:
+            return Response('자신이 직접 추가한 강의에는 강의평이 존재하지 않습니다.', status=status.HTTP_400_BAD_REQUEST)
         evals = LectureEvaluation.objects.filter(course=course)
 
         if not evals.exists():
             return JsonResponse({
                 'has_evals': False,
             }, status=status.HTTP_200_OK)
-
 
         avg_rating = round(evals.aggregate(Avg('rating')).get('rating__avg'), 2)
         # 아래 다섯개의 값은 most common 값을 들고오도록 함
@@ -115,15 +127,36 @@ class EvalSummaryView(APIView):
             'attendance': attendance,
             'exam_freq': exam_freq,
         }, status=status.HTTP_200_OK)
+
+
 #
 #
 # class ExamInfoView:
 #     pass
 #
 #
-# class CourseSearchView:
-#     pass
-#
+class CourseSearchView(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def post(self, request):
+        data = request.data
+
+        search = data.get('search')
+        if search is None or len(search) == 1:
+            return JsonResponse({
+                'is_success': False,  # 검색어를 두 글자 이상 입력해주세요.
+            })
+
+        result = Course.objects.filter(self_made=False)
+        result = result.filter(Q(title__icontains=search) | Q(instructor__icontains=search))
+        if not result.exists():
+            return Response(None, status.HTTP_200_OK)
+
+        # 별점이 높은 순으로 정렬 --> 별점이 같다면 id가 빠른 순으로 정렬
+        result = result.annotate(avg_rating=Avg('lectureevaluation__rating')).order_by("-avg_rating")
+        serializer = CourseSearchSerializer(result, many=True)
+        return Response(serializer.data, status.HTTP_200_OK)
+
 
 class LikeEvaluationView(APIView):
     permission_classes = (permissions.IsAuthenticated,)

@@ -1,3 +1,4 @@
+from django.db.models import Avg
 from rest_framework import serializers
 
 import re
@@ -12,6 +13,7 @@ class CourseForEvalSerializer(serializers.ModelSerializer):
     class Meta:
         model = Course
         fields = (
+            'id',
             'title',
             'instructor',
             'semester',
@@ -21,12 +23,13 @@ class CourseForEvalSerializer(serializers.ModelSerializer):
     def get_semester(self, course):
         semester = ""
         sem = self.context['sem']
-        for i in range(len(sem)-1):
-            num = re.findall(r'\d+', sem[i])
-            semester += (num[0]+"-"+num[1]+", ")
+        if sem is not None:
+            for i in range(len(sem)-1):
+                num = re.findall(r'\d+', sem[i])
+                semester += (num[0]+"-"+num[1]+", ")
 
-        num = re.findall(r'\d+', sem[len(sem)-1])
-        semester += (num[0]+"-"+num[1])
+            num = re.findall(r'\d+', sem[len(sem)-1])
+            semester += (num[0]+"-"+num[1])
 
         return semester
 
@@ -80,6 +83,29 @@ class EvalCreateSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         eval = LectureEvaluation.objects.create(**validated_data)
         return eval
+
+
+class CourseSearchSerializer(serializers.ModelSerializer):
+    rating = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Course
+        fields = (
+            'id',
+            'title',
+            'instructor',
+            'rating'
+        )
+
+    def get_rating(self, course):
+        evals = LectureEvaluation.objects.filter(course=course)
+
+        if not evals.exists():
+            return 0
+
+        avg_rating = round(evals.aggregate(Avg('rating')).get('rating__avg'), 1)
+        return avg_rating
+
 
 # class ExamInfoSerializer(serializers.Modelserializer):
 #     is_mine = serializers.SerializerMethodField()
