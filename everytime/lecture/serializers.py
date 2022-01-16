@@ -48,6 +48,7 @@ class EvalListSerializer(serializers.ModelSerializer):
             'semester',
             'content',
             'is_mine',
+            'num_of_likes'
         )
 
     def get_course(self, obj):
@@ -67,7 +68,7 @@ class EvalCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = LectureEvaluation
-        exclude = ['course', 'like_users']
+        exclude = ['course', 'like_users', 'num_of_likes']
 
     def validate(self, data):
         content = data.get('content')

@@ -6,7 +6,7 @@ from rest_framework import permissions, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
-from lecture.models import Course, LectureEvaluation, Semester
+from lecture.models import Course, LectureEvaluation, Semester, TimeTable
 from lecture.serializers import CourseForEvalSerializer, EvalListSerializer, EvalCreateSerializer
 
 
@@ -70,10 +70,13 @@ class EvaluationView(APIView):
         return Response(serializer.data, status.HTTP_200_OK)
 
 
-# class MyCourseView:
-#     pass
+# class MyCourseView(APIView):
+#     permission_classes = (permissions.IsAuthenticated,)
 #
-#
+#     def get(self, request):
+#         timetable = TimeTable.objects.get(user=request.user, is_default=True, )
+
+
 class EvalSummaryView(APIView):
     permission_classes = (permissions.IsAuthenticated,)
 
@@ -121,9 +124,27 @@ class EvalSummaryView(APIView):
 # class CourseSearchView:
 #     pass
 #
-#
-# class LikeEvaluationView:
-#     pass
+
+class LikeEvaluationView(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def post(self, request, pk, eval_pk):
+        # course = get_object_or_404(Course, pk=pk) 아래 eval의 course가 이 course인지 확인할 순 있겠지만 하지 않는걸로,,
+        eval = get_object_or_404(LectureEvaluation, pk=eval_pk)
+
+        if request.user in eval.like_users.all():  # 이미 추천을 누른 사람이라면
+            return JsonResponse({
+                'is_success': False,
+                'error_code': 1  # '이미 추천하였습니다.'를 담은 팝업창이 떠야함
+            })
+        else:
+            eval.like_users.add(request.user)
+            eval.num_of_likes += 1
+            eval.save()
+            return JsonResponse({
+                'is_success': True,
+                'value': eval.num_of_likes
+            })
 #
 #
 # class LikeExamInfoView:
