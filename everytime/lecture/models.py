@@ -20,11 +20,11 @@ class Lecture(models.Model):
     credits = models.SmallIntegerField()
     lecture = models.SmallIntegerField()  # 뭘 의미하는지 모르겠음
     laboratory = models.SmallIntegerField()
-    type = models.CharField(max_length=30, blank=True)
+    # type = models.CharField(max_length=30, blank=True)
     cart = models.IntegerField()
     quota = models.IntegerField()
     remark = models.TextField(null=True)
-    language = models.CharField(max_length=4)
+    # language = models.CharField(max_length=4)
     semester = models.ForeignKey('lecture.Semester', on_delete=models.CASCADE)
     self_made = models.BooleanField(default=False)
 
