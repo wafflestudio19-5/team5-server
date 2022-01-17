@@ -1,5 +1,5 @@
 from django.http import JsonResponse
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import redirect
 from django.utils import timezone
 
 from rest_framework import permissions
@@ -8,6 +8,7 @@ from rest_framework.views import APIView
 import datetime
 
 from comment.models import Comment
+from everytime.utils import get_object_or_404
 
 
 # '공감'버튼을 누르면 '이 댓글에 공감하십니까?'라는 팝업창이뜨고, '확인' 버튼을 누르면 호출될 API

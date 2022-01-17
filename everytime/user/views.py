@@ -25,6 +25,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 # from rest_framework_jwt.settings import api_settings
 
+from everytime.exceptions import AlreadyLogin, SocialLoginError, DatabaseError, FieldError, DuplicationError
+
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
@@ -49,7 +51,7 @@ class UserSignUpView(APIView):
         try:
             user, jwt_token = serializer.save()
         except IntegrityError:
-            return Response(status=status.HTTP_409_CONFLICT, data='DATABASE ERROR : 서버 관리자에게 문의주세요.')
+            raise DatabaseError()
 
         Point.objects.create(user=user, reason='기본 포인트 지급', point=20)
 
@@ -99,75 +101,58 @@ class KaKaoLoginView(APIView):
         REDIRECT_URI = 'http://d2hw7p0vhygoha.cloudfront.net/social/kakao'
 
         API_HOST = f'https://kauth.kakao.com/oauth/authorize?client_id={REST_API_KEY}&redirect_uri={REDIRECT_URI}&response_type=code'
-        try:
-            if request.user.is_authenticated:
-                raise SocialLoginException("User already logged in")
+        if request.user.is_authenticated:
+            raise AlreadyLogin()
 
-            return redirect(API_HOST)
-        except KakaoException as error:
-            messages.error(request, error)
-            return redirect("user:login")
-        except SocialLoginException as error:
-            messages.error(request, error)
-            return redirect("user:login")
+        return redirect(API_HOST)
 
 @api_view(["POST"])
 @permission_classes([permissions.AllowAny])
 def kakao_callback(request):
     # return HttpResponse('로그인 실패')
+    code = request.data.get("code")
+    REST_API_KEY = getattr(settings, 'SOCIAL_AUTH_KAKAO_SECRET')
+    # BASE_URL = getattr(settings, 'BASE_URL')
+    REDIRECT_URI = 'http://d2hw7p0vhygoha.cloudfront.net/social/kakao'
+    token_response = requests.get(
+        f"https://kauth.kakao.com/oauth/token?grant_type=authorization_code&client_id={REST_API_KEY}&redirect_uri={REDIRECT_URI}&code={code}"
+    )
+    token_json = token_response.json()
+
+    error = token_json.get("error", None)
+    if error is not None:
+        raise SocialLoginError(error)
+
+    access_token = token_json.get("access_token")
+
+    profile_req = requests.get(
+        "https://kapi.kakao.com/v2/user/me",
+        headers={"Authorization": f"Bearer {access_token}"},
+    )
+    profile_req_status = profile_req.status_code
+    if profile_req_status != 200:
+        raise SocialLoginError('프로필 정보를 가져오는 데에 실패하였습니다.')
+    profile_json = profile_req.json()
+    email = profile_json.get("kakao_account").get("email")
+    social_id = int(profile_json.get('id', -1))
     try:
-        code = request.data.get("code")
-        REST_API_KEY = getattr(settings, 'SOCIAL_AUTH_KAKAO_SECRET')
-        # BASE_URL = getattr(settings, 'BASE_URL')
-        REDIRECT_URI = 'http://d2hw7p0vhygoha.cloudfront.net/social/kakao'
-        token_response = requests.get(
-            f"https://kauth.kakao.com/oauth/token?grant_type=authorization_code&client_id={REST_API_KEY}&redirect_uri={REDIRECT_URI}&code={code}"
-        )
-        token_json = token_response.json()
+        social_account = SocialAccount.objects.get(social_id=social_id, provider='kakao')
+        user = social_account.user
+        jwt_token = jwt_token_of(user)
+        return JsonResponse({
+            'login': True,
+            'social_user': social_id, # -> username으로 사용
+            'token': jwt_token
+        })
+    except SocialAccount.DoesNotExist:
+        # 가입이 안 된 유저일 때 별도 가입페이지로 redirect하는 처리를 추가로 해줄 예정
+        return JsonResponse({
+            'login': False,
+            'social_id': social_id,
+            'email': email,
+            'provider': 'kakao'
+        })
 
-        error = token_json.get("error", None)
-        if error is not None:
-            raise KakaoException()
-
-        access_token = token_json.get("access_token")
-
-        profile_request = requests.get(
-            "https://kapi.kakao.com/v2/user/me",
-            headers={"Authorization": f"Bearer {access_token}"},
-        )
-        profile_json = profile_request.json()
-        email = profile_json.get("kakao_account").get("email")
-        social_id = int(profile_json.get('id', -1))
-        try:
-            social_account = SocialAccount.objects.get(social_id=social_id, provider='kakao')
-            user = social_account.user
-            jwt_token = jwt_token_of(user)
-            return JsonResponse({
-                'login': True,
-                'social_user': social_id, # -> username으로 사용
-                'token': jwt_token
-            })
-        except SocialAccount.DoesNotExist:
-            # 가입이 안 된 유저일 때 별도 가입페이지로 redirect하는 처리를 추가로 해줄 예정
-            return JsonResponse({
-                'login': False,
-                'social_id': social_id,
-                'email': email,
-                'provider': 'kakao'
-            })
-    except KakaoException:
-        return HttpResponse('Login failed')
-
-
-class KakaoException(APIException):
-    status_code = status.HTTP_400_BAD_REQUEST
-    default_code = 'bad_request'
-    default_detail = 'KakaoException'
-
-class SocialLoginException(APIException):
-    status_code = status.HTTP_400_BAD_REQUEST
-    default_code = 'bad_request'
-    default_detail = 'SocialLoginException'
 
       
 
@@ -185,6 +170,9 @@ class GoogleLoginView(APIView):
         scope = "https://www.googleapis.com/auth/userinfo.profile" + \
                 " https://www.googleapis.com/auth/userinfo.email"
         client_id = getattr(settings, "SOCIAL_AUTH_GOOGLE_CLIENT_ID")
+        if request.user.is_authenticated:
+            raise AlreadyLogin()
+
         return redirect(f"https://accounts.google.com/o/oauth2/v2/auth?client_id={client_id}&response_type=code&redirect_uri={GOOGLE_CALLBACK_URI}&scope={scope}")
 
 @api_view(["POST"])
@@ -204,7 +192,7 @@ def google_callback(request):
     token_req_json = token_req.json()
     error = token_req_json.get("error")
     if error is not None:
-        raise JSONDecodeError(error)
+        raise SocialLoginError(error)
     access_token = token_req_json.get('access_token')
     """
     Profile Request
@@ -213,7 +201,7 @@ def google_callback(request):
         f"https://www.googleapis.com/oauth2/v1/userinfo?alt=json&access_token={access_token}")
     profile_req_status = profile_req.status_code
     if profile_req_status != 200:
-        return JsonResponse({'err_msg': 'failed to get profile'}, status=status.HTTP_400_BAD_REQUEST)
+        raise SocialLoginError('프로필 정보를 가져오는 데에 실패하였습니다.')
     profile_req_json = profile_req.json()
     social_id = profile_req_json.get('id')
     email = profile_req_json.get('email')
@@ -249,8 +237,7 @@ class NaverLoginView(APIView):
         NAVER_CALLBACK_URI = 'http://d2hw7p0vhygoha.cloudfront.net/social/naver'
         CLIENT_ID = getattr(settings, 'SOCIAL_AUTH_NAVER_CLIENT_ID')
         if request.user.is_authenticated:
-            messages.error(request, '이미 로그인된 유저입니다.')
-            return redirect(BASE_URL)
+            raise AlreadyLogin()
         # Create random state
         STATE = ''.join((random.choice(string.digits)) for x in range(15))
         request.session['original_state'] = STATE
@@ -282,8 +269,7 @@ def naver_callback(request):
 
     # token을 제대로 받아오지 못했다면
     if not token_req.ok:
-        messages.error(request, token_req_json.get('error'), extra_tags='danger')
-        return redirect('user:login')
+        raise SocialLoginError(token_req_json.get('error'))
 
     access_token = token_req_json.get('access_token')
     print(access_token)
@@ -292,8 +278,7 @@ def naver_callback(request):
     profile_req = requests.get('https://openapi.naver.com/v1/nid/me', headers={'Authorization': '{} {}'.format('Bearer', access_token)})
     profile_req_status = profile_req.status_code
     if profile_req_status != 200:
-        messages.error(request, '프로필 정보를 가져오는 데에 실패하였습니다.', extra_tags='danger')
-        return redirect('user:login')
+        raise SocialLoginError('프로필 정보를 가져오는 데에 실패하였습니다.')
 
     profile_req_json = profile_req.json()['response']
     social_id = profile_req_json.get('id')
@@ -327,7 +312,7 @@ class SocialUserSignUpView(APIView):
         social_id = data.get('social_id')
         provider = data.get('provider')
         if SocialAccount.objects.filter(social_id=social_id, provider=provider).exists():
-            return JsonResponse({"error": "이미 존재하는 소셜 계정 유저입니다."}, status=status.HTTP_400_BAD_REQUEST)
+            raise DuplicationError("이미 존재하는 소셜 계정 유저입니다.")
 
         # requests.data의 'email'에 대한 전제사항
         # 소셜로그인 callback 함수에서 JsonResponse로 반환된 email이 None이 아니라면, 그 값을 가짐 (사용자가 따로 입력할 수 없도록 프론트단에서 처리)
@@ -336,7 +321,7 @@ class SocialUserSignUpView(APIView):
         # 이메일 중복 처리 - 소셜계정의 이메일로 이미 일반 회원가입을 한 상태일 때, 소셜 계정을 기존회원정보와 연동
         social_email = data.get('email')
         if not social_email:
-            return JsonResponse({"email": "이메일을 입력하세요."}, status=status.HTTP_400_BAD_REQUEST)
+            raise FieldError("이메일을 입력하세요.")
         if User.objects.filter(email=social_email).exists():
             user = User.objects.get(email=social_email)
             SocialAccount.objects.create(social_id=social_id, provider=provider, user=user)
@@ -357,7 +342,7 @@ class SocialUserSignUpView(APIView):
         try:
             user, jwt_token = serializer.save()
         except IntegrityError:
-            return Response(status=status.HTTP_409_CONFLICT, data='DATABASE ERROR : 서버 관리자에게 문의주세요.')
+            raise DatabaseError()
 
         return Response({
             'social_user': user.username,   # social_id 값임
@@ -370,8 +355,8 @@ class VerifyingMailSendView(APIView):
 
     def post(self, request):
         user = request.user
-        if hasattr(user,school_email):
-            return JsonResponse({"message": "이미 학교 인증을 마친 계정입니다."}, status=400)
+        if hasattr(user, 'school_email'):
+            raise DuplicationError("이미 학교 인증을 마친 계정입니다.")
 
         data = request.data
         email = data['email']

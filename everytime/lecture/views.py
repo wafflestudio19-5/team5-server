@@ -1,12 +1,11 @@
 from django.http import JsonResponse
-from django.shortcuts import get_object_or_404
 
 from rest_framework import permissions, status
 from rest_framework.views import APIView
 
 from lecture.models import Course
 from lecture.serializers import CourseForEvalSerializer
-
+from everytime.utils import get_object_or_404
 
 class CourseForEvalView(APIView):
     permission_classes = (permissions.IsAuthenticated,)

@@ -1,10 +1,8 @@
 import pytz
-from django.shortcuts import render, get_object_or_404
-# from django.core.paginator import Paginator
 from django.http import JsonResponse
 from django.utils import timezone
 
-from rest_framework import status, viewsets, permissions, exceptions
+from rest_framework import status, viewsets, permissions
 from rest_framework.views import APIView
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -21,7 +19,8 @@ import datetime
 import re
 from pytz import utc
 
-from everytime.utils import ViewSetActionPermissionMixin
+from everytime.exceptions import NotAllowed, FieldError, NotFound
+from everytime.utils import ViewSetActionPermissionMixin, get_object_or_404
 
 # request.data안에 새로운 Tag를 찾아서 데이터베이스에 저장
 def create_tag(data):
@@ -71,13 +70,13 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
     def list(self, request):
         board = request.query_params.get('board')
         if board is None:
-            return Response('board를 query parameter로 입력해주세요.', status=status.HTTP_400_BAD_REQUEST)
+            raise FieldError('board를 query parameter로 입력해주세요.')
         
         elif board not in ['hot', 'best']:  # hot, best를 제외한 게시판은 여기서 처리
             try:
                 board = Board.objects.get(id=board)
             except Board.DoesNotExist:
-                return Response("존재하지 않는 게시판입니다. board를 확인해주세요.", status=status.HTTP_400_BAD_REQUEST)
+                raise NotFound("존재하지 않는 게시판입니다. board를 확인해주세요.")
 
             # 하위게시판이 아닌 일반 게시판의 글을 불러오길 원한다면
             if board.head_board is None:
@@ -106,7 +105,7 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
                 first_half = bool(request.query_params.get('first_half', (datetime.datetime.now().month < 7)))
             # query param으로 int/bool 변환가능한 값이 입력되지 않는 경우를 대비하여
             except ValueError:
-                return Response('query parameter의 year 또는 first_half 값을 확인해주세요.', status=status.HTTP_400_BAD_REQUEST)
+                raise FieldError('query parameter의 year 또는 first_half 값을 확인해주세요.')
             best_posts = BestBoard.objects.filter(year=year, first_half=first_half).values('post')
             queryset = Post.objects.filter(id__in=best_posts).order_by('-num_of_likes')
             
@@ -118,18 +117,14 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
         post = get_object_or_404(Post, pk=pk)
         # 자신이 쓴 글이 아니면 프론트에서 수정 버튼이 존재하지 않을테지만,
         if post.writer != request.user:
-            return JsonResponse({
-                'is_success': False
-            }, status=status.HTTP_400_BAD_REQUEST)
+            raise NotAllowed('글 작성자가 아닙니다.')
 
         # 게시글이 질문 글이고 댓글이 존재한다면,
         # 수정 가능한 화면이 뜨고 글 내용을 수정할 수는 있지만 '수정'버튼을 누르면
         # '댓글이 달린 이후에는 글을 수정 및 삭제할 수 없습니다. 그래도 작성하시겠습니까?'라는 팝업메시지 이후
         # '질문 글은 댓글이 달린 이후에는 수정할 수 없습니다.'메시지가 뜸
         if post.is_question and post.comment_set.exists():
-            return JsonResponse({
-                'is_success': False
-            }, status=status.HTTP_400_BAD_REQUEST)
+            raise NotAllowed('질문 글은 댓글이 달린 이후에는 수정/삭제할 수 없습니다.')
 
         tags = list(post.tags.all())
         data = request.data
@@ -137,7 +132,7 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
 
         create_tag(data)
         if post.writer_id is not user.id:
-            raise exceptions.AuthenticationFailed('글 작성자가 아니므로 글을 수정할 수 없습니다.')
+            raise NotAllowed('글 작성자가 아니므로 글을 수정할 수 없습니다.')
 
         serializer = self.get_serializer(post, data=data, partial=True)
         serializer.is_valid(raise_exception=True)
@@ -154,14 +149,10 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
         post = get_object_or_404(Post, pk=pk)
         # 자신이 쓴 글이 아니면 프론트에서 삭제 버튼이 존재하지 않을테지만,
         if post.writer != request.user:
-            return JsonResponse({
-                'is_success': False
-            }, status=status.HTTP_400_BAD_REQUEST)
+            raise NotAllowed('글 작성자가 아닙니다.')
 
         if post.is_question and post.comment_set.exists():  # 게시글이 질문 글이고 댓글이 존재한다면
-            return JsonResponse({
-                'is_success': False # '질문 글은 댓글이 달린 이후에는 삭제할 수 없습니다.' 팝업메시지
-            }, status=status.HTTP_400_BAD_REQUEST )
+            raise NotAllowed('질문 글은 댓글이 달린 이후에는 수정/삭제할 수 없습니다.')
 
         tags = list(post.tags.all())  # 이렇게 하지 않으면 post.delete() 이후에 tags도 비어있게 됨.
         for image in post.postimage_set.all():
@@ -202,9 +193,7 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
         user = request.user
         comment = get_object_or_404(Comment, pk=comment_id)
         if comment.writer != user:
-            return JsonResponse({
-                'is_success': False
-            }, status=status.HTTP_400_BAD_REQUEST)
+            raise NotAllowed('댓글 작성자가 아닙니다.')
         if comment.head_comment is not None:                # 지울려는 댓글이 대댓글인 경우 -> 댓글 삭제
             comment.delete()
             if not comment.head_comment.tail_comments.exists() \
@@ -232,7 +221,7 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
         search_set = request.query_params.get('query', '')
         search_set = search_set.split(' ')
         if len(search_set) == 0:
-            return Response('검색어를 입력하십시오.', status.HTTP_400_BAD_REQUEST)
+            raise FieldError('검색어를 입려하세요.')
         if board == '':
             queryset = Post.objects.all().order_by('-id')
             for query in search_set:
@@ -256,15 +245,9 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
         user = request.user
 
         if post in user.like_post.all(): # 이미 공감한 게시글입니다.
-            return JsonResponse({
-                'is_success': False,
-                'error_code': 1
-            })
+            raise NotAllowed('이미 공감한 게시글입니다.')
         elif post.created_at < (timezone.now() - datetime.timedelta(days=365)): # 오래된 글은 공감할 수 없습니다.
-            return JsonResponse({
-                'is_success': False,
-                'error_code': 2
-            })
+            raise NotAllowed('오래된 글은 공감할 수 없습니다.')
         else:
             post.num_of_likes += 1
             post.save()
@@ -294,10 +277,7 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
             user = request.user
 
             if post in user.scrap_post.all(): # 이미 스크랩한 글입니다.
-                return JsonResponse({
-                    'is_success': False,
-                    'error_code': 1
-                })
+                raise NotAllowed('이미 스크랩한 글입니다.')
             else:
                 post.num_of_scrap += 1
                 user.scrap_post.add(post)
@@ -321,7 +301,7 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
                     'value': post.num_of_scrap
                 })
             except:
-                raise exceptions.NotFound('게시글을 찾을 수 없습니다.')
+                raise NotFound('게시글을 찾을 수 없습니다.')
 
 
     @action(

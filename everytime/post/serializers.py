@@ -1,6 +1,7 @@
-from rest_framework import serializers, exceptions
+from rest_framework import serializers
 from .models import Post, Tag, PostImage, PostTag
 from board.models import Board
+from everytime.exceptions import FieldError, NotFound
 
 
 class PostImageSerializer(serializers.ModelSerializer):
@@ -85,13 +86,13 @@ class PostSerializer(serializers.ModelSerializer):
         # board 검증
         board = request.query_params.get('board')
         if board is None:
-            raise serializers.ValidationError("board를 query parameter로 입력해주세요.")
+            raise FieldError("board를 query parameter로 입력해주세요.")
 
         try:
             board = Board.objects.get(id=board)
             validated_data['board'] = board
         except Board.DoesNotExist:
-            raise serializers.ValidationError("존재하지 않는 게시판입니다. board를 확인해주세요.")
+            raise NotFound("존재하지 않는 게시판입니다. board를 확인해주세요.")
 
         # tags 따로 저장하기
         tags = validated_data.pop('tags') if 'tags' in validated_data else None
@@ -100,7 +101,7 @@ class PostSerializer(serializers.ModelSerializer):
         try:
             post = Post.objects.create(**validated_data)
         except TypeError:
-            raise exceptions.ValidationError('올바르지 않은 타입을 입력하셨습니다.')
+            raise FieldError('올바르지 않은 타입을 입력하셨습니다.')
 
         # 게시글과 태그 연결
         if tags is not None:
