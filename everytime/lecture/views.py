@@ -9,7 +9,7 @@ from rest_framework.response import Response
 
 from lecture.models import Course, LectureEvaluation, Semester, TimeTable, Point, ExamInfo, ExamType
 from lecture.serializers import CourseForEvalSerializer, EvalListSerializer, EvalCreateSerializer, \
-    CourseSearchSerializer, MyCourseSerializer, ExamInfoCreateSerializer, ExamInfoListSerializer
+    CourseSearchSerializer, MyCourseSerializer, ExamInfoCreateSerializer, ExamInfoListSerializer, PointSerializer
 
 
 class CourseInfoForEvalView(APIView):
@@ -328,7 +328,16 @@ class UsePointView(APIView):
         return Response(serializer.data, status.HTTP_200_OK)
 
 
-# class MyPointView(APIView):
-#     permission_classes = (permissions.IsAuthenticated,)
-#
-#     def get(self, request):
+class MyPointView(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get(self, request):
+        my_points = Point.objects.filter(user=request.user).order_by('-created_at')
+        serializer = PointSerializer(my_points, many=True)
+
+        point_sum = Point.objects.filter(user=request.user).aggregate(Sum('point'))
+
+        return JsonResponse({
+            'sum': point_sum.get('point__sum'),
+            'details': serializer.data
+        }, status=status.HTTP_200_OK)

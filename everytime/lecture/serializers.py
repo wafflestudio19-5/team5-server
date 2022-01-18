@@ -3,7 +3,7 @@ from rest_framework import serializers
 
 import re
 
-from lecture.models import Course, LectureEvaluation, ExamInfo
+from lecture.models import Course, LectureEvaluation, ExamInfo, Point
 
 
 class CourseForEvalSerializer(serializers.ModelSerializer):
@@ -221,3 +221,19 @@ class ExamInfoListSerializer(serializers.ModelSerializer):
             return obj.examples.split('\t')
         else:
             return None
+
+
+class PointSerializer(serializers.ModelSerializer):
+    created_at = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Point
+        fields = (
+            'id',
+            'point',
+            'reason',
+            'created_at',
+        )
+
+    def get_created_at(self, obj):
+        return str(obj.created_at)
