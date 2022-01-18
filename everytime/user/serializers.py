@@ -11,6 +11,7 @@ import re
 from datetime import date
 
 from user.models import SocialAccount
+from everytime.exceptions import FieldError, DuplicationError, AuthentificationFailed, NotAllowed
 
 User = get_user_model()
 # 더 이상 안 쓰는 API임 (simple JWT로 변경함)
@@ -47,7 +48,7 @@ class UserCreateSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True, max_length=255)
     nickname = serializers.CharField(required=True, max_length=30)
     univ = serializers.CharField(required=True, max_length=50)
-    admission_year = serializers.ChoiceField(choices=User.YEAR_CHOICES, required=True)
+    admission_year = serializers.CharField(required=True, max_length=10)
     profile_picture = serializers.ImageField(required=False, default="images/profile/default.png")
 
     def validate(self, data):
@@ -55,14 +56,14 @@ class UserCreateSerializer(serializers.Serializer):
         pw1 = data.get('password1')
         pw2 = data.get('password2')
         if pw1 != pw2:
-            raise serializers.ValidationError('입력한 두 비밀번호가 다릅니다. 비밀번호를 확인해주세요.')
+            raise FieldError('입력한 두 비밀번호가 다릅니다. 비밀번호를 확인해주세요.')
 
         if not validated_password(pw1):
-            raise serializers.ValidationError('영어, 숫자, 특문이 두종류 이상 조합된 8~20자의 비밀번호만 가능합니다.')
+            raise FieldError('영어, 숫자, 특문이 두종류 이상 조합된 8~20자의 비밀번호만 가능합니다.')
 
         admission_year = data.get('admission_year')
         if (admission_year, admission_year) not in User.YEAR_CHOICES:
-            raise serializers.ValidationError('학번을 올바르게 입력하세요.')
+            raise FieldError('학번을 올바르게 입력하세요.')
 
         username = data.get('username')
         email = data.get('email')
@@ -71,16 +72,16 @@ class UserCreateSerializer(serializers.Serializer):
         queryset = User.objects.filter(username=username) | User.objects.filter(email=email) | User.objects.filter(nickname=nickname)
 
         if queryset.filter(username=username).exists():
-            raise serializers.ValidationError('이미 존재하는 아이디입니다.')
+            raise DuplicationError('이미 존재하는 아이디입니다.')
         if queryset.filter(email=email).exists():
             user = User.objects.get(email=email)
             if SocialAccount.objects.filter(user=user).exists():
                 # 해당 이메일을 활용하여 소셜로그인/가입을 먼저 한 경우
-                raise serializers.ValidationError('소셜계정으로 가입된 이메일입니다. 소셜로그인을 활용해주세요.')
+                raise DuplicationError('소셜계정으로 가입된 이메일입니다. 소셜로그인을 활용해주세요.')
             else:
-                raise serializers.ValidationError('이미 존재하는 이메일입니다.')
+                raise DuplicationError('이미 존재하는 이메일입니다.')
         if queryset.filter(nickname=nickname).exists():
-            raise serializers.ValidationError('이미 존재하는 닉네임입니다.')
+            raise DuplicationError('이미 존재하는 닉네임입니다.')
 
         return data
 
@@ -108,7 +109,7 @@ class UserLoginSerializer(serializers.Serializer):
         user = authenticate(username=username, password=password)
 
         if user is None:
-            raise serializers.ValidationError('아이디 또는 비밀번호를 확인하세요.')
+            raise AuthentificationFailed('아이디 또는 비밀번호를 확인하세요.')
 
         return {
             'username' : user.username,
@@ -134,16 +135,16 @@ class UserProfileUpdateSerializer(serializers.Serializer):
 
         if new_password1 is not None or new_password2 is not None:
             if new_password1 != new_password2:
-                raise serializers.ValidationError('입력하신 두 비밀번호가 일치하지 않습니다.')
+                raise FieldError('입력하신 두 비밀번호가 일치하지 않습니다.')
             if new_password1 == origin_password:
-                raise serializers.ValidationError('새 비밀번호가 기존 비밀번호와 같습니다.')
+                raise FieldError('새 비밀번호가 기존 비밀번호와 같습니다.')
             if not validated_password(new_password1):
-                raise serializers.ValidationError('영어, 숫자, 특문이 두종류 이상 조합된 8~20자의 비밀번호만 가능합니다.')
+                raise FieldError('영어, 숫자, 특문이 두종류 이상 조합된 8~20자의 비밀번호만 가능합니다.')
             data['new_password'] = new_password1
         if user.email == email:
-            raise serializers.ValidationError('새 이메일이 기존 이메일과 같습니다.')
+            raise FieldError('새 이메일이 기존 이메일과 같습니다.')
         if user.nickname == nickname:
-            raise serializers.ValidationError('새 닉네임이 기존 닉네임과 같습니다.')
+            raise FieldError('새 닉네임이 기존 닉네임과 같습니다.')
 
         return data
 
@@ -157,20 +158,20 @@ class UserProfileUpdateSerializer(serializers.Serializer):
         if new_password is not None:
             user_pwcheck = authenticate(username=username, password=origin_password)
             if user_pwcheck is None:
-                raise serializers.ValidationError('계정 비밀번호가 올바르지 않아요.(origin_password field)')
+                raise AuthentificationFailed('계정 비밀번호가 올바르지 않아요.(origin_password field)')
             user.set_password(new_password)
             
         if email is not None:
             user_pwcheck = authenticate(username=username, password=origin_password)
             if user_pwcheck is None:
-                raise serializers.ValidationError('계정 비밀번호가 올바르지 않아요.(origin_password field)')
+                raise AuthentificationFailed('계정 비밀번호가 올바르지 않아요.(origin_password field)')
             user.email = email
             
         if nickname is not None:
             if hasattr(user, 'last_nickname_update'):
                 time = date.today() - user.last_nickname_update
                 if time.days < 30:
-                    raise serializers.ValidationError('닉네임을 변경한지 30일이 지나지 않았습니다.')
+                    raise NotAllowed('닉네임을 변경한지 30일이 지나지 않았습니다.')
             user.nickname = nickname
             user.last_nickname_update = date.today()
 
@@ -203,11 +204,11 @@ class SocialUserCreateSerializer(serializers.Serializer):
         # singup 과정에서 validate 함수 만들기
         admission_year = data.get('admission_year')
         if (admission_year, admission_year) not in User.YEAR_CHOICES:
-            raise serializers.ValidationError('학번을 올바르게 입력하세요.')
+            raise FieldError('학번을 올바르게 입력하세요.')
 
         nickname = data.get('nickname')
         if User.objects.filter(nickname=nickname).exists():
-            raise serializers.ValidationError('이미 존재하는 닉네임입니다.')
+            raise DuplicationError('이미 존재하는 닉네임입니다.')
 
         return data
 

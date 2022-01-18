@@ -1,6 +1,7 @@
-from rest_framework import serializers, exceptions
+from rest_framework import serializers
 from .models import Post, Tag, PostImage, PostTag
 from board.models import Board
+from everytime.exceptions import FieldError, NotFound
 
 
 class PostImageSerializer(serializers.ModelSerializer):
@@ -21,6 +22,7 @@ class PostSerializer(serializers.ModelSerializer):
     num_of_comments = serializers.SerializerMethodField()
     tags = serializers.PrimaryKeyRelatedField(queryset=Tag.objects.all(), many=True)
     images = serializers.SerializerMethodField()
+    is_mine = serializers.SerializerMethodField()
     is_anonymous = serializers.BooleanField(default=False)
     is_question = serializers.BooleanField(default=False)
 
@@ -37,10 +39,12 @@ class PostSerializer(serializers.ModelSerializer):
             'num_of_comments',
             'tags',
             'images',
+            'is_mine',
             'is_anonymous',
             'is_question',
+            'created_at',
         )
-        read_only_fields = ['id', 'board', 'writer', 'num_of_likes', 'num_of_scrap', 'num_of_comments']
+        read_only_fields = ['id', 'board', 'writer', 'is_mine', 'created_at', 'num_of_likes', 'num_of_scrap', 'num_of_comments']
 
     def get_writer(self, post):
         if post.is_anonymous:
@@ -56,6 +60,11 @@ class PostSerializer(serializers.ModelSerializer):
     def get_num_of_comments(self, obj):
         return obj.comment_set.count()
 
+    def get_is_mine(self, obj):
+        if obj.writer == self.context['request'].user:
+            return True
+        return False
+        
     def validate(self, data):
         request = self.context['request']
 
@@ -77,13 +86,13 @@ class PostSerializer(serializers.ModelSerializer):
         # board 검증
         board = request.query_params.get('board')
         if board is None:
-            raise serializers.ValidationError("board를 query parameter로 입력해주세요.")
+            raise FieldError("board를 query parameter로 입력해주세요.")
 
         try:
             board = Board.objects.get(id=board)
             validated_data['board'] = board
         except Board.DoesNotExist:
-            raise serializers.ValidationError("존재하지 않는 게시판입니다. board를 확인해주세요.")
+            raise NotFound("존재하지 않는 게시판입니다. board를 확인해주세요.")
 
         # tags 따로 저장하기
         tags = validated_data.pop('tags') if 'tags' in validated_data else None
@@ -92,7 +101,7 @@ class PostSerializer(serializers.ModelSerializer):
         try:
             post = Post.objects.create(**validated_data)
         except TypeError:
-            raise exceptions.ValidationError('올바르지 않은 타입을 입력하셨습니다.')
+            raise FieldError('올바르지 않은 타입을 입력하셨습니다.')
 
         # 게시글과 태그 연결
         if tags is not None:

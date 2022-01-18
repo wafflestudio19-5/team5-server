@@ -1,6 +1,5 @@
 from django.db.models import Avg, Count, Q, Sum
 from django.http import JsonResponse
-from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
 from rest_framework import permissions, status
@@ -13,6 +12,7 @@ from lecture.models import Course, LectureEvaluation, Semester, TimeTable, Point
 from lecture.serializers import CourseForEvalSerializer, EvalListSerializer, EvalCreateSerializer, \
     CourseSearchSerializer, MyCourseSerializer, ExamInfoCreateSerializer, ExamInfoListSerializer, PointSerializer
 
+from everytime.utils import get_object_or_404
 
 class CourseInfoForEvalView(APIView):
     permission_classes = (permissions.IsAuthenticated,)
