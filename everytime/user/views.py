@@ -87,8 +87,8 @@ class UserProfileView(APIView):
         serializer.is_valid(raise_exception=True)
         try:
             user = serializer.save()
-        except IntegrityError as e:
-            return Response(data=f'error: {e}', status=400)
+        except IntegrityError:
+            return DatabaseError()
 
         return Response(UserProfileSerializer(user).data, status=200)
 

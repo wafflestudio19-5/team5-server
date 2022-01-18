@@ -1,5 +1,9 @@
 
 from django.db import models
+from django.core.files import File
+
+from PIL import Image
+from io import BytesIO
 
 # Create your models here.
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser, PermissionsMixin, UserManager
@@ -107,6 +111,18 @@ class User(AbstractBaseUser, PermissionsMixin):
     # USERNAME_FIELD와 password는 항상 입력이 요구됨
     REQUIRED_FIELDS = ['email', 'nickname']
 
+    def save(self, *args, **kwargs):
+        new_image = self.reduce_image_size(self.profile_picture)
+        self.profile_picture = new_image
+        super().save(*args, **kwargs)
+
+    def reduce_image_size(self, profile_pic):
+        img = Image.open(profile_pic)
+        thumb_io = BytesIO()
+        img.thumbnail((160, 160))
+        img.save(thumb_io, img.format)
+        new_image = File(thumb_io, name=f'_.{img.format}')
+        return new_image
 
     def __str__(self):
         return self.nickname

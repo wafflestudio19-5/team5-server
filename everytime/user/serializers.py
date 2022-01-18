@@ -132,7 +132,6 @@ class UserProfileUpdateSerializer(serializers.Serializer):
         new_password2 = data.get('new_password2')
         email = data.get('email')
         nickname = data.get('nickname')
-
         if new_password1 is not None or new_password2 is not None:
             if new_password1 != new_password2:
                 raise FieldError('입력하신 두 비밀번호가 일치하지 않습니다.')
@@ -153,6 +152,7 @@ class UserProfileUpdateSerializer(serializers.Serializer):
         new_password = validated_data.get('new_password')
         email = validated_data.get('email')
         nickname = validated_data.get('nickname')
+        profile_picture = validated_data.get('profile_picture')
         username = user.username
 
         if new_password is not None:
@@ -174,7 +174,12 @@ class UserProfileUpdateSerializer(serializers.Serializer):
                     raise NotAllowed('닉네임을 변경한지 30일이 지나지 않았습니다.')
             user.nickname = nickname
             user.last_nickname_update = date.today()
-
+        
+        if profile_picture is not None:
+            if user.profile_picture.name != 'images/profile/default.png':
+                user.profile_picture.delete(save=False)
+            user.profile_picture = profile_picture
+            
         user.save()
         return user
 
