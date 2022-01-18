@@ -70,7 +70,6 @@ INSTALLED_APPS = [
     'comment',
     'lecture',
     'corsheaders',
-    'multiselectfield',
 ]
 
 MIDDLEWARE = [
