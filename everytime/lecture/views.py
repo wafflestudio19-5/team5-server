@@ -304,19 +304,30 @@ class LikeExamInfoView(APIView):
             })
 
 
-# class UsePointView(APIView):
-#     permission_classes = (permissions.IsAuthenticated,)
-#
-#     def post(self, request, pk=None):
-#         course = get_object_or_404(Course, pk=pk)
-#
-#         nonreadable = ExamInfo.objects.filter(course=course).exclude(readable_users=request.user).order_by('-created_at')
-#
-#         if
-#
-#         Point.objects.create(user=request.user, reason='시험 정보 조회', point=-5)
-#
-#
+class UsePointView(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def post(self, request, pk, exam_pk):
+        course = get_object_or_404(Course, pk=pk)
+        examinfo = get_object_or_404(ExamInfo, pk=exam_pk)
+        if examinfo.course != course:
+            return Response("강의 pk를 확인해주세요.", status=status.HTTP_400_BAD_REQUEST)
+
+        if request.user in examinfo.readable_users.all():
+            return Response("이미 볼 수 있는 유저임", status=status.HTTP_400_BAD_REQUEST)
+
+        my_point = Point.objects.filter(user=request.user).aggregate(Sum('point')).get('point__sum')
+        if my_point < 5:
+            return Response("포인트가 부족합니다.", status=status.HTTP_400_BAD_REQUEST)
+
+        examinfo.readable_users.add(request.user)
+        Point.objects.create(user=request.user, reason='시험 정보 조회', point=-5)
+
+        exam_info = ExamInfo.objects.filter(course=course).order_by('-created_at')
+        serializer = ExamInfoListSerializer(exam_info, many=True, context={'user': request.user})
+        return Response(serializer.data, status.HTTP_200_OK)
+
+
 # class MyPointView(APIView):
 #     permission_classes = (permissions.IsAuthenticated,)
 #
