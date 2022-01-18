@@ -65,7 +65,7 @@ class EvaluationView(APIView):
         if sem is None:
             raise FieldError('semester 값을 입력하세요.')
         if sem not in course_sem:
-            raise FieldError('해당학기에 개설되지 않은 강의입니다. 학기 정보를 확인하세요.')
+            raise FieldError('해당학기에 개설되지 않은 강의입니다. 학기 정보를 확인하세요. (오타 유의, ****년 *학기)')
 
         data['semester'] = Semester.objects.get(name=sem).id
 
@@ -78,9 +78,7 @@ class EvaluationView(APIView):
         Point.objects.create(user=request.user, reason='강의평 작성', point=10)
 
         evals = LectureEvaluation.objects.filter(course=course).order_by('-created_at')
-        return Response({
-            EvalListSerializer(evals, many=True, context={'user': request.user}).data,
-        }, status=status.HTTP_201_CREATED)
+        return Response(EvalListSerializer(evals, many=True, context={'user': request.user}).data, status=status.HTTP_201_CREATED)
 
     def get(self, request, pk=None):
         course = get_object_or_404(Course, pk=pk)
