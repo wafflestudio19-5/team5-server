@@ -201,8 +201,7 @@ class LikeEvaluationView(APIView):
 
         if request.user in eval.like_users.all():  # 이미 추천을 누른 사람이라면
             return JsonResponse({
-                'is_success': False,
-                'error_code': 1  # '이미 추천하였습니다.'를 담은 팝업창이 떠야함
+                'is_success': False     # '이미 추천하였습니다.'를 담은 팝업창이 떠야함
             })
         else:
             eval.like_users.add(request.user)
@@ -280,11 +279,30 @@ class ExamInfoView(APIView):
         serializer = ExamInfoListSerializer(exam_info, many=True, context={'user': request.user})
         return Response(serializer.data, status.HTTP_200_OK)
 
-#
-#
-# class LikeExamInfoView:
-#     pass
-#
-#
+
+class LikeExamInfoView(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def post(self, request, pk, exam_pk):
+        # course = get_object_or_404(Course, pk=pk) 아래 examinfo의 course가 이 course인지 확인할 순 있겠지만 하지 않는걸로,,
+        examinfo = get_object_or_404(ExamInfo, pk=exam_pk)
+
+        if request.user not in examinfo.readable_users.all():
+            return Response("readable user가 아니면 이 examinfo를 볼 수 없었을 텐데 어떻게 like를 누른거지", status=status.HTTP_400_BAD_REQUEST)
+
+        if request.user in examinfo.like_users.all():  # 이미 추천을 누른 사람이라면
+            return JsonResponse({
+                'is_success': False    # '이미 추천하였습니다.'를 담은 팝업창이 떠야함
+            })
+        else:
+            examinfo.like_users.add(request.user)
+            examinfo.num_of_likes += 1
+            examinfo.save()
+            return JsonResponse({
+                'is_success': True,
+                'value': examinfo.num_of_likes
+            })
+
+
 # class UsePointView:
 #     pass
