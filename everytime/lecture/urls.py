@@ -8,7 +8,7 @@ urlpatterns = [
     path('<int:pk>/', views.CourseInfoForEvalView.as_view(), name='course_info'),
     path('<int:pk>/summary/', views.EvalSummaryView.as_view(), name='evaluation_summary'),
     path('<int:pk>/eval/', views.EvaluationView.as_view(), name='get_or_create_evaluation'),
-    # path('<int:pk>/examinfo/', views.ExamInfoView.as_view(), name='get_or_create_exam_info'),
+    path('<int:pk>/examinfo/', views.ExamInfoView.as_view(), name='get_or_create_exam_info'),
 
     path('search/', views.CourseSearchView.as_view(), name='course_search'),
     path('<int:pk>/eval/<int:eval_pk>/like/', views.LikeEvaluationView.as_view(), name='like_evaluation'),

@@ -7,9 +7,9 @@ from rest_framework import permissions, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
-from lecture.models import Course, LectureEvaluation, Semester, TimeTable, Point
+from lecture.models import Course, LectureEvaluation, Semester, TimeTable, Point, ExamInfo, ExamType
 from lecture.serializers import CourseForEvalSerializer, EvalListSerializer, EvalCreateSerializer, \
-    CourseSearchSerializer, MyCourseSerializer
+    CourseSearchSerializer, MyCourseSerializer, ExamInfoCreateSerializer, ExamInfoListSerializer
 
 
 class CourseInfoForEvalView(APIView):
@@ -74,12 +74,13 @@ class EvaluationView(APIView):
         serializer.validated_data['course'] = course
         serializer.save()
 
+        Point.objects.create(user=request.user, reason='강의평 작성', point=10)
+
         evals = LectureEvaluation.objects.filter(course=course).order_by('-created_at')
-        serializer = EvalListSerializer(evals, many=True, context={'user': request.user})
         return JsonResponse({
             'is_success': True,
-            'evaluations': serializer.data,
-        }, status.HTTP_201_CREATED)
+            'evals': EvalListSerializer(evals, many=True, context={'user': request.user}).data,
+        }, status=status.HTTP_201_CREATED)
 
     def get(self, request, pk=None):
         course = get_object_or_404(Course, pk=pk)
@@ -168,12 +169,6 @@ class EvalSummaryView(APIView):
         }, status=status.HTTP_200_OK)
 
 
-#
-#
-# class ExamInfoView:
-#     pass
-#
-#
 class CourseSearchView(APIView):
     permission_classes = (permissions.IsAuthenticated,)
 
@@ -217,6 +212,74 @@ class LikeEvaluationView(APIView):
                 'is_success': True,
                 'value': eval.num_of_likes
             })
+
+class ExamInfoView(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def post(self, request, pk=None):
+        course = get_object_or_404(Course, pk=pk)
+        if course.self_made:
+            return Response('자신이 직접 추가한 강의에는 시험 정보를 추가할 수 없습니다.', status=status.HTTP_400_BAD_REQUEST)
+
+        # semester validation
+        data = request.data.copy()
+        sem = data.get('semester')  # string 값이 들어왔다 치면
+        course_sem = []
+        for obj in course.lecture_set.all():
+            course_sem.append(obj.semester.name)
+
+        if sem is None:
+            return Response('semester 값을 입력하세요.', status=status.HTTP_400_BAD_REQUEST)
+        if sem not in course_sem:
+            return Response('해당학기에 개설되지 않은 강의입니다. 학기 정보를 확인하세요.', status=status.HTTP_400_BAD_REQUEST)
+
+        data['semester'] = Semester.objects.get(name=sem).id
+
+        serializer = ExamInfoCreateSerializer(data=data)
+        serializer.is_valid(raise_exception=True)
+
+        if course.examinfo_set.filter(writer=request.user, exam=data.get('exam')).exists():
+            return JsonResponse({
+                'is_success': False  # "이미 등록한 시험입니다. 한 시험에 한 번만 등록할 수 있습니다."
+            })
+
+        serializer.validated_data['writer'] = request.user
+        serializer.validated_data['course'] = course
+        types_input = None
+        if 'types' in serializer.validated_data:
+            types_input = serializer.validated_data.pop('types')
+        exam_info = serializer.save()
+
+        if not course.examinfo_set.exists():
+            Point.objects.create(user=request.user, reason='시험 정보 공유', point=40)
+        else:
+            Point.objects.create(user=request.user, reason='시험 정보 공유', point=20)
+
+        # type 추가
+        if types_input:
+            for type in types_input:
+                input_type = ExamType.objects.get(type=type)
+                exam_info.types.add(input_type)
+
+        # readable_users에 글쓴이 추가
+        exam_info.readable_users.add(request.user)
+
+        exam_info = request.user.readable_evaluations.filter(course=course).order_by('-created_at')
+        serializer = ExamInfoListSerializer(exam_info, many=True, context={'user': request.user})
+        return JsonResponse({
+            'is_success': True,
+            'info': serializer.data
+        }, status=status.HTTP_201_CREATED)
+
+    def get(self, request, pk=None):
+        course = get_object_or_404(Course, pk=pk)
+        if course.self_made:
+            return Response('자신이 직접 추가한 강의에는 시험 정보가 존재하지 않습니다.', status=status.HTTP_400_BAD_REQUEST)
+
+        exam_info = request.user.readable_evaluations.filter(course=course).order_by('-created_at')
+        serializer = ExamInfoListSerializer(exam_info, many=True, context={'user': request.user})
+        return Response(serializer.data, status.HTTP_200_OK)
+
 #
 #
 # class LikeExamInfoView:

@@ -1,5 +1,4 @@
 from django.db import models
-from multiselectfield import MultiSelectField
 
 
 # AAA 교수의 BBB 강의를 하나의 course로 본다.
@@ -20,11 +19,11 @@ class Lecture(models.Model):
     credits = models.SmallIntegerField()
     lecture = models.SmallIntegerField()  # 뭘 의미하는지 모르겠음
     laboratory = models.SmallIntegerField()
-    type = models.CharField(max_length=30, blank=True)
+    # type = models.CharField(max_length=30, blank=True)
     cart = models.IntegerField()
     quota = models.IntegerField()
     remark = models.TextField(null=True)
-    language = models.CharField(max_length=4)
+    # language = models.CharField(max_length=4)
     semester = models.ForeignKey('lecture.Semester', on_delete=models.CASCADE)
     self_made = models.BooleanField(default=False)
 
@@ -148,13 +147,13 @@ class ExamInfo(models.Model):
         (6, '기타'),
     ]
     EXAM_TYPE_CHOICES = [
-        (0, '객관식'),
-        (1, '주관식'),
-        (2, 'T/F형'),
-        (3, '약술형'),
-        (4, '논술형'),
-        (5, '구술'),
-        (6, '기타'),
+        ('객관식', '객관식'),
+        ('주관식', '주관식'),
+        ('T/F형', 'T/F형'),
+        ('약술형', '약술형'),
+        ('논술형', '논술형'),
+        ('구술', '구술'),
+        ('기타', '기타'),
     ]
 
     course = models.ForeignKey('Course', on_delete=models.CASCADE)
@@ -165,7 +164,7 @@ class ExamInfo(models.Model):
     exam = models.SmallIntegerField(choices=EXAM_CHOICES)    # 응시한 시험 종류
     semester = models.ForeignKey('lecture.Semester', on_delete=models.CASCADE)
     strategy = models.TextField()
-    type = MultiSelectField(choices=EXAM_TYPE_CHOICES, null=True)  # 문제유형, 필수 아님
+    types = models.ManyToManyField('ExamType')  # 문제유형, 필수 아님
     examples = models.TextField()   # tab으로 나뉘어지도록 할 수 있으면 좋을듯
 
     # 추천
@@ -173,6 +172,10 @@ class ExamInfo(models.Model):
     like_users = models.ManyToManyField('user.User', related_name='like_exam_info')
 
     created_at = models.DateTimeField(auto_now_add=True)
+
+
+class ExamType(models.Model):
+    type = models.CharField(max_length=10)
 
 
 # 강의평가 서비스에서 사용되는 포인트
