@@ -221,7 +221,7 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
         search_set = request.query_params.get('query', '')
         search_set = search_set.split(' ')
         if len(search_set) == 0:
-            raise FieldError('검색어를 입려하세요.')
+            raise FieldError('검색어를 입력하세요.')
         if board == '':
             queryset = Post.objects.all().order_by('-id')
             for query in search_set:

@@ -3,6 +3,7 @@ from rest_framework import serializers
 
 import re
 
+from everytime.exceptions import FieldError
 from lecture.models import Course, LectureEvaluation, ExamInfo, Point
 
 
@@ -76,7 +77,7 @@ class EvalCreateSerializer(serializers.ModelSerializer):
     def validate(self, data):
         content = data.get('content')
         if content is None or len(content) < 20:
-            raise serializers.ValidationError("좀 더 성의있는 내용 작성을 부탁드립니다 :)")
+            raise FieldError("좀 더 성의있는 내용 작성을 부탁드립니다 :)")
 
         return data
 
@@ -137,10 +138,11 @@ class ExamInfoCreateSerializer(serializers.ModelSerializer):
     def validate(self, data):
         strategy = data.get('strategy')
         if len(strategy) < 20:
-            raise serializers.ValidationError("시험 전략에 대해 좀 더 성의있는 작성을 부탁드립니다 :)")
+            raise FieldError("시험 전략에 대해 좀 더 성의있는 작성을 부탁드립니다 :)")
 
         examples = ""
-        ex_input = data.get('examples') # validation 통과해야해서 무조건 존재하긴 함 (빈 배열도 불가)
+        ex_input = data.get('examples') # validation 통과해야해서 무조건 존재하긴 함 (빈 list도 불가)
+        # element를 \t로 나눠서 쭉 이어붙이기
         for i in range(len(ex_input)-1):
             examples += ex_input[i]
             examples += '\t'

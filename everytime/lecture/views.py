@@ -7,7 +7,7 @@ from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
-from everytime import settings
+from everytime.exceptions import NotAllowed, FieldError
 from lecture.models import Course, LectureEvaluation, Semester, TimeTable, Point, ExamInfo, ExamType
 from lecture.serializers import CourseForEvalSerializer, EvalListSerializer, EvalCreateSerializer, \
     CourseSearchSerializer, MyCourseSerializer, ExamInfoCreateSerializer, ExamInfoListSerializer, PointSerializer
@@ -20,7 +20,7 @@ class CourseInfoForEvalView(APIView):
     def get(self, request, pk=None):
         course = get_object_or_404(Course, pk=pk)
         if course.self_made:
-            return Response('자신이 직접 추가한 강의에는 강의평가가 불가합니다.', status=status.HTTP_400_BAD_REQUEST)
+            raise NotAllowed('자신이 직접 추가한 강의에는 강의평가가 불가합니다.')
 
         if not course.lecture_set.exists():
             course_sem = None
@@ -51,11 +51,9 @@ class EvaluationView(APIView):
         course = get_object_or_404(Course, pk=pk)
 
         if course.self_made:
-            return Response('자신이 직접 추가한 강의에는 강의평을 추가할 수 없습니다.', status=status.HTTP_400_BAD_REQUEST)
+            raise NotAllowed('자신이 직접 추가한 강의에는 강의평을 추가할 수 없습니다.')
         if course.lectureevaluation_set.filter(writer=request.user).exists():
-            return JsonResponse({
-                'is_success': False     # "이미 강의평을 등록한 과목입니다.\n한 과목당 한 개의 강의평만 등록할 수 있습니다."
-            })
+            raise NotAllowed('이미 강의평을 등록한 과목입니다.\n한 과목당 한 개의 강의평만 등록할 수 있습니다.')
 
         data = request.data.copy()
         sem = data.get('semester')  # string 값이 들어왔다 치면
@@ -65,9 +63,9 @@ class EvaluationView(APIView):
             course_sem.append(obj.semester.name)
 
         if sem is None:
-            return Response('semester 값을 입력하세요.', status=status.HTTP_400_BAD_REQUEST)
+            raise FieldError('semester 값을 입력하세요.')
         if sem not in course_sem:
-            return Response('해당학기에 개설되지 않은 강의입니다. 학기 정보를 확인하세요.', status=status.HTTP_400_BAD_REQUEST)
+            raise FieldError('해당학기에 개설되지 않은 강의입니다. 학기 정보를 확인하세요.')
 
         data['semester'] = Semester.objects.get(name=sem).id
 
@@ -80,15 +78,14 @@ class EvaluationView(APIView):
         Point.objects.create(user=request.user, reason='강의평 작성', point=10)
 
         evals = LectureEvaluation.objects.filter(course=course).order_by('-created_at')
-        return JsonResponse({
-            'is_success': True,
-            'evals': EvalListSerializer(evals, many=True, context={'user': request.user}).data,
+        return Response({
+            EvalListSerializer(evals, many=True, context={'user': request.user}).data,
         }, status=status.HTTP_201_CREATED)
 
     def get(self, request, pk=None):
         course = get_object_or_404(Course, pk=pk)
         if course.self_made:
-            return Response('자신이 직접 추가한 강의에는 강의평이 존재하지 않습니다.', status=status.HTTP_400_BAD_REQUEST)
+            raise NotAllowed('자신이 직접 추가한 강의에는 강의평이 존재하지 않습니다.')
 
         evals = LectureEvaluation.objects.filter(course=course).order_by('-created_at')
         serializer = EvalListSerializer(evals, many=True, context={'user': request.user})
@@ -137,7 +134,7 @@ class EvalSummaryView(APIView):
     def get(self, request, pk):
         course = get_object_or_404(Course, pk=pk)
         if course.self_made:
-            return Response('자신이 직접 추가한 강의에는 강의평이 존재하지 않습니다.', status=status.HTTP_400_BAD_REQUEST)
+            raise NotAllowed('자신이 직접 추가한 강의에는 강의평이 존재하지 않습니다.')
         evals = LectureEvaluation.objects.filter(course=course)
 
         if not evals.exists():
@@ -180,9 +177,7 @@ class CourseSearchView(APIView):
 
         search = data.get('search')
         if search is None or len(search) == 1:
-            return JsonResponse({
-                'is_success': False,  # 검색어를 두 글자 이상 입력해주세요.
-            })
+            raise FieldError('검색어를 두 글자 이상 입력해주세요.')
 
         result = Course.objects.filter(self_made=False)
         result = result.filter(Q(title__icontains=search) | Q(instructor__icontains=search))
@@ -203,9 +198,7 @@ class LikeEvaluationView(APIView):
         eval = get_object_or_404(LectureEvaluation, pk=eval_pk)
 
         if request.user in eval.like_users.all():  # 이미 추천을 누른 사람이라면
-            return JsonResponse({
-                'is_success': False     # '이미 추천하였습니다.'를 담은 팝업창이 떠야함
-            })
+            raise NotAllowed('이미 추천하였습니다.')
         else:
             eval.like_users.add(request.user)
             eval.num_of_likes += 1
@@ -221,7 +214,7 @@ class ExamInfoView(APIView):
     def post(self, request, pk=None):
         course = get_object_or_404(Course, pk=pk)
         if course.self_made:
-            return Response('자신이 직접 추가한 강의에는 시험 정보를 추가할 수 없습니다.', status=status.HTTP_400_BAD_REQUEST)
+            raise NotAllowed('자신이 직접 추가한 강의에는 시험 정보를 추가할 수 없습니다.')
 
         # semester validation
         data = request.data.copy()
@@ -231,9 +224,9 @@ class ExamInfoView(APIView):
             course_sem.append(obj.semester.name)
 
         if sem is None:
-            return Response('semester 값을 입력하세요.', status=status.HTTP_400_BAD_REQUEST)
+            raise FieldError('semester 값을 입력하세요.')
         if sem not in course_sem:
-            return Response('해당학기에 개설되지 않은 강의입니다. 학기 정보를 확인하세요.', status=status.HTTP_400_BAD_REQUEST)
+            raise FieldError('해당학기에 개설되지 않은 강의입니다. 학기 정보를 확인하세요.')
 
         data['semester'] = Semester.objects.get(name=sem).id
 
@@ -241,9 +234,7 @@ class ExamInfoView(APIView):
         serializer.is_valid(raise_exception=True)
 
         if course.examinfo_set.filter(writer=request.user, exam=data.get('exam')).exists():
-            return JsonResponse({
-                'is_success': False  # "이미 등록한 시험입니다. 한 시험에 한 번만 등록할 수 있습니다."
-            })
+            raise NotAllowed("이미 등록한 시험입니다.\n한 시험에 한 번만 등록할 수 있습니다.")
 
         serializer.validated_data['writer'] = request.user
         serializer.validated_data['course'] = course
@@ -268,15 +259,12 @@ class ExamInfoView(APIView):
 
         exam_info = ExamInfo.objects.filter(course=course).order_by('-created_at')
         serializer = ExamInfoListSerializer(exam_info, many=True, context={'user': request.user})
-        return JsonResponse({
-            'is_success': True,
-            'info': serializer.data
-        }, status=status.HTTP_201_CREATED)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def get(self, request, pk=None):
         course = get_object_or_404(Course, pk=pk)
         if course.self_made:
-            return Response('자신이 직접 추가한 강의에는 시험 정보가 존재하지 않습니다.', status=status.HTTP_400_BAD_REQUEST)
+            raise NotAllowed('자신이 직접 추가한 강의에는 시험 정보가 존재하지 않습니다.')
 
         exam_info = ExamInfo.objects.filter(course=course).order_by('-created_at')
         serializer = ExamInfoListSerializer(exam_info, many=True, context={'user': request.user})
@@ -291,12 +279,10 @@ class LikeExamInfoView(APIView):
         examinfo = get_object_or_404(ExamInfo, pk=exam_pk)
 
         if request.user not in examinfo.readable_users.all():
-            return Response("readable user가 아니면 이 examinfo를 볼 수 없었을 텐데 어떻게 like를 누른거지", status=status.HTTP_400_BAD_REQUEST)
+            raise NotAllowed("readable user가 아니면 이 examinfo를 볼 수 없었을 텐데 어떻게 like를 누른거지")
 
         if request.user in examinfo.like_users.all():  # 이미 추천을 누른 사람이라면
-            return JsonResponse({
-                'is_success': False    # '이미 추천하였습니다.'를 담은 팝업창이 떠야함
-            })
+            raise NotAllowed('이미 추천하였습니다.')
         else:
             examinfo.like_users.add(request.user)
             examinfo.num_of_likes += 1
@@ -314,14 +300,14 @@ class UsePointView(APIView):
         course = get_object_or_404(Course, pk=pk)
         examinfo = get_object_or_404(ExamInfo, pk=exam_pk)
         if examinfo.course != course:
-            return Response("강의 pk를 확인해주세요.", status=status.HTTP_400_BAD_REQUEST)
+            raise FieldError("강의 pk를 확인해주세요.")
 
         if request.user in examinfo.readable_users.all():
-            return Response("이미 볼 수 있는 유저임", status=status.HTTP_400_BAD_REQUEST)
+            raise NotAllowed("이미 볼 수 있는 유저임")
 
         my_point = Point.objects.filter(user=request.user).aggregate(Sum('point')).get('point__sum')
         if my_point < 5:
-            return Response("포인트가 부족합니다.", status=status.HTTP_400_BAD_REQUEST)
+            raise NotAllowed("포인트가 부족합니다.")
 
         examinfo.readable_users.add(request.user)
         Point.objects.create(user=request.user, reason='시험 정보 조회', point=-5)
