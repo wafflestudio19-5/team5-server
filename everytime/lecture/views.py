@@ -4,9 +4,11 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
 from rest_framework import permissions, status
+from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
+from everytime import settings
 from lecture.models import Course, LectureEvaluation, Semester, TimeTable, Point, ExamInfo, ExamType
 from lecture.serializers import CourseForEvalSerializer, EvalListSerializer, EvalCreateSerializer, \
     CourseSearchSerializer, MyCourseSerializer, ExamInfoCreateSerializer, ExamInfoListSerializer, PointSerializer
@@ -32,13 +34,14 @@ class CourseInfoForEvalView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class RecentEvalView(APIView):
+class RecentEvalView(APIView, LimitOffsetPagination):
     permission_classes = (permissions.IsAuthenticated,)
 
     def get(self, request):
-        evals = LectureEvaluation.objects.order_by('-created_at')
-        serializer = EvalListSerializer(evals, many=True, context={'user': request.user})
-        return Response(serializer.data, status.HTTP_200_OK)
+        evals = LectureEvaluation.objects.order_by('-created_at')[:150]
+        page = self.paginate_queryset(evals, request)
+        data = EvalListSerializer(page, many=True, context={'user': request.user}).data
+        return self.get_paginated_response(data)
 
 
 class EvaluationView(APIView):
