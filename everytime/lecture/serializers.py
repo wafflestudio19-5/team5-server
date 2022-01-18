@@ -155,8 +155,10 @@ class ExamInfoCreateSerializer(serializers.ModelSerializer):
 
 
 class ExamInfoListSerializer(serializers.ModelSerializer):
+    is_readable = serializers.SerializerMethodField()
     exam = serializers.SerializerMethodField()
     semester = serializers.SerializerMethodField()
+    strategy = serializers.SerializerMethodField()
     is_mine = serializers.SerializerMethodField()
     types = serializers.SerializerMethodField()
     examples = serializers.SerializerMethodField()
@@ -165,6 +167,7 @@ class ExamInfoListSerializer(serializers.ModelSerializer):
         model = ExamInfo
         fields = (
             'id',
+            'is_readable',
             'exam',
             'semester',
             'strategy',
@@ -174,6 +177,12 @@ class ExamInfoListSerializer(serializers.ModelSerializer):
             'num_of_likes',
         )
 
+    def get_is_readable(self, obj):
+        if self.context['user'] in obj.readable_users.all():
+            return True
+        else:
+            return False
+
     def get_exam(self, obj):
         return dict(ExamInfo.EXAM_CHOICES)[obj.exam]
 
@@ -181,12 +190,21 @@ class ExamInfoListSerializer(serializers.ModelSerializer):
         sem = obj.semester.name
         return sem[2:] + " 수강자"
 
+    def get_strategy(self, obj):
+        if self.context['user'] in obj.readable_users.all():
+            return obj.strategy
+        else:
+            return None
+
     def get_is_mine(self, obj):
         if obj.writer == self.context['user']:
             return True
         return False
 
     def get_types(self, obj):
+        if self.context['user'] not in obj.readable_users.all():
+            return None
+
         if not obj.types.exists():
             return None
 
@@ -199,4 +217,7 @@ class ExamInfoListSerializer(serializers.ModelSerializer):
         return result
 
     def get_examples(self, obj):
-        return obj.examples.split('\t')
+        if self.context['user'] in obj.readable_users.all():
+            return obj.examples.split('\t')
+        else:
+            return None

@@ -13,5 +13,7 @@ urlpatterns = [
     path('search/', views.CourseSearchView.as_view(), name='course_search'),
     path('<int:pk>/eval/<int:eval_pk>/like/', views.LikeEvaluationView.as_view(), name='like_evaluation'),
     path('<int:pk>/examinfo/<int:exam_pk>/like/', views.LikeExamInfoView.as_view(), name='like_exam_info'),
-    # path('<int:pk>/point/', views.UsePointView.as_view(), name='use_point'),
+    # path('<int:pk>/examinfo/<int:exam_pk>/point/', views.UsePointView.as_view(), name='use_point'),
+    # path('<int:pk>/examinfo/')
+    # path('mypoint/', views.MyPointView.as_view(), name='my_point')
 ]
