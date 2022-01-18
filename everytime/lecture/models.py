@@ -65,21 +65,6 @@ class Semester(models.Model):
     )
     name = models.CharField(max_length=12, choices=SEMESTER_CHOICES)
 
-class TimeTable(models.Model):
-    PRIVATE_CHOICES=(
-        ('전체공개', '전채공개'),
-        ('친구공개', '친구공개'),
-        ('비공개', '비공개')
-    )
-    user = models.ForeignKey('user.User', on_delete=models.CASCADE, null=False)
-    lecture = models.ManyToManyField('lecture.Lecture', null=True)
-    semester = models.ForeignKey('lecture.Semester', on_delete=models.CASCADE)
-    name = models.CharField(max_length=30)
-    is_default = models.BooleanField(default=False)
-    private = models.CharField(max_length=5, choices=PRIVATE_CHOICES)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
 class LectureEvaluation(models.Model):
     AMOUNT_CHOICES = [
         (2, '많음'),
