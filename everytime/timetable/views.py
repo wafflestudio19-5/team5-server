@@ -1,5 +1,4 @@
 from django.http import JsonResponse
-from django.shortcuts import get_object_or_404
 from django.db import transaction
 
 from rest_framework import status, viewsets, permissions, exceptions
@@ -7,6 +6,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.decorators import action
 
+from everytime.utils import get_object_or_404
 from lecture.models import Semester, Lecture, Course, LectureTime
 from .models import TimeTable
 from .serializers import TimeTableSerializer, TimeTableListSerializer, SelfLectureCreateSerializer
@@ -32,8 +32,8 @@ class TimeTableViewSet(viewsets.GenericViewSet):
 
     def list(self, request):
         user = request.user
-        semester_id = request.query_params.get('semester')
-        semester = get_object_or_404(Semester, id=semester_id)
+        semester_name = request.query_params.get('semester')
+        semester = get_object_or_404(Semester, name=semester_name)
         queryset = TimeTable.objects.filter(user=user, semester=semester).all()
         return Response(self.get_serializer(queryset, many=True).data, status=status.HTTP_200_OK)
 
@@ -47,11 +47,10 @@ class TimeTableViewSet(viewsets.GenericViewSet):
         timetable = get_object_or_404(TimeTable, pk=pk)
         if request.user != timetable.user:
             return Response('자신의 시간표만 삭제할 수 있습니다.', status=status.HTTP_403_FORBIDDEN)
-
-        queryset = TimeTable.objects.filter(user=request.user, semester=timetable.semester)
+        semester = timetable.semester
+        queryset = TimeTable.objects.filter(user=request.user, semester=semester)
 
         if timetable.is_default:
-            semester = timetable.semester
             timetable.delete()
             try:
                 default_timetable = queryset.order_by('-updated_at')[0]
@@ -132,7 +131,6 @@ class TimeTableViewSet(viewsets.GenericViewSet):
                                         status=status.HTTP_400_BAD_REQUEST)
                     
             timetable.lecture.add(lecture)
-
             return Response(self.get_serializer(timetable).data, status=status.HTTP_200_OK)
 
         if request.method == 'DELETE':
