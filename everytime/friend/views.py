@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from user.models import User
 from .models import Friend, FriendRequest
 from .serializers import FriendRequestSerializer, FriendSerializer
-from everytime.exceptions import FieldError, ServerError, NotFound
+from everytime.exceptions import FieldError, ServerError, NotFound, DatabaseError
 
 # Create your views here.
 class FriendRequestView(generics.GenericAPIView):
@@ -21,19 +21,21 @@ class FriendRequestView(generics.GenericAPIView):
             raise ServerError()
         return Response("친구 요청을 보냈습니다.\n상대방이 수락하면 친구가 맺어짖니다.", status=status.HTTP_201_CREATED) # 이 부분 직접 친구신청 해보고 response 수정해야됨
 
-    def delete(self, request):
-        data = request.data
+class FriendRequestDeleteView(generics.GenericAPIView):
+    permission_classes = (permissions.IsAuthenticated, )
+    serializer_class = FriendRequestSerializer
+
+    def delete(self, request, pk=None):
         user = request.user
-        sender = data.get('sender', None)
-        if sender is None:
-            raise FieldError()
+        if not pk:
+            raise FieldError('삭제할 요청를 입력해주세요.')
+        sender = User.objects.get(pk=pk)
         try:
             delete_request = FriendRequest.objects.get(sender=sender, receiver=user)
         except:
-            raise ServerError()
+            raise DatabaseError('요청이 존재하지 않습니다. 관리자에게 문의 바랍니다.')
         delete_request.delete()
         return Response("친구 요청을 거절하였습니다.", status=status.HTTP_200_OK)
-
 
 
 class FriendView(generics.GenericAPIView):
