@@ -163,3 +163,16 @@ class LiveTopSerializer(serializers.ModelSerializer):
         return obj.comment_set.count()
 
 
+class HotSerializer(serializers.ModelSerializer):
+    title_or_content = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Post
+        fields = (
+            'title_or_content',
+            'created_at'
+        )
+
+    def get_title_or_content(self, post):
+        return post.title + ' ' + post.content
+

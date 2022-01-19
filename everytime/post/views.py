@@ -313,3 +313,12 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
         queryset = Post.objects.filter(created_at__gt=yesterday).order_by('-num_of_likes')[:2]
         return Response(LiveTopSerializer(queryset, many=True).data, status=status.HTTP_200_OK)
 
+    @action(
+        detail=False,
+        methods=['GET'],
+    )
+    def hot(self, request):
+        hot_posts = HotBoard.objects.all().values('post')
+        queryset = Post.objects.filter(id__in=hot_posts).order_by('-hotboard__created_at')[:4]
+        return Response(HotSerializer(queryset, many=True).data, status=status.HTTP_200_OK)
+
