@@ -69,6 +69,7 @@ INSTALLED_APPS = [
     'post',
     'comment',
     'lecture',
+    'friend',
     'corsheaders',
     'multiselectfield',
 ]
