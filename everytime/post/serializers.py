@@ -169,6 +169,7 @@ class HotSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post
         fields = (
+            'id',
             'title_content',
             'created_at'
         )
@@ -180,6 +181,7 @@ class TitleListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post
         fields = (
+            'id',
             'title',
             'created_at'
         )
@@ -190,6 +192,7 @@ class ContentListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post
         fields = (
+            'id',
             'content',
             'created_at',
             'num_of_likes',
