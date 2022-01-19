@@ -32,7 +32,7 @@ def exception_handler(exc, context):
         return Response(data, status=exc.status_code, headers=headers)
 
     return Response({
-        'detatil': '서버 에러입니다. 서버 관리자에게 문의 바랍니다.',
+        'detail': '서버 에러입니다. 서버 관리자에게 문의 바랍니다.',
         'code': 'E000'
     }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 

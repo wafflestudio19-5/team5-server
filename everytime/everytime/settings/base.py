@@ -71,6 +71,7 @@ INSTALLED_APPS = [
     'comment',
     'lecture',
     'timetable',
+    'friend',
     'corsheaders',
     'multiselectfield',
 ]
