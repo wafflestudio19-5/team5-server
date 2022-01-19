@@ -164,16 +164,16 @@ class LiveTopSerializer(serializers.ModelSerializer):
 
 
 class HotSerializer(serializers.ModelSerializer):
-    title_or_content = serializers.SerializerMethodField()
+    title_content = serializers.SerializerMethodField()
 
     class Meta:
         model = Post
         fields = (
-            'title_or_content',
+            'title_content',
             'created_at'
         )
 
-    def get_title_or_content(self, post):
+    def get_title_content(self, post):
         return post.title + ' ' + post.content
 
 class TitleListSerializer(serializers.ModelSerializer):
