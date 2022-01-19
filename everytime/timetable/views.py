@@ -7,6 +7,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 
 from everytime.utils import get_object_or_404
+from everytime.exceptions import NotAllowed, FieldError
 from lecture.models import Semester, Lecture, Course, LectureTime
 from .models import TimeTable
 from .serializers import TimeTableSerializer, TimeTableListSerializer, SelfLectureCreateSerializer
@@ -40,13 +41,13 @@ class TimeTableViewSet(viewsets.GenericViewSet):
     def retrieve(self, request, pk=None):
         timetable = get_object_or_404(TimeTable, pk=pk)
         if request.user != timetable.user:
-            return Response('자신의 시간표만 열람할 수 있습니다.', status=status.HTTP_403_FORBIDDEN)
+            raise NotAllowed('자신의 시간표만 열람할 수 있습니다.')
         return Response(self.get_serializer(timetable).data, status=status.HTTP_200_OK)
 
     def destroy(self, request, pk=None):
         timetable = get_object_or_404(TimeTable, pk=pk)
         if request.user != timetable.user:
-            return Response('자신의 시간표만 삭제할 수 있습니다.', status=status.HTTP_403_FORBIDDEN)
+            raise NotAllowed('자신의 시간표만 삭제할 수 있습니다.')
         semester = timetable.semester
         queryset = TimeTable.objects.filter(user=request.user, semester=semester)
 
@@ -71,7 +72,7 @@ class TimeTableViewSet(viewsets.GenericViewSet):
     def update(self, request, pk=None):
         timetable = get_object_or_404(TimeTable, pk=pk)
         if request.user != timetable.user:
-            return Response('자신의 시간표만 수정할 수 있습니다.', status=status.HTTP_403_FORBIDDEN)
+            raise NotAllowed('자신의 시간표만 수정할 수 있습니다.')
         data = request.data
 
         serializer = self.get_serializer(timetable, data=data, partial=True)
@@ -90,7 +91,7 @@ class TimeTableViewSet(viewsets.GenericViewSet):
         user = request.user
         data = request.data
         if timetable.user != user:
-            return Response('자신의 시간표에만 강의를 추가/제거할 수 있습니다.', status=status.HTTP_403_FORBIDDEN)
+            raise NotAllowed('자신의 시간표에만 강의를 추가/제거할 수 있습니다.')
 
         with transaction.atomic():
             serializer = SelfLectureCreateSerializer(data=data, context={'request': request, 'timetable': timetable})
@@ -111,13 +112,13 @@ class TimeTableViewSet(viewsets.GenericViewSet):
         user = request.user
         data = request.data
         if timetable.user != user:
-            return Response('자신의 시간표에만 강의를 추가/제거할 수 있습니다.', status=status.HTTP_403_FORBIDDEN)
+            raise NotAllowed('자신의 시간표에만 강의를 추가/제거할 수 있습니다.')
         if lecture.semester != timetable.semester:
-            return Response('시간표와 수업의 학기가 서로 다릅니다.', status=status.HTTP_400_BAD_REQUEST)
+            raise FieldError('시간표와 수업의 학기가 서로 다릅니다.')
         if request.method == 'POST':
             existing_lectures = timetable.lecture.all()
             if lecture in existing_lectures:
-                return Response('이미 추가한 수업입니다.', status=status.HTTP_400_BAD_REQUEST)
+                raise FieldError('이미 추가한 수업입니다.')
             existing_time_set = LectureTime.objects.filter(lecture__in=existing_lectures).all()
             
             new_time_set = lecture.lecturetime_set.all()
@@ -127,8 +128,7 @@ class TimeTableViewSet(viewsets.GenericViewSet):
                     if new_time.start >= existing_time.end or new_time.end <= existing_time.start:
                         pass
                     else:
-                        return Response(f'{lecture.course.title} 수업과 같은 시간에 이미 수업이 있습니다.',
-                                        status=status.HTTP_400_BAD_REQUEST)
+                        return FieldError(f'{lecture.course.title} 수업과 같은 시간에 이미 수업이 있습니다.')
                     
             timetable.lecture.add(lecture)
             return Response(self.get_serializer(timetable).data, status=status.HTTP_200_OK)

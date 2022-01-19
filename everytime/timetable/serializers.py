@@ -2,10 +2,9 @@ from django.db import transaction
 
 from rest_framework import serializers, exceptions
 
-from everytime.exceptions import FieldError
+from everytime.exceptions import FieldError, DuplicationError
 from lecture.models import Semester, Lecture, Course, LectureTime
 from .models import TimeTable
-
 
 
 class LectureTimeSerializer(serializers.ModelSerializer):
@@ -25,6 +24,7 @@ class LectureTimeSerializer(serializers.ModelSerializer):
         if data.get('start') >= data.get('end'):
             raise FieldError('수업 시작시간이 종료시간보다 늦을 수 없습니다.')
         return data
+
 
 class LectureSerializer(serializers.ModelSerializer):
     title = serializers.SerializerMethodField()
@@ -112,12 +112,14 @@ class TimeTableSerializer(serializers.ModelSerializer):
         queryset = TimeTable.objects.filter(user=user, semester=timetable.semester)
         
         if is_default is True:
-            queryset.get(is_default=True).update(is_default=False)
+            default_timetable = queryset.get(is_default=True)
+            default_timetable.is_default = False
+            default_timetable.save()
             timetable.is_default = True
             
         if name:
             if name in queryset.exclude(id=timetable.id).values_list('name', flat=True):
-                raise serializers.ValidationError('같은 이름의 시간표가 이미 존재합니다.')
+                raise DuplicationError('같은 이름의 시간표가 이미 존재합니다.')
             timetable.name = name
             
         if private:
@@ -182,7 +184,7 @@ class SelfLectureCreateSerializer(serializers.Serializer):
                 if new_time.start >= existing_time.end or new_time.end <= existing_time.start:
                     pass
                 else:
-                    raise serializers.ValidationError('같은 시간에 이미 수업이 있습니다.')
+                    raise FieldError('같은 시간에 이미 수업이 있습니다.')
         
         return lecture
 
