@@ -14,8 +14,6 @@ class Friend(models.Model):
                 name="friend relation"
             )
         ]
-        # 데이터 기본 정렬 순서 1순위 user 2순위 friend
-        ordering = ['user', 'friend']
 
 class FriendRequest(models.Model):
     sender = models.ForeignKey('user.User', related_name='reqeust_from_set', on_delete=models.CASCADE)
@@ -28,4 +26,3 @@ class FriendRequest(models.Model):
                 name="friend request"
             )
         ]
-        ordering = ["sender", "friend"]
