@@ -322,3 +322,21 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
         queryset = Post.objects.filter(id__in=hot_posts).order_by('-hotboard__created_at')[:4]
         return Response(HotSerializer(queryset, many=True).data, status=status.HTTP_200_OK)
 
+    @action(
+        detail=False,
+        methods=['GET'],
+    )
+    def main(self, request):
+        data = {}
+        boards = Board.objects.all()[:6]
+        for i in range(6):
+            board = boards[i]
+            if board.sub_boards.exists():
+                queryset = Post.objects.filter(board__head_board=board)
+            else:
+                queryset = Post.objects.filter(board=board)
+            if board.title_enabled:
+                data[board.title] = TitleListSerializer(queryset, many=True).data[:4]
+            else:
+                data[board.title] = ContentListSerializer(queryset, many=True).data[:2]
+        return Response(data, status=status.HTTP_200_OK)

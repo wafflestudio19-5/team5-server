@@ -176,3 +176,25 @@ class HotSerializer(serializers.ModelSerializer):
     def get_title_or_content(self, post):
         return post.title + ' ' + post.content
 
+class TitleListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Post
+        fields = (
+            'title',
+            'created_at'
+        )
+
+class ContentListSerializer(serializers.ModelSerializer):
+    num_of_comments = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Post
+        fields = (
+            'content',
+            'created_at',
+            'num_of_likes',
+            'num_of_comments'
+        )
+
+    def get_num_of_comments(self, obj):
+        return obj.comment_set.count()
