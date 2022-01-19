@@ -34,6 +34,7 @@ urlpatterns = [
     path('post/', include('post.urls')),
     path('comment/', include('comment.urls')),
     path('lecture/', include('lecture.urls')),
+    path('timetable/', include('timetable.urls')),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 ]
 

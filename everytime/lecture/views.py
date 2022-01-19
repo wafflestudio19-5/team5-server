@@ -1,18 +1,22 @@
 from django.db.models import Avg, Count, Q, Sum
 from django.http import JsonResponse
+from django_filters import rest_framework as filters
 from django.utils import timezone
 
-from rest_framework import permissions, status
-from rest_framework.pagination import LimitOffsetPagination
+from rest_framework import permissions, status, viewsets
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.pagination import LimitOffsetPagination
 
-from everytime.exceptions import NotAllowed, FieldError
-from lecture.models import Course, LectureEvaluation, Semester, TimeTable, Point, ExamInfo, ExamType
+from lecture.models import Course, Lecture, LectureEvaluation, Semester, TimeTable, Point, ExamInfo, ExamType
 from lecture.serializers import CourseForEvalSerializer, EvalListSerializer, EvalCreateSerializer, \
-    CourseSearchSerializer, MyCourseSerializer, ExamInfoCreateSerializer, ExamInfoListSerializer, PointSerializer
+    CourseSearchSerializer, MyCourseSerializer, ExamInfoCreateSerializer, ExamInfoListSerializer, PointSerializer, LectureSearchSerializer
 
 from everytime.utils import get_object_or_404
+from everytime.exceptions import NotAllowed, FieldError
+
+from .filters import LectureFilter
+
 
 class CourseInfoForEvalView(APIView):
     permission_classes = (permissions.IsAuthenticated,)
@@ -328,3 +332,20 @@ class MyPointView(APIView):
             'sum': point_sum.get('point__sum'),
             'details': serializer.data
         }, status=status.HTTP_200_OK)
+
+
+class LectureSearchViewSet(viewsets.GenericViewSet):
+    permission_classes = (permissions.IsAuthenticated,)
+    serializer_class = LectureSearchSerializer
+    queryset = Lecture.objects.select_related('course__department__college')\
+            .filter(course__self_made=False)\
+            .all().prefetch_related('lecturetime_set')\
+            .order_by('id')
+    filter_backends = (filters.DjangoFilterBackend,)
+    filterset_class = LectureFilter
+
+    def list(self, request):
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
+        data = self.get_serializer(page, many=True).data
+        return self.get_paginated_response(data)

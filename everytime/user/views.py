@@ -32,7 +32,8 @@ from drf_yasg.utils import swagger_auto_schema
 
 from json.decoder import JSONDecodeError
 
-from lecture.models import Point
+from lecture.models import Point, Semester
+from timetable.models import TimeTable
 from .models import User, SocialAccount
 from .serializers import UserCreateSerializer, UserLoginSerializer, SocialUserCreateSerializer, UserProfileSerializer, UserProfileUpdateSerializer, jwt_token_of
 from .utils import email_verification_token, message
@@ -54,7 +55,9 @@ class UserSignUpView(APIView):
             raise DatabaseError()
 
         Point.objects.create(user=user, reason='기본 포인트 지급', point=20)
-
+        semesters = Semester.objects.all()
+        for semester in semesters:
+            TimeTable.objects.creeate(semester=semester, user=user, is_default=True, name='시간표 1')
         return Response({
             'user': user.username,
             'token': jwt_token
@@ -87,8 +90,8 @@ class UserProfileView(APIView):
         serializer.is_valid(raise_exception=True)
         try:
             user = serializer.save()
-        except IntegrityError as e:
-            return Response(data=f'error: {e}', status=400)
+        except IntegrityError:
+            return DatabaseError()
 
         return Response(UserProfileSerializer(user).data, status=200)
 
@@ -343,6 +346,11 @@ class SocialUserSignUpView(APIView):
             user, jwt_token = serializer.save()
         except IntegrityError:
             raise DatabaseError()
+
+        Point.objects.create(user=user, reason='기본 포인트 지급', point=20)
+        semesters = Semester.objects.all()
+        for semester in semesters:
+            TimeTable.objects.creeate(semester=semester, user=user, is_default=True, name='시간표 1')
 
         return Response({
             'social_user': user.username,   # social_id 값임
