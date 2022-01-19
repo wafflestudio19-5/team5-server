@@ -28,6 +28,7 @@ class Lecture(models.Model):
     semester = models.ForeignKey('lecture.Semester', on_delete=models.CASCADE)
     self_made = models.BooleanField(default=False)
 
+
 class LectureTime(models.Model):
     DAY_CHOICES = (
         ('월', '월'),
@@ -42,6 +43,7 @@ class LectureTime(models.Model):
     start = models.IntegerField()
     end = models.IntegerField()
     location = models.CharField(max_length=30, blank=True)
+
 
 class College(models.Model):
     name = models.CharField(max_length=30, unique=True)

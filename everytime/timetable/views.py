@@ -12,7 +12,7 @@ from .models import TimeTable
 from .serializers import TimeTableSerializer, TimeTableListSerializer, SelfLectureCreateSerializer
 
 
-class TimeTableView(viewsets.GenericViewSet):
+class TimeTableViewSet(viewsets.GenericViewSet):
     permission_classes = (permissions.IsAuthenticated,)
     queryset = TimeTable.objects.all()
 

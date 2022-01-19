@@ -185,3 +185,5 @@ class SelfLectureCreateSerializer(serializers.Serializer):
                     raise serializers.ValidationError('같은 시간에 이미 수업이 있습니다.')
         
         return lecture
+
+

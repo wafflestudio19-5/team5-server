@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.sites',
     'django_extensions',
+    'django_filters',
     'rest_framework',
     # 'rest_framework_jwt',
     'rest_framework_simplejwt',
@@ -183,8 +184,6 @@ REST_FRAMEWORK = {
         # 'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
     ),
 
-    'EXCEPTION_HANDLER': 'everytime.views.exception_handler',
-
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
     'PAGE_SIZE': 10,
 }
@@ -199,7 +198,7 @@ REST_FRAMEWORK = {
 # }
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': datetime.timedelta(minutes=10),
+    'ACCESS_TOKEN_LIFETIME': datetime.timedelta(minutes=1000),
     'REFRESH_TOKEN_LIFETIME': datetime.timedelta(days=1),
 
     'ALGORITHM': 'HS256',

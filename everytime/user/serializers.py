@@ -154,7 +154,11 @@ class UserProfileUpdateSerializer(serializers.Serializer):
         email = validated_data.get('email')
         nickname = validated_data.get('nickname')
         username = user.username
+        if queryset.filter(username=username).exists():
+            raise DuplicationError('이미 존재하는 아이디입니다.')
 
+        if queryset.filter(nickname=nickname).exists():
+            raise DuplicationError('이미 존재하는 닉네임입니다.')
         if new_password is not None:
             user_pwcheck = authenticate(username=username, password=origin_password)
             if user_pwcheck is None:
@@ -165,6 +169,8 @@ class UserProfileUpdateSerializer(serializers.Serializer):
             user_pwcheck = authenticate(username=username, password=origin_password)
             if user_pwcheck is None:
                 raise AuthentificationFailed('계정 비밀번호가 올바르지 않아요.(origin_password field)')
+            if queryset.filter(email=email).exists():
+                raise DuplicationError('이미 존재하는 이메일입니다.')
             user.email = email
             
         if nickname is not None:
@@ -172,6 +178,8 @@ class UserProfileUpdateSerializer(serializers.Serializer):
                 time = date.today() - user.last_nickname_update
                 if time.days < 30:
                     raise NotAllowed('닉네임을 변경한지 30일이 지나지 않았습니다.')
+            if queryset.filter(nickname=nickname).exists():
+                raise DuplicationError('이미 존재하는 닉네임입니다.')
             user.nickname = nickname
             user.last_nickname_update = date.today()
 
