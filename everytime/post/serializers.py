@@ -140,3 +140,26 @@ class PostSerializer(serializers.ModelSerializer):
         post.save()
 
         return post
+
+
+class LiveTopSerializer(serializers.ModelSerializer):
+    board = serializers.SerializerMethodField()
+    num_of_comments = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Post
+        fields = (
+            'id',
+            'board',
+            'title',
+            'content',
+            'num_of_comments'
+        )
+
+    def get_board(self, obj):
+        return obj.board.title
+
+    def get_num_of_comments(self, obj):
+        return obj.comment_set.count()
+
+
