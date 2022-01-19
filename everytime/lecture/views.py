@@ -8,7 +8,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.pagination import LimitOffsetPagination
 
-from lecture.models import Course, Lecture, LectureEvaluation, Semester, TimeTable, Point, ExamInfo, ExamType
+from timetable.models import TimeTable
+from lecture.models import Course, Lecture, LectureEvaluation, Semester, Point, ExamInfo, ExamType
 from lecture.serializers import CourseForEvalSerializer, EvalListSerializer, EvalCreateSerializer, \
     CourseSearchSerializer, MyCourseSerializer, ExamInfoCreateSerializer, ExamInfoListSerializer, PointSerializer, LectureSearchSerializer
 
