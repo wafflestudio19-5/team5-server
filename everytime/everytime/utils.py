@@ -1,5 +1,11 @@
 from django.shortcuts import _get_queryset
 from .exceptions import NotFound
+from rest_framework_simplejwt.tokens import AccessToken, BlacklistMixin
+
+
+class AccessToken(BlacklistMixin, AccessToken):
+    pass
+
 
 class ViewSetActionPermissionMixin:
     def get_permissions(self):
