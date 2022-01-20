@@ -14,7 +14,7 @@ class Lecture(models.Model):
     classification = models.CharField(max_length=3)
     degree = models.CharField(max_length=5)
     grade = models.SmallIntegerField(null=True)
-    course_code = models.CharField(max_length=15, null=True)
+    course_code = models.CharField(max_length=15, blank=True, null=True)
     lecture_code = models.IntegerField()
     credits = models.SmallIntegerField()
     lecture = models.SmallIntegerField()  # 뭘 의미하는지 모르겠음

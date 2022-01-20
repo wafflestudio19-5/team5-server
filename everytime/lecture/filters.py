@@ -19,53 +19,6 @@ CLASSIFICATION_CHOICES = (
 )
 
 
-class LectureFilter(django_filters.FilterSet):
-    grade = django_filters.MultipleChoiceFilter(choices=GRADE_CHOICES)
-    classification = django_filters.MultipleChoiceFilter(choices=CLASSIFICATION_CHOICES)
-    credits = NumInFilter()
-    department = django_filters.ModelChoiceFilter(field_name='course__department',to_field_name='name', queryset=Department.objects.all())
-    title = django_filters.CharFilter(field_name='course__title', lookup_expr='icontains', min_length=2)
-    instructor = django_filters.CharFilter(field_name='course__instructor', lookup_expr='icontains', min_length=2)
-    course_code = django_filters.CharFilter(field_name='course_code', lookup_expr='icontains')
-    location = django_filters.CharFilter(field_name='lecturetime__location', lookup_expr='icontains')
-    lecturetime = MultipleValueFilter(field_class=CharField, method='custom_time_filter')
-    ordering = UserOrderingFilter(
-        fields=(
-            ('cart', 'cart'),
-            ('course_code', 'course_code'),
-        ),
-    )
-
-    class Meta:
-        model = Lecture
-        fields = {
-            'classification':['exact'],
-            'grade':['exact'],
-            'credits':['in']
-        }
-
-    def custom_time_filter(self, queryset, value, *arg):
-        q = Q()
-        time_queryset = LectureTime.objects.filter(lecture__course__self_made=False)\
-                        .select_related('lecture__course')
-        for time_string in arg[0]:
-            if len(time:=time_string.split('/')) != 3:
-                raise FieldError('시간값이 요일/시작/끝 의 형식과 맞지 않습니다.')
-            day = time[0]
-            start = int(time[1])
-            end = int(time[2])
-
-            q.add(
-                Q(day=day)&
-                Q(start__gte=start)&
-                Q(end__lte=end),
-            q.OR)
-        lecture_set = time_queryset.filter(~q).all().values('lecture')
-        queryset = queryset.exclude(id__in=lecture_set)\
-                .exclude(lecturetime=None)
-
-        return queryset
-
 class MultipleValueField(MultipleChoiceField):
     def __init__(self, *args, field_class, **kwargs):
         self.inner_field = field_class()
@@ -119,6 +72,54 @@ class UserOrderingFilter(django_filters.OrderingFilter):
                     f_ordering.append(F(o).asc(nulls_last=True))
 
             return queryset.order_by(*f_ordering)
+
+        return queryset
+
+
+class LectureFilter(django_filters.FilterSet):
+    grade = django_filters.MultipleChoiceFilter(choices=GRADE_CHOICES)
+    classification = django_filters.MultipleChoiceFilter(choices=CLASSIFICATION_CHOICES)
+    credits = NumInFilter()
+    department = django_filters.ModelChoiceFilter(field_name='course__department',to_field_name='name', queryset=Department.objects.all())
+    title = django_filters.CharFilter(field_name='course__title', lookup_expr='icontains', min_length=2)
+    instructor = django_filters.CharFilter(field_name='course__instructor', lookup_expr='icontains', min_length=2)
+    course_code = django_filters.CharFilter(field_name='course_code', lookup_expr='icontains')
+    location = django_filters.CharFilter(field_name='lecturetime__location', lookup_expr='icontains')
+    lecturetime = MultipleValueFilter(field_class=CharField, method='custom_time_filter')
+    ordering = UserOrderingFilter(
+        fields=(
+            ('cart', 'cart'),
+            ('course_code', 'course_code'),
+        ),
+    )
+
+    class Meta:
+        model = Lecture
+        fields = {
+            'classification':['exact'],
+            'grade':['exact'],
+            'credits':['in']
+        }
+
+    def custom_time_filter(self, queryset, value, *arg):
+        q = Q()
+        time_queryset = LectureTime.objects.filter(lecture__course__self_made=False)\
+                        .select_related('lecture__course')
+        for time_string in arg[0]:
+            if len(time:=time_string.split('/')) != 3:
+                raise FieldError('시간값이 요일/시작/끝 의 형식과 맞지 않습니다.')
+            day = time[0]
+            start = int(time[1])
+            end = int(time[2])
+
+            q.add(
+                Q(day=day)&
+                Q(start__gte=start)&
+                Q(end__lte=end),
+            q.OR)
+        lecture_set = time_queryset.filter(~q).all().values('lecture')
+        queryset = queryset.exclude(id__in=lecture_set)\
+                .exclude(lecturetime=None)
 
         return queryset
 
