@@ -24,9 +24,10 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.exceptions import APIException
 from rest_framework.views import APIView
 from rest_framework.response import Response
-# from rest_framework_jwt.settings import api_settings
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from everytime.exceptions import AlreadyLogin, SocialLoginError, DatabaseError, FieldError, DuplicationError
+from everytime.utils import AccessToken
 
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
@@ -75,6 +76,16 @@ class UserLoginView(APIView):
         token = serializer.validated_data['token']
 
         return Response({'success': True, 'token': token}, status=status.HTTP_200_OK)
+
+class UserLogoutView(APIView):
+    permission_classes(permissions.IsAuthenticated, )
+
+    def post(self, request):
+        refresh_token = RefreshToken(request.data.get('refresh'))
+        access_token = AccessToken(request.META.get('HTTP_AUTHORIZATION').split()[1])
+        refresh_token.blacklist()
+        access_token.blacklist()
+        return Response("Success")
 
 
 class UserProfileView(APIView):
