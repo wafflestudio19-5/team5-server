@@ -64,6 +64,23 @@ class UserSignUpView(APIView):
             'token': jwt_token
         }, status=status.HTTP_201_CREATED)
 
+class UserDeleteAccountView(APIView):
+    permission_classes = (permissions.IsAuthenticated, )
+
+    def post(self, request):
+        serializer = UserLoginSerializer(data={
+            "username": request.user.username,
+            "password": request.data.get('password', None)
+        })
+        try:
+            serializer.is_valid(raise_exception=True)
+        except:
+            raise FieldError("계정 비밀번호가 올바르지 않습니다.")
+        else:
+            request.user.delete()
+            return Response("정상적으로 회원탈퇴가 완료되었습니다.")
+
+
 
 class UserLoginView(APIView):
     permission_classes = (permissions.AllowAny,)

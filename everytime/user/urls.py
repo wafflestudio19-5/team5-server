@@ -7,6 +7,7 @@ from . import views
 app_name='user'
 urlpatterns = [
     path('signup/', views.UserSignUpView.as_view(), name='signup'),
+    path('deactivate/', views.UserDeleteAccountView.as_view(), name='delete account'),
     path('login/', views.UserLoginView.as_view(), name='login'),
     path('logout/', views.UserLogoutView.as_view(), name='logout'),
     path('kakao/login/', views.KaKaoLoginView.as_view(), name='kakao login'),
