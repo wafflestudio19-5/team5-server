@@ -21,5 +21,7 @@ urlpatterns = [
     path('verify/accepted/<str:uidb64>/<str:token>/<str:emailb64>/', views.VerifyingMailAcceptView.as_view(),
          name='email_verify_accept'),
     path('myscrap/', views.UserScrapView.as_view(), name='myscrap'),
+    path('mypost/', views.UserPostView.as_view(), name='myscrap'),
+    path('mycomment/', views.UserCommentView.as_view(), name='myscrap'),
     path('myprofile/', views.UserProfileView.as_view(), name='myprofile'),
 ]

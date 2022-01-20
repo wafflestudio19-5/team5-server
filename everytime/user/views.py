@@ -20,6 +20,7 @@ import random
 
 
 from rest_framework import status, viewsets, permissions
+from rest_framework.generics import GenericAPIView
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.exceptions import APIException
 from rest_framework.views import APIView
@@ -41,6 +42,7 @@ from .serializers import UserCreateSerializer, UserLoginSerializer, SocialUserCr
 from .utils import email_verification_token, message
 
 from post.serializers import PostSerializer
+from post.models import Post
 
 
 class UserSignUpView(APIView):
@@ -435,35 +437,38 @@ class VerifyingMailAcceptView(APIView):
         except KeyError:
             raise FieldError("INVALID_KEY")
 
-class UserScrapView(APIView):
+
+class UserScrapView(GenericAPIView):
     permission_classes = (permissions.IsAuthenticated, )
+    serializer_class = PostSerializer
 
     def get(self, request):
         user = request.user
-        query_params = request.query_params
-        limit = int(query_params.get('limit', 10))
-        offset = int(query_params.get('offset', 0))
+        queryset = user.scrap_post.order_by('-id')
+        page = self.paginate_queryset(queryset)
+        data = self.get_serializer(page, many=True).data
+        return self.get_paginated_response(data)
 
-        scrap_posts = user.scrap_post.order_by('-id')
-        count = len(scrap_posts)
 
-        current_url = request.scheme + '://' + request.get_host() + request.path
-        if offset + limit < count:
-            next = current_url + f'?limit={limit}&offset={offset + limit}'
-        else:
-            next = None
-        if offset > limit:
-            previous = current_url + f'?limit={limit}&offset={offset - limit}'
-        elif offset == 0:
-            previous = None
-        else:
-            previous = current_url + f'?limit={limit}'
+class UserPostView(GenericAPIView):
+    permission_classes = (permissions.IsAuthenticated,)
+    serializer_class = PostSerializer
 
-        results = PostSerializer(scrap_posts[offset:offset+limit], many=True).data
+    def get(self, request):
+        user = request.user
+        queryset = user.post_set.order_by('-id')
+        page = self.paginate_queryset(queryset)
+        data = self.get_serializer(page, many=True).data
+        return self.get_paginated_response(data)
 
-        return JsonResponse({
-            'count': count,
-            'next': next,
-            'previous': previous,
-            'results': results
-        })
+
+class UserCommentView(GenericAPIView):
+    permission_classes = (permissions.IsAuthenticated,)
+    serializer_class = PostSerializer
+
+    def get(self, request):
+        user = request.user
+        queryset = Post.objects.filter(id__in=user.comment_set.values("post")).order_by('-id')
+        page = self.paginate_queryset(queryset)
+        data = self.get_serializer(page, many=True).data
+        return self.get_paginated_response(data)
