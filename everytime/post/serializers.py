@@ -158,7 +158,10 @@ class LiveTopSerializer(serializers.ModelSerializer):
         )
 
     def get_board(self, obj):
-        return obj.board.title
+        return {
+            'id': obj.board.id,
+            'title': obj.board.title
+        }
 
     def get_num_of_comments(self, obj):
         return obj.comment_set.count()
