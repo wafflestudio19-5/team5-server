@@ -1,4 +1,5 @@
 from django.http import HttpResponse, JsonResponse
+from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.core.mail import EmailMessage
 from django.core.paginator import Paginator
@@ -35,7 +36,7 @@ from json.decoder import JSONDecodeError
 from lecture.models import Point, Semester
 from timetable.models import TimeTable
 from .models import User, SocialAccount
-from .serializers import UserCreateSerializer, UserLoginSerializer, SocialUserCreateSerializer, UserProfileSerializer, UserProfileUpdateSerializer, jwt_token_of
+from .serializers import UserCreateSerializer, UserLoginSerializer, SocialUserCreateSerializer, UserProfileSerializer, UserProfileUpdateSerializer, jwt_token_of, SchoolMailVerifyService
 from .utils import email_verification_token, message
 
 from post.serializers import PostSerializer
@@ -350,7 +351,7 @@ class SocialUserSignUpView(APIView):
         Point.objects.create(user=user, reason='기본 포인트 지급', point=20)
         semesters = Semester.objects.all()
         for semester in semesters:
-            TimeTable.objects.creeate(semester=semester, user=user, is_default=True, name='시간표 1')
+            TimeTable.objects.create(semester=semester, user=user, is_default=True, name='시간표 1')
 
         return Response({
             'social_user': user.username,   # social_id 값임
@@ -363,10 +364,11 @@ class VerifyingMailSendView(APIView):
 
     def post(self, request):
         user = request.user
-        if hasattr(user, 'school_email'):
+        if user.school_email is not None:
             raise DuplicationError("이미 학교 인증을 마친 계정입니다.")
 
         data = request.data
+        SchoolMailVerifyService(data=data).is_valid(raise_exception=True)
         email = data['email']
         uidb64 = urlsafe_base64_encode(force_bytes(user.id))
         emailb64 = urlsafe_base64_encode(force_bytes(email))
@@ -382,7 +384,7 @@ class VerifyingMailSendView(APIView):
 
 
 class VerifyingMailAcceptView(APIView):
-    permission_classes = (permissions.IsAuthenticated,)
+    permission_classes = (permissions.AllowAny,)
 
     def get(self, request, uidb64, token, emailb64):
         try:
@@ -394,12 +396,12 @@ class VerifyingMailAcceptView(APIView):
                 user.save()
                 return JsonResponse({"verify": "SUCCESS"}, status=200)
 
-            return JsonResponse({"message":"AUTH FAIL"}, status=400)
+            raise FieldError("AUTH FAIL")
 
         except ValidationError:
-            return JsonResponse({"message": "TYPE_ERROR"}, status=400)
+            raise FieldError("TYPE_ERROR")
         except KeyError:
-            return JsonResponse({"message": "INVALID_KEY"}, status=400)
+            raise FieldError("INVALID_KEY")
 
 class UserScrapView(APIView):
     permission_classes = (permissions.IsAuthenticated, )

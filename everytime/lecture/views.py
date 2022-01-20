@@ -340,13 +340,16 @@ class LectureSearchViewSet(viewsets.GenericViewSet):
     serializer_class = LectureSearchSerializer
     queryset = Lecture.objects.select_related('course__department__college')\
             .filter(course__self_made=False)\
-            .all().prefetch_related('lecturetime_set')\
+            .prefetch_related('lecturetime_set')\
             .order_by('id')
     filter_backends = (filters.DjangoFilterBackend,)
     filterset_class = LectureFilter
 
     def list(self, request):
-        queryset = self.filter_queryset(self.get_queryset())
+        semester_name = request.query_params.get('semester')
+        semester = get_object_or_404(Semester, name=semester_name)
+        queryset = self.get_queryset().filter(semester=semester)
+        queryset = self.filter_queryset(queryset)
         page = self.paginate_queryset(queryset)
         data = self.get_serializer(page, many=True).data
         return self.get_paginated_response(data)
