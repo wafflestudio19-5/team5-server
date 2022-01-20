@@ -153,6 +153,7 @@ class LiveTopSerializer(serializers.ModelSerializer):
             'board',
             'title',
             'content',
+            'num_of_likes',
             'num_of_comments'
         )
 
