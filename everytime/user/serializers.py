@@ -171,6 +171,8 @@ class UserProfileUpdateSerializer(serializers.Serializer):
                 raise AuthentificationFailed('계정 비밀번호가 올바르지 않아요.(origin_password field)')
             if queryset.filter(email=email).exists():
                 raise DuplicationError('이미 존재하는 이메일입니다.')
+            if user.socialaccount.all().exists():
+                raise NotAllowed('소셜 계정은 email을 바꿀 수 없습니다.')
             user.email = email
             
         if nickname is not None:
