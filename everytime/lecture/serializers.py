@@ -257,7 +257,7 @@ class LectureSearchSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Lecture
-        exclude = ('self_made',)
+        fields = '__all__'
 
     def get_lecture_time(self, lecture):
         lecture_time_set = lecture.lecturetime_set.all()
