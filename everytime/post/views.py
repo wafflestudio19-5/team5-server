@@ -1,5 +1,6 @@
 import pytz
 from django.http import JsonResponse
+from django.http.request import QueryDict
 from django.utils import timezone
 
 from rest_framework import status, viewsets, permissions
@@ -26,11 +27,14 @@ from everytime.utils import ViewSetActionPermissionMixin, get_object_or_404
 def create_tag(data):
     if 'tags' in data:
         all_tag = Tag.objects.all()
-        if hasattr(data, 'getlist'):
-            for tag_name in data.getlist('tags'):
-                tag_name = tag_name.upper()
-                if not all_tag.filter(name__iexact=tag_name).exists():
-                    Tag.objects.create(name=tag_name)
+        if isinstance(data, QueryDict):
+            tags = data.getlist('tags', [])
+        else:
+            tags = data.get('tags', [])
+        for tag_name in tags:
+            tag_name = tag_name.upper()
+            if not all_tag.filter(name__iexact=tag_name).exists():
+                Tag.objects.create(name=tag_name)
 
 def delete_tag(tags):
     for tag in tags:
@@ -50,7 +54,7 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
     queryset = Post.objects.all()
 
     def create(self, request):
-        data = request.data.copy()
+        data = request.data
 
         create_tag(data)
 
