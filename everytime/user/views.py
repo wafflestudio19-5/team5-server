@@ -1,4 +1,5 @@
 from django.http import HttpResponse, JsonResponse
+from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.core.mail import EmailMessage
 from django.core.paginator import Paginator
@@ -395,12 +396,12 @@ class VerifyingMailAcceptView(APIView):
                 user.save()
                 return JsonResponse({"verify": "SUCCESS"}, status=200)
 
-            return FieldError("AUTH FAIL")
+            raise FieldError("AUTH FAIL")
 
         except ValidationError:
-            return FieldError("TYPE_ERROR")
+            raise FieldError("TYPE_ERROR")
         except KeyError:
-            return FieldError("INVALID_KEY")
+            raise FieldError("INVALID_KEY")
 
 class UserScrapView(APIView):
     permission_classes = (permissions.IsAuthenticated, )
