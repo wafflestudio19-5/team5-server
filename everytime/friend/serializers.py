@@ -1,28 +1,25 @@
+from django.db.transaction import atomic
 from rest_framework import serializers
 from everytime.exceptions import FieldError, DuplicationError, NotFound, ServerError
 from .models import Friend, FriendRequest
 from user.models import User
 
-class FriendRequestSerializer(serializers.ModelSerializer):
-    sender = serializers.CharField()
+class FriendRequestSerializer(serializers.Serializer):
+    sender = serializers.CharField(read_only=True)
     receiver = serializers.CharField()
 
-    class Meta:
-        model = Friend
-
     def validate(self, data):
-        sender = data.get('sender', None)
+        print(self.context)
+        sender = self.context['request'].user
         receiver = data.get('receiver', None)
-        if sender in None or receiver is None:
+        if sender.username is None or receiver is None:
             raise FieldError()
-        try:
-            sender = User.objects.get(username=sender)
-        except:
-            raise ServerError()
         try:
             receiver = User.objects.get(username=receiver)
         except User.DoesNotExist:
             raise NotFound('올바르지 않은 상대입니다.')
+        if FriendRequest.objects.filter(sender=sender, receiver=receiver).exists():
+            raise DuplicationError('이미 친구 요청을 보낸 상대입니다.\n상대방이 수락하면 친구가 맺어집니다.')
         if Friend.objects.filter(user=sender, friend=receiver).exists():
             raise DuplicationError('이미 친구인 상대입니다.')
         data['sender'] = sender
@@ -34,31 +31,35 @@ class FriendRequestSerializer(serializers.ModelSerializer):
 
 
 class FriendSerializer(serializers.ModelSerializer):
-    user = serializers.CharField()
-    Friend = serializers.CharField()
+    user = serializers.CharField(read_only=True)
+    friend = serializers.IntegerField()
 
     class Meta:
         model = Friend
+        fields = '__all__'
 
     def validate(self, data):
-        user = data.get('user', None)
+        print(data)
+        user = self.context['request'].user
         friend = data.get('friend', None)
-        if user in None or friend is None:
+        if friend is None:
             raise FieldError()
         try:
-            sender = User.objects.get(username=user)
+            friend = User.objects.get(pk=friend)
         except:
-            raise ServerError()
-        try:
-            friend = User.objects.get(username=friend)
-        except User.DoesNotExist:
-            raise NotFound('이런 상황이 있을 수 있나?')
+            raise NotFound('존재하지 않는 유저입니다.')
+        if not FriendRequest.objects.filter(sender=friend, receiver=user).exists():
+            raise NotFound('친구 요청이 존재하지 않습니다.')
         if Friend.objects.filter(user=user, friend=friend).exists():
             raise DuplicationError('이미 친구인 상대입니다.')
-        data['user'] = sender
+        data['user'] = user
         data['friend'] = friend
+        print(data)
         return data
 
     def create(self, validated_data):
-        Friend.objects.create(user=validated_data['friend'], friend=validated_data['friend'])
-        return Friend.objects.create(**validated_data)
+        with atomic():
+            friend_request = FriendRequest.objects.get(sender=validated_data['friend'], receiver=validated_data['user'])
+            friend_request.delete()
+            Friend.objects.create(user=validated_data['friend'], friend=validated_data['user'])
+            return Friend.objects.create(**validated_data)

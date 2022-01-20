@@ -57,7 +57,7 @@ class UserSignUpView(APIView):
         Point.objects.create(user=user, reason='기본 포인트 지급', point=20)
         semesters = Semester.objects.all()
         for semester in semesters:
-            TimeTable.objects.creeate(semester=semester, user=user, is_default=True, name='시간표 1')
+            TimeTable.objects.create(semester=semester, user=user, is_default=True, name='시간표 1')
         return Response({
             'user': user.username,
             'token': jwt_token
