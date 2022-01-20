@@ -62,6 +62,7 @@ INSTALLED_APPS = [
     'rest_framework',
     # 'rest_framework_jwt',
     'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
     'rest_framework.authtoken',
     'drf_yasg',
     'storages',
@@ -189,14 +190,6 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 10,
 }
 
-# 더 이상 안 쓰는 API임 (simple JWT로 변경함)
-# JWT_AUTH = {
-#     'JWT_SECRET_KEY': SECRET_KEY,
-#     'JWT_ALGORITHM': 'HS256',  # 암호화 알고리즘
-#     'JWT_ALLOW_REFRESH': True,
-#     'JWT_EXPIRATION_DELTA': datetime.timedelta(hours=2),  # 유효기간 설정
-#     'JWT_REFRESH_EXPIRATION_DELTA': datetime.timedelta(days=3),  # JWT 토큰 갱신 유효기간
-# }
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': datetime.timedelta(minutes=60),
@@ -209,7 +202,7 @@ SIMPLE_JWT = {
     'USER_ID_CLAIM': 'user_id',
     'USER_AUTHENTICATION_RULE': 'rest_framework_simplejwt.authentication.default_user_authentication_rule',
 
-    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
+    'AUTH_TOKEN_CLASSES': ('everytime.utils.AccessToken',),
     'TOKEN_TYPE_CLAIM': 'token_type',
 
     'JTI_CLAIM': 'jti',
