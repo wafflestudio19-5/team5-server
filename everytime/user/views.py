@@ -418,3 +418,25 @@ class UserScrapView(GenericAPIView):
         return self.get_paginated_response(data)
 
 
+class UserPostView(GenericAPIView):
+    permission_classes = (permissions.IsAuthenticated,)
+    serializer_class = PostSerializer
+
+    def get(self, request):
+        user = request.user
+        queryset = user.post_set.order_by('-id')
+        page = self.paginate_queryset(queryset)
+        data = self.get_serializer(page, many=True).data
+        return self.get_paginated_response(data)
+
+
+class UserCommentView(GenericAPIView):
+    permission_classes = (permissions.IsAuthenticated,)
+    serializer_class = PostSerializer
+
+    def get(self, request):
+        user = request.user
+        queryset = Post.objects.filter(id__in=user.comment_set.values("post")).order_by('-id')
+        page = self.paginate_queryset(queryset)
+        data = self.get_serializer(page, many=True).data
+        return self.get_paginated_response(data)
