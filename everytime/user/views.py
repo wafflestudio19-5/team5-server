@@ -77,6 +77,10 @@ class UserDeleteAccountView(APIView):
         except:
             raise FieldError("계정 비밀번호가 올바르지 않습니다.")
         else:
+            refresh_token = RefreshToken(request.data.get('refresh'))
+            access_token = AccessToken(request.META.get('HTTP_AUTHORIZATION').split()[1])
+            refresh_token.blacklist()
+            access_token.blacklist()
             request.user.delete()
             return Response("정상적으로 회원탈퇴가 완료되었습니다.")
 
