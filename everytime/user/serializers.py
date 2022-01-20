@@ -240,3 +240,6 @@ class SocialUserCreateSerializer(serializers.Serializer):
         jwt_token = jwt_token_of(user)
         return user, jwt_token
 
+
+class SchoolMailVerifyService(serializers.Serializer):
+    email=serializers.EmailField(required=True)

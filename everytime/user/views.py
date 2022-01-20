@@ -35,7 +35,7 @@ from json.decoder import JSONDecodeError
 from lecture.models import Point, Semester
 from timetable.models import TimeTable
 from .models import User, SocialAccount
-from .serializers import UserCreateSerializer, UserLoginSerializer, SocialUserCreateSerializer, UserProfileSerializer, UserProfileUpdateSerializer, jwt_token_of
+from .serializers import UserCreateSerializer, UserLoginSerializer, SocialUserCreateSerializer, UserProfileSerializer, UserProfileUpdateSerializer, jwt_token_of, SchoolMailVerifyService
 from .utils import email_verification_token, message
 
 from post.serializers import PostSerializer
@@ -363,10 +363,11 @@ class VerifyingMailSendView(APIView):
 
     def post(self, request):
         user = request.user
-        if hasattr(user, 'school_email'):
+        if user.school_email is not None:
             raise DuplicationError("이미 학교 인증을 마친 계정입니다.")
 
         data = request.data
+        SchoolMailVerifyService(data=data).is_valid(raise_exception=True)
         email = data['email']
         uidb64 = urlsafe_base64_encode(force_bytes(user.id))
         emailb64 = urlsafe_base64_encode(force_bytes(email))
@@ -382,7 +383,7 @@ class VerifyingMailSendView(APIView):
 
 
 class VerifyingMailAcceptView(APIView):
-    permission_classes = (permissions.IsAuthenticated,)
+    permission_classes = (permissions.AllowAny,)
 
     def get(self, request, uidb64, token, emailb64):
         try:
@@ -394,12 +395,12 @@ class VerifyingMailAcceptView(APIView):
                 user.save()
                 return JsonResponse({"verify": "SUCCESS"}, status=200)
 
-            return JsonResponse({"message":"AUTH FAIL"}, status=400)
+            return FieldError("AUTH FAIL")
 
         except ValidationError:
-            return JsonResponse({"message": "TYPE_ERROR"}, status=400)
+            return FieldError("TYPE_ERROR")
         except KeyError:
-            return JsonResponse({"message": "INVALID_KEY"}, status=400)
+            return FieldError("INVALID_KEY")
 
 class UserScrapView(APIView):
     permission_classes = (permissions.IsAuthenticated, )
