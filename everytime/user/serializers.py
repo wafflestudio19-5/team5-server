@@ -154,11 +154,11 @@ class UserProfileUpdateSerializer(serializers.Serializer):
         nickname = validated_data.get('nickname')
         profile_picture = validated_data.get('profile_picture')
         username = user.username
-        if queryset.filter(username=username).exists():
-            raise DuplicationError('이미 존재하는 아이디입니다.')
+        queryset = User.objects.filter(email=email) | User.objects.filter(nickname=nickname)
 
         if queryset.filter(nickname=nickname).exists():
             raise DuplicationError('이미 존재하는 닉네임입니다.')
+        
         if new_password is not None:
             user_pwcheck = authenticate(username=username, password=origin_password)
             if user_pwcheck is None:
