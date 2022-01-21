@@ -37,6 +37,7 @@ urlpatterns = [
     path('timetable/', include('timetable.urls')),
     path('friend/', include('friend.urls')),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('report/', include('report.urls')),
 ]
 
 if settings.DEBUG_TOOLBAR:

@@ -167,7 +167,7 @@ class ExamType(models.Model):
 
 # 강의평가 서비스에서 사용되는 포인트
 class Point(models.Model):
-    user = models.ForeignKey('user.User', on_delete=models.CASCADE)
+    user = models.CharField(max_length=255)
     reason = models.CharField(max_length=30)
     point = models.SmallIntegerField()
     created_at = models.DateTimeField(auto_now_add=True)

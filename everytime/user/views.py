@@ -58,7 +58,6 @@ class UserSignUpView(APIView):
         except IntegrityError:
             raise DatabaseError()
 
-        Point.objects.create(user=user, reason='기본 포인트 지급', point=20)
         semesters = Semester.objects.all()
         for semester in semesters:
             TimeTable.objects.create(semester=semester, user=user, is_default=True, name='시간표 1')
@@ -382,7 +381,6 @@ class SocialUserSignUpView(APIView):
         except IntegrityError:
             raise DatabaseError()
 
-        Point.objects.create(user=user, reason='기본 포인트 지급', point=20)
         semesters = Semester.objects.all()
         for semester in semesters:
             TimeTable.objects.create(semester=semester, user=user, is_default=True, name='시간표 1')
@@ -428,6 +426,7 @@ class VerifyingMailAcceptView(APIView):
             if email_verification_token.check_token(user, token):
                 user.school_email = email
                 user.save()
+                Point.objects.create(user=user.school_email, reason='기본 포인트 지급', point=20)
                 return JsonResponse({"verify": "SUCCESS"}, status=200)
 
             raise FieldError("AUTH FAIL")

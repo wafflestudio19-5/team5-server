@@ -80,7 +80,7 @@ class EvaluationView(APIView):
         serializer.validated_data['course'] = course
         serializer.save()
 
-        Point.objects.create(user=request.user, reason='강의평 작성', point=10)
+        Point.objects.create(user=request.user.school_email, reason='강의평 작성', point=10)
 
         evals = LectureEvaluation.objects.filter(course=course).order_by('-created_at')
         return Response(EvalListSerializer(evals, many=True, context={'user': request.user}).data, status=status.HTTP_201_CREATED)
@@ -123,7 +123,7 @@ class MyCourseView(APIView):
         else:
             my_courses = None
 
-        point = Point.objects.filter(user=request.user).aggregate(Sum('point'))
+        point = Point.objects.filter(user=request.user.school_email).aggregate(Sum('point'))
 
         return JsonResponse({
             'point': point.get('point__sum'),
@@ -247,9 +247,9 @@ class ExamInfoView(APIView):
         exam_info = serializer.save()
 
         if not course.examinfo_set.exists():
-            Point.objects.create(user=request.user, reason='시험 정보 공유', point=40)
+            Point.objects.create(user=request.user.school_email, reason='시험 정보 공유', point=40)
         else:
-            Point.objects.create(user=request.user, reason='시험 정보 공유', point=20)
+            Point.objects.create(user=request.user.school_email, reason='시험 정보 공유', point=20)
 
         # type 추가
         if types_input:
@@ -308,12 +308,12 @@ class UsePointView(APIView):
         if request.user in examinfo.readable_users.all():
             raise NotAllowed("이미 볼 수 있는 유저임")
 
-        my_point = Point.objects.filter(user=request.user).aggregate(Sum('point')).get('point__sum')
+        my_point = Point.objects.filter(user=request.user.school_email).aggregate(Sum('point')).get('point__sum')
         if my_point < 5:
             raise NotAllowed("포인트가 부족합니다.")
 
         examinfo.readable_users.add(request.user)
-        Point.objects.create(user=request.user, reason='시험 정보 조회', point=-5)
+        Point.objects.create(user=request.user.school_email, reason='시험 정보 조회', point=-5)
 
         exam_info = ExamInfo.objects.filter(course=course).order_by('-created_at')
         serializer = ExamInfoListSerializer(exam_info, many=True, context={'user': request.user})
@@ -324,10 +324,10 @@ class MyPointView(APIView):
     permission_classes = (permissions.IsAuthenticated,)
 
     def get(self, request):
-        my_points = Point.objects.filter(user=request.user).order_by('-created_at')
+        my_points = Point.objects.filter(user=request.user.school_email).order_by('-created_at')
         serializer = PointSerializer(my_points, many=True)
 
-        point_sum = Point.objects.filter(user=request.user).aggregate(Sum('point'))
+        point_sum = Point.objects.filter(user=request.user.school_email).aggregate(Sum('point'))
 
         return JsonResponse({
             'sum': point_sum.get('point__sum'),
