@@ -55,11 +55,4 @@ class ReportedUser(models.Model):
     # 몇 번 신고당했는지
     count = models.PositiveIntegerField(default=1)
     created_at = models.DateTimeField(auto_now_add=True)
-
-
-class BlockedUser(models.Model):
-    school_email = models.CharField(max_length=255)
-    # 몇 번째로 제한이 걸린 건지(제한 횟수가 늘수록 오랫동안 제한이 걸리도록)
-    count = models.PositiveIntegerField(default=1)
-    created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

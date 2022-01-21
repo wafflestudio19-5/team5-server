@@ -21,25 +21,12 @@ class PostReportView(APIView):
             reported_user = ReportedUser.objects.get(school_email=reported_email)
             reported_user.count += 1
             reported_user.save()
-
-            reported_cnt = reported_user.count
-            if reported_cnt == 10:
-                BlockedUser.objects.create(school_email=reported_email)
-            elif reported_cnt == 30:
-                blocked = BlockedUser.objects.get(school_email=reported_email)
-                blocked.count = 2
-                blocked.save()
-            elif reported_cnt == 50:
-                blocked = BlockedUser.objects.get(school_email=reported_email)
-                blocked.count = 3
-                blocked.save()
-            else:
-                blocked = BlockedUser.objects.get(school_email=reported_email)
-                blocked.count = 4
-                blocked.save()
-            # 제한 횟수에 따른 제한 기간은 기준을 모르겠어서 우리끼리 알아서 정하면 될 거 같고,
-            # 이후 BlockedUser 객체의 count와 updated_at 따라 permission 조정
         else:
             ReportedUser.objects.create(school_email=reported_email)
 
         return Response('신고하였습니다.')
+
+
+# 제한 횟수에 따른 제한 기간은 기준을 모르겠어서 우리끼리 알아서 정하면 될 거 같고,
+# (10회 일주일 정지, 30회 한 달 정지, 50회 6개월 정지 등등,, 알아서)
+# 이후 ReportedUser 객체의 count와 updated_at 따라 permission 조정
