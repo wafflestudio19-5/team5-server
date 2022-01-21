@@ -340,7 +340,7 @@ class LectureSearchViewSet(viewsets.GenericViewSet):
     serializer_class = LectureSearchSerializer
     queryset = Lecture.objects.select_related('course__department__college')\
             .filter(course__self_made=False)\
-            .prefetch_related('lecturetime_set')\
+            .prefetch_related('lecturetime_set','course__lectureevaluation_set')\
             .order_by('id')
     filter_backends = (filters.DjangoFilterBackend,)
     filterset_class = LectureFilter
