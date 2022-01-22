@@ -120,6 +120,8 @@ class LectureEvaluation(models.Model):
     num_of_likes = models.PositiveIntegerField(default=0, blank=True)
     like_users = models.ManyToManyField('user.User', related_name='like_evaluations')
 
+    reporting_users = models.ManyToManyField('user.User', related_name='eval_reporting_users')
+
     created_at = models.DateTimeField(auto_now_add=True)
 
 
@@ -157,6 +159,8 @@ class ExamInfo(models.Model):
     # 추천
     num_of_likes = models.PositiveIntegerField(default=0, blank=True)
     like_users = models.ManyToManyField('user.User', related_name='like_exam_info')
+
+    reporting_users = models.ManyToManyField('user.User', related_name='exam_info_reporting_users')
 
     created_at = models.DateTimeField(auto_now_add=True)
 

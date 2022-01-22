@@ -2,6 +2,7 @@ from django.db import transaction
 
 from rest_framework import serializers, exceptions
 
+from everytime.utils import get_object_or_404
 from everytime.exceptions import FieldError, DuplicationError
 from lecture.models import Semester, Lecture, Course, LectureTime
 from .models import TimeTable
@@ -56,6 +57,7 @@ class TimeTableSerializer(serializers.ModelSerializer):
     private = serializers.ChoiceField(required=False, choices=TimeTable.PRIVATE_CHOICES)
     is_default = serializers.BooleanField(required=False)
 
+    semester = serializers.SerializerMethodField()
     lecture = serializers.SerializerMethodField()
     credit_total = serializers.SerializerMethodField()
 
@@ -81,15 +83,18 @@ class TimeTableSerializer(serializers.ModelSerializer):
 
     def get_lecture(self, timetable):
         return LectureSerializer(timetable.lecture.all(), many=True).data
-    
+
+    def get_semester(self, timetable):
+        return timetable.semester.name
+
     def validate(self, data):
         return data
 
     def create(self, validated_data):
         request = self.context['request']
         user = request.user
-        semester = validated_data.get('semester')
-
+        semester = request.data.get('semester')
+        semester = get_object_or_404(Semester, name=semester)
         table_list = TimeTable.objects.filter(user=user, semester=semester).values_list('name', flat=True)
 
         success = False
@@ -112,9 +117,14 @@ class TimeTableSerializer(serializers.ModelSerializer):
         queryset = TimeTable.objects.filter(user=user, semester=timetable.semester)
         
         if is_default is True:
-            default_timetable = queryset.get(is_default=True)
-            default_timetable.is_default = False
-            default_timetable.save()
+            try:
+                default_timetable = queryset.get(is_default=True)
+                default_timetable.is_default = False
+                default_timetable.save()
+            except:
+                timetable.is_default = True
+                timetable.save()
+                pass
             timetable.is_default = True
             
         if name:
@@ -146,7 +156,7 @@ class TimeTableListSerializer(serializers.ModelSerializer):
 class SelfLectureCreateSerializer(serializers.Serializer):
     title = serializers.CharField(max_length=35)
     instructor = serializers.CharField(max_length=50)
-    
+
     def validate_time(self, value):
         if len(value.split('/')) != 4:
             raise serializers.ValidationError('time 필드의 값이 부적절합니다.')
@@ -154,14 +164,17 @@ class SelfLectureCreateSerializer(serializers.Serializer):
 
     def create(self, validated_data):
         request = self.context['request']
-        time_list = request.data.getlist('time')        
+        data = dict(request.data)
+        time_list = data.get('time')
+        if not time_list or len(time_list)==0:
+            raise FieldError('time값을 입력해주세요')
         timetable = self.context['timetable']
         
-        course = Course.objects.create(**validated_data, self_made=True)
+        course = Course.objects.create(title=validated_data.get('title'),instructor=validated_data.get('instructor'), self_made=True)
         lecture = Lecture.objects.create(
             course=course, semester=timetable.semester, classification='/',
             degree='.', course_code='.', grade=0, lecture_code=0, credits=0, lecture=0, 
-            laboratory=0, cart=0, quota=0, self_made=True
+            laboratory=0, cart=0, quota=0
         )
         for time in time_list:
             t = time.split('/')

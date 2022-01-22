@@ -33,7 +33,7 @@ class Post(models.Model):
     is_anonymous = models.BooleanField(default=True, blank=True)
     is_question = models.BooleanField(default=False, blank=True)
 
-    reporting_users = models.ManyToManyField('user.User', related_name='reporting_users')
+    reporting_users = models.ManyToManyField('user.User', related_name='post_reporting_users')
 
 
 class PostImage(models.Model):
