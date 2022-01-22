@@ -117,9 +117,14 @@ class TimeTableSerializer(serializers.ModelSerializer):
         queryset = TimeTable.objects.filter(user=user, semester=timetable.semester)
         
         if is_default is True:
-            default_timetable = queryset.get(is_default=True)
-            default_timetable.is_default = False
-            default_timetable.save()
+            try:
+                default_timetable = queryset.get(is_default=True)
+                default_timetable.is_default = False
+                default_timetable.save()
+            except:
+                timetable.is_default = True
+                timetable.save()
+                pass
             timetable.is_default = True
             
         if name:
@@ -128,8 +133,6 @@ class TimeTableSerializer(serializers.ModelSerializer):
             timetable.name = name
             
         if private:
-            if private not in TimeTable.PRIVATE_CHOICES:
-                raise FieldError('private값이 선택지에 없습니다.')
             timetable.private = private
             
         timetable.save()
@@ -153,7 +156,6 @@ class TimeTableListSerializer(serializers.ModelSerializer):
 class SelfLectureCreateSerializer(serializers.Serializer):
     title = serializers.CharField(max_length=35)
     instructor = serializers.CharField(max_length=50)
-    time = serializers.CharField(max_length=120)
 
     def validate_time(self, value):
         if len(value.split('/')) != 4:
@@ -162,8 +164,10 @@ class SelfLectureCreateSerializer(serializers.Serializer):
 
     def create(self, validated_data):
         request = self.context['request']
-
-        time_list = request.data.getlist('time')
+        data = dict(request.data)
+        time_list = data.get('time')
+        if not time_list or len(time_list)==0:
+            raise FieldError('time값을 입력해주세요')
         timetable = self.context['timetable']
         
         course = Course.objects.create(title=validated_data.get('title'),instructor=validated_data.get('instructor'), self_made=True)
