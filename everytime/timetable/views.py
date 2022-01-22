@@ -76,7 +76,7 @@ class TimeTableViewSet(viewsets.GenericViewSet):
         data = request.data
 
         serializer = self.get_serializer(timetable, data=data, partial=True)
-        serializer.is_valid()
+        serializer.is_valid(raise_exception=True)
         timetable = serializer.save()
 
         return Response(self.get_serializer(timetable).data, status=status.HTTP_200_OK)

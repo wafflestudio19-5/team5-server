@@ -2,6 +2,7 @@ from django.db import transaction
 
 from rest_framework import serializers, exceptions
 
+from everytime.utils import get_object_or_404
 from everytime.exceptions import FieldError, DuplicationError
 from lecture.models import Semester, Lecture, Course, LectureTime
 from .models import TimeTable
@@ -56,6 +57,7 @@ class TimeTableSerializer(serializers.ModelSerializer):
     private = serializers.ChoiceField(required=False, choices=TimeTable.PRIVATE_CHOICES)
     is_default = serializers.BooleanField(required=False)
 
+    semester = serializers.SerializerMethodField()
     lecture = serializers.SerializerMethodField()
     credit_total = serializers.SerializerMethodField()
 
@@ -81,15 +83,18 @@ class TimeTableSerializer(serializers.ModelSerializer):
 
     def get_lecture(self, timetable):
         return LectureSerializer(timetable.lecture.all(), many=True).data
-    
+
+    def get_semester(self, timetable):
+        return timetable.semester.name
+
     def validate(self, data):
         return data
 
     def create(self, validated_data):
         request = self.context['request']
         user = request.user
-        semester = validated_data.get('semester')
-
+        semester = request.data.get('semester')
+        semester = get_object_or_404(Semester, name=semester)
         table_list = TimeTable.objects.filter(user=user, semester=semester).values_list('name', flat=True)
 
         success = False
@@ -123,6 +128,8 @@ class TimeTableSerializer(serializers.ModelSerializer):
             timetable.name = name
             
         if private:
+            if private not in TimeTable.PRIVATE_CHOICES:
+                raise FieldError('private값이 선택지에 없습니다.')
             timetable.private = private
             
         timetable.save()
