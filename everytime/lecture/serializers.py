@@ -242,14 +242,22 @@ class PointSerializer(serializers.ModelSerializer):
         return str(obj.created_at)
 
 class CourseSerializer(serializers.ModelSerializer):
+    rating = serializers.SerializerMethodField()
 
     class Meta:
         model = Course
         fields = (
             'title',
-            'instructor'
+            'instructor',
+            'rating',
         )
 
+    def get_rating(self, course):
+        evals = course.lectureevaluation_set
+        if not evals.exists():
+            return 0
+        avg_rating=round(evals.aggregate(Avg('rating')).get('rating__avg'), 1)
+        return avg_rating
 
 class LectureSearchSerializer(serializers.ModelSerializer):
     lecture_time = serializers.SerializerMethodField()
