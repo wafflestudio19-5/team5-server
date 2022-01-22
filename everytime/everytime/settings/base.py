@@ -75,6 +75,7 @@ INSTALLED_APPS = [
     'friend',
     'corsheaders',
     'multiselectfield',
+    'report',
 ]
 
 MIDDLEWARE = [
