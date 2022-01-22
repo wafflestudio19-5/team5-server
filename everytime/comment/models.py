@@ -24,6 +24,8 @@ class Comment(models.Model):
     # on_delete를 set_null로 할 수는 없음 - 댓글과 대댓글을 구분해야하기 때문
     head_comment = models.ForeignKey('self', related_name='tail_comments', on_delete=models.DO_NOTHING, null=True)
 
+    reporting_users = models.ManyToManyField('user.User', related_name='comment_reporting_users')
+
     def __str__(self):
         return self.content
 
