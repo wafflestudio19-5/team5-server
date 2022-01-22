@@ -75,8 +75,8 @@ class PostSerializer(serializers.ModelSerializer):
         return "https://t5backendbucket.s3.ap-northeast-2.amazonaws.com/media/images/profile/default.png"
 
     def get_thumbnail_picture(self, obj):
-        if obj.postimage_set.first():
-            return obj.postimage_set.first().image.url
+        if obj.postimage_set.all():
+            return obj.postimage_set.all()[0].image.url
         return None
 
     def validate(self, data):
