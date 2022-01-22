@@ -43,7 +43,7 @@ def delete_tag(tags):
 
 
 class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
-    permission_classes = (permissions.AllowAny, )
+    permission_classes = (permissions.IsAuthenticated, )
     permission_action_classes = {
         'livetop': (permissions.AllowAny, ),
         'hot': (permissions.AllowAny, ),

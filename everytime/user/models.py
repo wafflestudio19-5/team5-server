@@ -113,8 +113,11 @@ class User(AbstractBaseUser, PermissionsMixin):
     REQUIRED_FIELDS = ['email', 'nickname']
 
     def save(self, *args, **kwargs):
-        new_image = self.reduce_image_size(self.profile_picture)
-        self.profile_picture = new_image
+        if self.profile_picture == "images/profile/default.png":
+            pass
+        else:
+            new_image = self.reduce_image_size(self.profile_picture)
+            self.profile_picture = new_image
         super().save(*args, **kwargs)
 
     def reduce_image_size(self, profile_pic):
