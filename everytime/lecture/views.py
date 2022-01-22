@@ -343,6 +343,7 @@ class LectureSearchViewSet(viewsets.GenericViewSet):
             .select_related('course__department__college')\
             .prefetch_related('lecturetime_set')\
             .order_by('id')
+
     filter_backends = (filters.DjangoFilterBackend,)
     filterset_class = LectureFilter
 
