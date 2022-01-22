@@ -85,7 +85,7 @@ class LectureFilter(django_filters.FilterSet):
     instructor = django_filters.CharFilter(field_name='course__instructor', lookup_expr='icontains', min_length=2)
     course_code = django_filters.CharFilter(field_name='course_code', lookup_expr='icontains')
     location = django_filters.CharFilter(field_name='lecturetime__location', lookup_expr='icontains')
-    lecturetime = MultipleValueFilter(field_class=CharField, method='custom_time_filter')
+    time = MultipleValueFilter(field_class=CharField, method='custom_time_filter')
     ordering = UserOrderingFilter(
         fields=(
             ('cart', 'cart'),

@@ -146,7 +146,8 @@ class TimeTableListSerializer(serializers.ModelSerializer):
 class SelfLectureCreateSerializer(serializers.Serializer):
     title = serializers.CharField(max_length=35)
     instructor = serializers.CharField(max_length=50)
-    
+    time = serializers.CharField(max_length=120)
+
     def validate_time(self, value):
         if len(value.split('/')) != 4:
             raise serializers.ValidationError('time 필드의 값이 부적절합니다.')
@@ -154,14 +155,15 @@ class SelfLectureCreateSerializer(serializers.Serializer):
 
     def create(self, validated_data):
         request = self.context['request']
-        time_list = request.data.getlist('time')        
+
+        time_list = request.data.getlist('time')
         timetable = self.context['timetable']
         
-        course = Course.objects.create(**validated_data, self_made=True)
+        course = Course.objects.create(title=validated_data.get('title'),instructor=validated_data.get('instructor'), self_made=True)
         lecture = Lecture.objects.create(
             course=course, semester=timetable.semester, classification='/',
             degree='.', course_code='.', grade=0, lecture_code=0, credits=0, lecture=0, 
-            laboratory=0, cart=0, quota=0, self_made=True
+            laboratory=0, cart=0, quota=0
         )
         for time in time_list:
             t = time.split('/')

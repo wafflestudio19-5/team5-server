@@ -338,8 +338,9 @@ class MyPointView(APIView):
 class LectureSearchViewSet(viewsets.GenericViewSet):
     permission_classes = (permissions.IsAuthenticated,)
     serializer_class = LectureSearchSerializer
-    queryset = Lecture.objects.select_related('course__department__college')\
-            .filter(course__self_made=False)\
+    queryset = Lecture.objects.filter(course__self_made=False)\
+            .exclude(lecturetime=None)\
+            .select_related('course__department__college')\
             .prefetch_related('lecturetime_set')\
             .order_by('id')
     filter_backends = (filters.DjangoFilterBackend,)
