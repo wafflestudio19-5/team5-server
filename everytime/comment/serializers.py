@@ -12,6 +12,7 @@ class CommentSerializer(serializers.ModelSerializer):
     is_mine = serializers.SerializerMethodField()
     user_type = serializers.SerializerMethodField()
     nickname = serializers.SerializerMethodField()
+    profile_picture = serializers.SerializerMethodField()
 
     class Meta:
         model = Comment
@@ -19,6 +20,7 @@ class CommentSerializer(serializers.ModelSerializer):
             'id',
             'writer',
             'nickname',
+            'profile_picture',
             'content',
             'created_at',
             'user_type',
@@ -61,6 +63,11 @@ class CommentSerializer(serializers.ModelSerializer):
             return comment.writer.userpost_set.get(post=comment.post).anonymous_nickname
         return comment.writer.nickname
 
+    def get_profile_picture(self, comment):
+        if comment.writer and not comment.is_anonymous:
+            return comment.writer.profile_picture.url
+        return "https://t5backendbucket.s3.ap-northeast-2.amazonaws.com/media/images/profile/default.png"
+
     def validate(self, data):
         data['writer'] = self.context['user']
         data['post'] = self.context['post']
@@ -95,6 +102,7 @@ class ReplySerializer(serializers.ModelSerializer):
     is_mine = serializers.SerializerMethodField()
     user_type = serializers.SerializerMethodField()
     nickname = serializers.SerializerMethodField()
+    profile_picture = serializers.SerializerMethodField()
 
     class Meta:
         model = Comment
@@ -102,6 +110,7 @@ class ReplySerializer(serializers.ModelSerializer):
             'id',
             'writer',
             'nickname',
+            'profile_picture',
             'content',
             'created_at',
             'user_type',
@@ -136,3 +145,8 @@ class ReplySerializer(serializers.ModelSerializer):
                 return '익명(글쓴이)'
             return comment.writer.userpost_set.get(post=comment.post).anonymous_nickname
         return comment.writer.nickname
+
+    def get_profile_picture(self, comment):
+        if comment.writer and not comment.is_anonymous:
+            return comment.writer.profile_picture.url
+        return "https://t5backendbucket.s3.ap-northeast-2.amazonaws.com/media/images/profile/default.png"
