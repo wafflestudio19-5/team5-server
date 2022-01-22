@@ -14,7 +14,7 @@ class PostReport(models.Model):
         (5, '낚시/놀람/도배'),
         (6, '정당/정치인 비하 및 선거운동')
     )
-    post = models.ForeignKey('post.Post', related_name='reports')
+    post = models.ForeignKey('post.Post', related_name='reports', on_delete=models.CASCADE)
     type = models.SmallIntegerField(choices=TYPE_CHOICES)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -29,18 +29,18 @@ class CommentReport(models.Model):
         (5, '낚시/놀람/도배'),
         (6, '정당/정치인 비하 및 선거운동')
     )
-    comment = models.ForeignKey('comment.Comment', related_name='reports')
+    comment = models.ForeignKey('comment.Comment', related_name='reports', on_delete=models.CASCADE)
     type = models.SmallIntegerField(choices=TYPE_CHOICES)
     created_at = models.DateTimeField(auto_now_add=True)
 
 
 class EvaluationReport(models.Model):
-    eval = models.ForeignKey('lecture.LectureEvaluation', related_name='reports')
+    eval = models.ForeignKey('lecture.LectureEvaluation', related_name='reports', on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
 
 
 class ExamInfoReport(models.Model):
-    examinfo = models.ForeignKey('lecture.ExamInfo', related_name='reports')
+    examinfo = models.ForeignKey('lecture.ExamInfo', related_name='reports', on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
 
 

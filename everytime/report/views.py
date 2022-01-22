@@ -2,7 +2,7 @@ from rest_framework import permissions
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
-from report.models import ReportedUser, BlockedUser
+from report.models import ReportedUser
 from report.serializers import PostReportSerializer
 
 
