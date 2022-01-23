@@ -19,7 +19,6 @@ class PostReportSerializer(serializers.ModelSerializer):
             raise NotAllowed('해당 글을 작성한 유저가 더이상 존재하지 않습니다.')
         if post.writer.school_email is None:
             raise DatabaseError('학교 인증을 마치지 않은 작성자입니다. 서버 관리자에게 문의 바랍니다.')
-        # post에 reporting_users 추가함(마이그레이션 안함)
         if self.context['user'] in post.reporting_users.all():
             raise NotAllowed('이미 신고한 글입니다.')
 
@@ -37,7 +36,6 @@ class CommentReportSerializer(serializers.ModelSerializer):
             raise NotAllowed('해당 글을 작성한 유저가 더이상 존재하지 않습니다.')
         if comment.writer.school_email is None:
             raise DatabaseError('학교 인증을 마치지 않은 작성자입니다. 서버 관리자에게 문의 바랍니다.')
-        # post에 reporting_users 추가함(마이그레이션 안함)
         if self.context['user'] in comment.reporting_users.all():
             raise NotAllowed('이미 신고한 글입니다.')
 
@@ -55,7 +53,6 @@ class EvaluationReportSerializer(serializers.ModelSerializer):
             raise NotAllowed('해당 글을 작성한 유저가 더이상 존재하지 않습니다.')
         if eval.writer.school_email is None:
             raise DatabaseError('학교 인증을 마치지 않은 작성자입니다. 서버 관리자에게 문의 바랍니다.')
-        # post에 reporting_users 추가함(마이그레이션 안함)
         if self.context['user'] in eval.reporting_users.all():
             raise NotAllowed('이미 신고한 글입니다.')
 
@@ -73,7 +70,6 @@ class ExamInfoReportSerializer(serializers.ModelSerializer):
             raise NotAllowed('해당 글을 작성한 유저가 더이상 존재하지 않습니다.')
         if examinfo.writer.school_email is None:
             raise DatabaseError('학교 인증을 마치지 않은 작성자입니다. 서버 관리자에게 문의 바랍니다.')
-        # post에 reporting_users 추가함(마이그레이션 안함)
         if self.context['user'] in examinfo.reporting_users.all():
             raise NotAllowed('이미 신고한 글입니다.')
 
