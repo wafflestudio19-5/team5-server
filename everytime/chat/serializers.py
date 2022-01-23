@@ -25,23 +25,27 @@ class MessageCreateSerializer(serializers.ModelSerializer):
         if sender == receiver:
             raise NotAllowed('자기 자신에게는 쪽지를 보낼 수 없습니다.')
         is_anonymous = data.get('is_anonymous')
+        channel = self.context.get('channel')
+        if channel not in ['post', 'comment', 'chatroom']:
+            raise FieldError('채널 쿼리 파라미터는 post 또는 comment만 가능합니다.')
+        channel_detail = self.context.get('channel_detail')
 
-        chatroom_sender, created = ChatRoom.objects.get_or_create(user=sender, partner=receiver, is_anonymous=is_anonymous)
+        chatroom_sender, created = ChatRoom.objects.get_or_create(user=sender, partner=receiver, is_anonymous=is_anonymous, channel=channel_detail)
+        chatroom_receiver, created = ChatRoom.objects.get_or_create(user=receiver, partner=sender, is_anonymous=is_anonymous, channel=channel_detail)
+
         if created and is_anonymous:
-            channel = self.context.get('channel')
             if channel == 'post':
-                post = self.context.get('obj')
+                post = self.context.get('object')
                 notice = Message.objects.create(sender=None, receiver=None, is_notice=True,
                                                 content=post.board.title+'에 작성된 글을 통해 시작된 쪽지입니다.\n글 내용: '+(post.title if post.board.title_enabled else post.content))
                 ChatRoomMessage.objects.create(chatroom=chatroom_sender, message=notice)
             elif channel == 'comment':
-                comment = self.context.get('obj')
+                comment = self.context.get('object')
                 post = comment.post
                 notice = Message.objects.create(sender=None, receiver=None, is_notice=True,
                                                 content=post.board.title + '에 작성된 ' + comment.writer.userpost_set.get(post=post).anonymous_nickname + '의 댓글을 통해 시작된 쪽지입니다.\n글 내용: ' + (post.title if post.board.title_enabled else post.content))
                 ChatRoomMessage.objects.create(chatroom=chatroom_sender, message=notice)
 
-        chatroom_receiver, created = ChatRoom.objects.get_or_create(user=receiver, partner=sender, is_anonymous=is_anonymous)
         if created:
             notice1 = Message.objects.create(sender=None, receiver=None, is_notice=True,
                                              content='쪽지 이용 시 개인정보 및 금융정보 보호에 유의해주시기 바랍니다. 광고, 스팸, 사기 등의 쪽지를 받으셨을 경우 스팸 신고를 눌러주세요.')

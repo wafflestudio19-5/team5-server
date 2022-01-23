@@ -29,14 +29,14 @@ class MessageThroughPostOrCommentView(GenericAPIView):
             raise FieldError('메세지 전달 경로를 명시해주세요.')
         elif channel == 'post':
             post_id = params.get('post_id', None)
-            self.obj = get_object_or_404(Post, id=post_id)
-            receiver = self.obj.writer
-            is_anonymous = self.obj.is_anonymous
+            obj = get_object_or_404(Post, id=post_id)
+            receiver = obj.writer
+            is_anonymous = obj.is_anonymous
         elif channel == 'comment':
             comment_id = params.get('comment_id', None)
-            self.obj = get_object_or_404(Comment, id=comment_id)
-            receiver = self.obj.writer
-            is_anonymous = self.obj.is_anonymous
+            obj = get_object_or_404(Comment, id=comment_id)
+            receiver = obj.writer
+            is_anonymous = obj.is_anonymous
 
         if receiver.username is None:
             raise NotFound('존재하지 않는 유저입니다.')
@@ -48,7 +48,8 @@ class MessageThroughPostOrCommentView(GenericAPIView):
             'sender': user,
             'receiver': receiver,
             'channel': channel,
-            channel: getattr(self, 'obj')
+            'channel_detail': channel + '_' + obj.id,
+            'object': obj
         })
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -76,7 +77,8 @@ class MessageThroughChatRoomView(GenericAPIView):
         }, context={
             'sender': sender,
             'receiver': receiver,
-            'channel': 'chatroom'
+            'channel': 'chatroom',
+            'channel_detail': chatroom.channel
         })
         serializer.is_valid(raise_exception=True)
         serializer.save()
