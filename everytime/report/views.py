@@ -19,6 +19,7 @@ class PostReportView(APIView):
         serializer = PostReportSerializer(data=request.data, context={'user': request.user})
         serializer.is_valid(raise_exception=True)
         postreport = serializer.save()
+        serializer.validated_data['post'].reporting_users.add(request.user)
 
         reported_email = postreport.post.writer.school_email
 
@@ -39,10 +40,10 @@ class CommentReportView(APIView):
     permission_classes = (permissions.IsAuthenticated,)
 
     def post(self, request):
-        # data에 post(pk)와 type 전달
         serializer = CommentReportSerializer(data=request.data, context={'user': request.user})
         serializer.is_valid(raise_exception=True)
         comment_report = serializer.save()
+        serializer.validated_data['comment'].reporting_users.add(request.user)
 
         reported_email = comment_report.comment.writer.school_email
 
@@ -63,10 +64,10 @@ class EvaluationReportView(APIView):
     permission_classes = (permissions.IsAuthenticated,)
 
     def post(self, request):
-        # data에 post(pk)와 type 전달
         serializer = EvaluationReportSerializer(data=request.data, context={'user': request.user})
         serializer.is_valid(raise_exception=True)
         evaluation_report = serializer.save()
+        serializer.validated_data['eval'].reporting_users.add(request.user)
 
         reported_email = evaluation_report.eval.writer.school_email
 
@@ -87,10 +88,10 @@ class ExamInfoReportView(APIView):
     permission_classes = (permissions.IsAuthenticated,)
 
     def post(self, request):
-        # data에 post(pk)와 type 전달
         serializer = ExamInfoReportSerializer(data=request.data, context={'user': request.user})
         serializer.is_valid(raise_exception=True)
         exam_info_report = serializer.save()
+        serializer.validated_data['examinfo'].reporting_users.add(request.user)
 
         reported_email = exam_info_report.post.writer.school_email
 

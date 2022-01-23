@@ -73,6 +73,7 @@ INSTALLED_APPS = [
     'lecture',
     'timetable',
     'friend',
+    'chat',
     'corsheaders',
     'multiselectfield',
     'report',
