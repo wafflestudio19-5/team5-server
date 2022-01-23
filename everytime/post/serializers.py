@@ -25,6 +25,8 @@ class PostSerializer(serializers.ModelSerializer):
     is_mine = serializers.SerializerMethodField()
     is_anonymous = serializers.BooleanField(default=False)
     is_question = serializers.BooleanField(default=False)
+    profile_picture = serializers.SerializerMethodField()
+    thumbnail_picture = serializers.SerializerMethodField()
 
     class Meta:
         model = Post
@@ -32,6 +34,8 @@ class PostSerializer(serializers.ModelSerializer):
             'id',
             'board',
             'writer',
+            'profile_picture',
+            'thumbnail_picture',
             'title',
             'content',
             'num_of_likes',
@@ -64,7 +68,17 @@ class PostSerializer(serializers.ModelSerializer):
         if obj.writer == self.context['request'].user:
             return True
         return False
-        
+
+    def get_profile_picture(self, obj):
+        if obj.writer and not obj.is_anonymous:
+            return obj.writer.profile_picture.url
+        return "https://t5backendbucket.s3.ap-northeast-2.amazonaws.com/media/images/profile/default.png"
+
+    def get_thumbnail_picture(self, obj):
+        if obj.postimage_set.all():
+            return obj.postimage_set.all()[0].image.url
+        return None
+
     def validate(self, data):
         request = self.context['request']
 
@@ -140,3 +154,74 @@ class PostSerializer(serializers.ModelSerializer):
         post.save()
 
         return post
+
+
+class LiveTopSerializer(serializers.ModelSerializer):
+    board = serializers.SerializerMethodField()
+    num_of_comments = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Post
+        fields = (
+            'id',
+            'board',
+            'title',
+            'content',
+            'num_of_likes',
+            'num_of_comments'
+        )
+
+    def get_board(self, obj):
+        if obj.board.head_board is None:
+            return {
+                'id': obj.board.id,
+                'title': obj.board.title
+            }
+        else:
+            return {
+                'id': obj.board.head_board.id,
+                'title': obj.board.head_board.title
+            }
+
+    def get_num_of_comments(self, obj):
+        return obj.comment_set.count()
+
+
+class HotSerializer(serializers.ModelSerializer):
+    title_content = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Post
+        fields = (
+            'id',
+            'title_content',
+            'created_at'
+        )
+
+    def get_title_content(self, post):
+        return post.title + ' ' + post.content
+
+class TitleListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Post
+        fields = (
+            'id',
+            'title',
+            'created_at'
+        )
+
+class ContentListSerializer(serializers.ModelSerializer):
+    num_of_comments = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Post
+        fields = (
+            'id',
+            'content',
+            'created_at',
+            'num_of_likes',
+            'num_of_comments'
+        )
+
+    def get_num_of_comments(self, obj):
+        return obj.comment_set.count()

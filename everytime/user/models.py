@@ -1,5 +1,6 @@
 
 from django.db import models
+from django.dispatch import receiver
 from django.core.files import File
 
 from PIL import Image
@@ -112,8 +113,11 @@ class User(AbstractBaseUser, PermissionsMixin):
     REQUIRED_FIELDS = ['email', 'nickname']
 
     def save(self, *args, **kwargs):
-        new_image = self.reduce_image_size(self.profile_picture)
-        self.profile_picture = new_image
+        if self.profile_picture == "images/profile/default.png":
+            pass
+        else:
+            new_image = self.reduce_image_size(self.profile_picture)
+            self.profile_picture = new_image
         super().save(*args, **kwargs)
 
     def reduce_image_size(self, profile_pic):
@@ -129,6 +133,10 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def get_short_name(self):
         return self.email
+
+@receiver(models.signals.pre_delete, sender=User)
+def remove_file_from_s3(sender, instance, using, **kwargs):
+    instance.profile_picture.delete(save=False)
 
 class SocialAccount(models.Model):
     provider = models.CharField(max_length=10, null=True)

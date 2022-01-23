@@ -1,6 +1,6 @@
 import django_filters
 from django.forms.fields import MultipleChoiceField, CharField
-from django.db.models import Q, F, Count
+from django.db.models import Q, F, Count, Avg
 
 from everytime.exceptions import FieldError
 from .models import Lecture, Department, LectureTime
@@ -52,6 +52,8 @@ class UserOrderingFilter(django_filters.OrderingFilter):
         self.extra['choices'] += [
             ('competition', '-competition'),
             ('-competition', 'competition'),
+            ('rating', 'rating'),
+            ('-rating', '-rating'),
             ('title','title'),
         ]
 
@@ -61,6 +63,8 @@ class UserOrderingFilter(django_filters.OrderingFilter):
             queryset = queryset.annotate(competition=F('cart')/F('quota'))
         if value and value[0] == 'title':
             value[0] = 'course__title'
+        if value and value[0] in ['rating', '-rating']:
+            queryset = queryset.annotate(rating=Avg('course__lectureevaluation__rating'))
         if value:
             f_ordering = []
             for o in value:
@@ -70,9 +74,7 @@ class UserOrderingFilter(django_filters.OrderingFilter):
                     f_ordering.append(F(o[1:]).desc(nulls_last=True))
                 else:
                     f_ordering.append(F(o).asc(nulls_last=True))
-
             return queryset.order_by(*f_ordering)
-
         return queryset
 
 
@@ -85,7 +87,7 @@ class LectureFilter(django_filters.FilterSet):
     instructor = django_filters.CharFilter(field_name='course__instructor', lookup_expr='icontains', min_length=2)
     course_code = django_filters.CharFilter(field_name='course_code', lookup_expr='icontains')
     location = django_filters.CharFilter(field_name='lecturetime__location', lookup_expr='icontains')
-    lecturetime = MultipleValueFilter(field_class=CharField, method='custom_time_filter')
+    time = MultipleValueFilter(field_class=CharField, method='custom_time_filter')
     ordering = UserOrderingFilter(
         fields=(
             ('cart', 'cart'),

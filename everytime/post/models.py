@@ -33,6 +33,8 @@ class Post(models.Model):
     is_anonymous = models.BooleanField(default=True, blank=True)
     is_question = models.BooleanField(default=False, blank=True)
 
+    reporting_users = models.ManyToManyField('user.User', related_name='post_reporting_users')
+
 
 class PostImage(models.Model):
     post = models.ForeignKey('Post', on_delete=models.CASCADE)
@@ -64,20 +66,3 @@ class UserPost(models.Model):
     user = models.ForeignKey('user.User', on_delete=models.CASCADE)
     anonymous_nickname = models.CharField(max_length=10, null=True)
 
-# class Report(models.Model):
-#     TYPE_CHOICES = (
-#         ('게시판 성격에 부적절함', '게시판 성격에 부적절함'),
-#         ('욕설/비하', '욕설/비하'),
-#         ('음란물/불건전한 만남 및 대화', '음란물/불건전한 만남 및 대화'),
-#         ('상업적 광고 및 판매', '상업적 광고 및 판매'),
-#         ('유출/사칭/사기', '유출/사칭/사기'),
-#         ('낚시/놀람/도배', '낚시/놀람/도배'),
-#         ('정당/정치인 비하 및 선거운동', '정당/정치인 비하 및 선거운동')
-#     )
-#
-#     is_user_reported = models.BooleanField()
-#     reported_user = models.ForeignKey('User', related_name='report', null=True)
-#     reported_post = models.ForeignKey('Post', related_name='report', null=True)
-#     # 위 둘 중 하나는 무조건 있어야 하는데 둘 다 null=True로 해둬서, 이후 validation 에서 둘 중 하나 값은 갖는지 따로 체크해줘야할듯
-#     type = models.CharField(max_length=50, choices=TYPE_CHOICES)
-#     댓글, 강의평, 시험정보도 모두 신고 가능 --> 반영할 것이면 report 모델 수정 필요

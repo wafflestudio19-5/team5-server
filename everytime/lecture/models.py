@@ -120,6 +120,8 @@ class LectureEvaluation(models.Model):
     num_of_likes = models.PositiveIntegerField(default=0, blank=True)
     like_users = models.ManyToManyField('user.User', related_name='like_evaluations')
 
+    reporting_users = models.ManyToManyField('user.User', related_name='eval_reporting_users')
+
     created_at = models.DateTimeField(auto_now_add=True)
 
 
@@ -158,6 +160,8 @@ class ExamInfo(models.Model):
     num_of_likes = models.PositiveIntegerField(default=0, blank=True)
     like_users = models.ManyToManyField('user.User', related_name='like_exam_info')
 
+    reporting_users = models.ManyToManyField('user.User', related_name='exam_info_reporting_users')
+
     created_at = models.DateTimeField(auto_now_add=True)
 
 
@@ -167,7 +171,7 @@ class ExamType(models.Model):
 
 # 강의평가 서비스에서 사용되는 포인트
 class Point(models.Model):
-    user = models.ForeignKey('user.User', on_delete=models.CASCADE)
+    user = models.CharField(max_length=255)
     reason = models.CharField(max_length=30)
     point = models.SmallIntegerField()
     created_at = models.DateTimeField(auto_now_add=True)

@@ -1,4 +1,5 @@
 from django.http import HttpResponse, JsonResponse
+from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.core.mail import EmailMessage
 from django.core.paginator import Paginator
@@ -19,13 +20,15 @@ import random
 
 
 from rest_framework import status, viewsets, permissions
+from rest_framework.generics import GenericAPIView
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.exceptions import APIException
 from rest_framework.views import APIView
 from rest_framework.response import Response
-# from rest_framework_jwt.settings import api_settings
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from everytime.exceptions import AlreadyLogin, SocialLoginError, DatabaseError, FieldError, DuplicationError
+from everytime.utils import AccessToken
 
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
@@ -35,10 +38,11 @@ from json.decoder import JSONDecodeError
 from lecture.models import Point, Semester
 from timetable.models import TimeTable
 from .models import User, SocialAccount
-from .serializers import UserCreateSerializer, UserLoginSerializer, SocialUserCreateSerializer, UserProfileSerializer, UserProfileUpdateSerializer, jwt_token_of
+from .serializers import UserCreateSerializer, UserLoginSerializer, SocialUserCreateSerializer, UserProfileSerializer, UserProfileUpdateSerializer, jwt_token_of, SchoolMailVerifyService
 from .utils import email_verification_token, message
 
 from post.serializers import PostSerializer
+from post.models import Post
 
 
 class UserSignUpView(APIView):
@@ -54,14 +58,34 @@ class UserSignUpView(APIView):
         except IntegrityError:
             raise DatabaseError()
 
-        Point.objects.create(user=user, reason='기본 포인트 지급', point=20)
         semesters = Semester.objects.all()
         for semester in semesters:
-            TimeTable.objects.creeate(semester=semester, user=user, is_default=True, name='시간표 1')
+            TimeTable.objects.create(semester=semester, user=user, is_default=True, name='시간표 1')
         return Response({
             'user': user.username,
             'token': jwt_token
         }, status=status.HTTP_201_CREATED)
+
+class UserDeleteAccountView(APIView):
+    permission_classes = (permissions.IsAuthenticated, )
+
+    def post(self, request):
+        serializer = UserLoginSerializer(data={
+            "username": request.user.username,
+            "password": request.data.get('password', None)
+        })
+        try:
+            serializer.is_valid(raise_exception=True)
+        except:
+            raise FieldError("계정 비밀번호가 올바르지 않습니다.")
+        else:
+            refresh_token = RefreshToken(request.data.get('refresh'))
+            access_token = AccessToken(request.META.get('HTTP_AUTHORIZATION').split()[1])
+            refresh_token.blacklist()
+            access_token.blacklist()
+            request.user.delete()
+            return Response("정상적으로 회원탈퇴가 완료되었습니다.")
+
 
 
 class UserLoginView(APIView):
@@ -74,6 +98,16 @@ class UserLoginView(APIView):
         token = serializer.validated_data['token']
 
         return Response({'success': True, 'token': token}, status=status.HTTP_200_OK)
+
+class UserLogoutView(APIView):
+    permission_classes(permissions.IsAuthenticated, )
+
+    def post(self, request):
+        refresh_token = RefreshToken(request.data.get('refresh'))
+        access_token = AccessToken(request.META.get('HTTP_AUTHORIZATION').split()[1])
+        refresh_token.blacklist()
+        access_token.blacklist()
+        return Response("Success")
 
 
 class UserProfileView(APIView):
@@ -347,10 +381,9 @@ class SocialUserSignUpView(APIView):
         except IntegrityError:
             raise DatabaseError()
 
-        Point.objects.create(user=user, reason='기본 포인트 지급', point=20)
         semesters = Semester.objects.all()
         for semester in semesters:
-            TimeTable.objects.creeate(semester=semester, user=user, is_default=True, name='시간표 1')
+            TimeTable.objects.create(semester=semester, user=user, is_default=True, name='시간표 1')
 
         return Response({
             'social_user': user.username,   # social_id 값임
@@ -363,10 +396,11 @@ class VerifyingMailSendView(APIView):
 
     def post(self, request):
         user = request.user
-        if hasattr(user, 'school_email'):
+        if user.school_email is not None:
             raise DuplicationError("이미 학교 인증을 마친 계정입니다.")
 
         data = request.data
+        SchoolMailVerifyService(data=data).is_valid(raise_exception=True)
         email = data['email']
         uidb64 = urlsafe_base64_encode(force_bytes(user.id))
         emailb64 = urlsafe_base64_encode(force_bytes(email))
@@ -382,7 +416,7 @@ class VerifyingMailSendView(APIView):
 
 
 class VerifyingMailAcceptView(APIView):
-    permission_classes = (permissions.IsAuthenticated,)
+    permission_classes = (permissions.AllowAny,)
 
     def get(self, request, uidb64, token, emailb64):
         try:
@@ -392,44 +426,48 @@ class VerifyingMailAcceptView(APIView):
             if email_verification_token.check_token(user, token):
                 user.school_email = email
                 user.save()
+                Point.objects.create(user=user.school_email, reason='기본 포인트 지급', point=20)
                 return JsonResponse({"verify": "SUCCESS"}, status=200)
 
-            return JsonResponse({"message":"AUTH FAIL"}, status=400)
+            raise FieldError("AUTH FAIL")
 
         except ValidationError:
-            return JsonResponse({"message": "TYPE_ERROR"}, status=400)
+            raise FieldError("TYPE_ERROR")
         except KeyError:
-            return JsonResponse({"message": "INVALID_KEY"}, status=400)
+            raise FieldError("INVALID_KEY")
 
-class UserScrapView(APIView):
+
+class UserScrapView(GenericAPIView):
     permission_classes = (permissions.IsAuthenticated, )
+    serializer_class = PostSerializer
 
     def get(self, request):
         user = request.user
-        query_params = request.query_params
-        limit = int(query_params.get('limit', 10))
-        offset = int(query_params.get('offset', 0))
+        queryset = user.scrap_post.order_by('-id')
+        page = self.paginate_queryset(queryset)
+        data = self.get_serializer(page, many=True).data
+        return self.get_paginated_response(data)
 
-        scrap_posts = user.scrap_post.order_by('-id')
-        count = len(scrap_posts)
 
-        current_url = request.scheme + '://' + request.get_host() + request.path
-        if offset + limit < count:
-            next = current_url + f'?limit={limit}&offset={offset + limit}'
-        else:
-            next = None
-        if offset > limit:
-            previous = current_url + f'?limit={limit}&offset={offset - limit}'
-        elif offset == 0:
-            previous = None
-        else:
-            previous = current_url + f'?limit={limit}'
+class UserPostView(GenericAPIView):
+    permission_classes = (permissions.IsAuthenticated,)
+    serializer_class = PostSerializer
 
-        results = PostSerializer(scrap_posts[offset:offset+limit], many=True).data
+    def get(self, request):
+        user = request.user
+        queryset = user.post_set.order_by('-id')
+        page = self.paginate_queryset(queryset)
+        data = self.get_serializer(page, many=True).data
+        return self.get_paginated_response(data)
 
-        return JsonResponse({
-            'count': count,
-            'next': next,
-            'previous': previous,
-            'results': results
-        })
+
+class UserCommentView(GenericAPIView):
+    permission_classes = (permissions.IsAuthenticated,)
+    serializer_class = PostSerializer
+
+    def get(self, request):
+        user = request.user
+        queryset = Post.objects.filter(id__in=user.comment_set.values("post")).order_by('-id')
+        page = self.paginate_queryset(queryset)
+        data = self.get_serializer(page, many=True).data
+        return self.get_paginated_response(data)

@@ -1,5 +1,6 @@
 import pytz
 from django.http import JsonResponse
+from django.http.request import QueryDict
 from django.utils import timezone
 
 from rest_framework import status, viewsets, permissions
@@ -11,7 +12,7 @@ from comment.models import Comment
 from comment.serializers import CommentSerializer
 from .models import Post, Tag
 from board.models import Board, HotBoard, BestBoard
-from .serializers import PostSerializer
+from .serializers import PostSerializer, LiveTopSerializer, HotSerializer, TitleListSerializer, ContentListSerializer
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
@@ -26,11 +27,14 @@ from everytime.utils import ViewSetActionPermissionMixin, get_object_or_404
 def create_tag(data):
     if 'tags' in data:
         all_tag = Tag.objects.all()
-        if hasattr(data, 'getlist'):
-            for tag_name in data.getlist('tags'):
-                tag_name = tag_name.upper()
-                if not all_tag.filter(name__iexact=tag_name).exists():
-                    Tag.objects.create(name=tag_name)
+        if isinstance(data, QueryDict):
+            tags = data.getlist('tags', [])
+        else:
+            tags = data.get('tags', [])
+        for tag_name in tags:
+            tag_name = tag_name.upper()
+            if not all_tag.filter(name__iexact=tag_name).exists():
+                Tag.objects.create(name=tag_name)
 
 def delete_tag(tags):
     for tag in tags:
@@ -41,17 +45,18 @@ def delete_tag(tags):
 class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
     permission_classes = (permissions.IsAuthenticated, )
     permission_action_classes = {
-        # 'retrieve': (permissions.AllowAny, ),
-        # 'list': (permissions.AllowAny, ),
-        # 'comment': (permissions.AllowAny, ),
-        # 'search': (permissions.AllowAny, )
+        'livetop': (permissions.AllowAny, ),
+        'hot': (permissions.AllowAny, ),
+        'main': (permissions.AllowAny, ),
         # 추후 메인화면에서 쓰일 simple list API 들에게 AllowAny 할당 예정
     }
     serializer_class = PostSerializer
-    queryset = Post.objects.all()
+    queryset = Post.objects.all()\
+        .select_related('writer','board')\
+        .prefetch_related('comment_set','postimage_set')
 
     def create(self, request):
-        data = request.data.copy()
+        data = request.data
 
         create_tag(data)
 
@@ -309,8 +314,35 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
         methods=['GET'],
     )
     def livetop(self, request):
-        now = datetime.datetime.now().astimezone(tz=pytz.timezone(zone='Asia/Seoul')) # settings 에 timezone이 서울로 설정되어있으면 상관없는데 어차피 이거 settings의 timezone이랑 같으면 return self 하니까 혹시 몰라서 넣어둠
+        now = datetime.datetime.now()
         yesterday = now - datetime.timedelta(days=1)
         queryset = Post.objects.filter(created_at__gt=yesterday).order_by('-num_of_likes')[:2]
-        return Response(PostSerializer(queryset, many=True).data, status=status.HTTP_200_OK)
+        return Response(LiveTopSerializer(queryset, many=True).data, status=status.HTTP_200_OK)
 
+    @action(
+        detail=False,
+        methods=['GET'],
+    )
+    def hot(self, request):
+        hot_posts = HotBoard.objects.all().values('post')
+        queryset = Post.objects.filter(id__in=hot_posts).order_by('-hotboard__created_at')[:4]
+        return Response(HotSerializer(queryset, many=True).data, status=status.HTTP_200_OK)
+
+    @action(
+        detail=False,
+        methods=['GET'],
+    )
+    def main(self, request):
+        data = {}
+        boards = Board.objects.all()[:6]
+        for i in range(6):
+            board = boards[i]
+            if board.sub_boards.exists():
+                queryset = Post.objects.filter(board__head_board=board)
+            else:
+                queryset = Post.objects.filter(board=board)
+            if board.title_enabled:
+                data[board.title] = TitleListSerializer(queryset, many=True).data[:4]
+            else:
+                data[board.title] = ContentListSerializer(queryset, many=True).data[:2]
+        return Response(data, status=status.HTTP_200_OK)
