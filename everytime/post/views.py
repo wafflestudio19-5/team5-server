@@ -51,7 +51,9 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
         # 추후 메인화면에서 쓰일 simple list API 들에게 AllowAny 할당 예정
     }
     serializer_class = PostSerializer
-    queryset = Post.objects.all()
+    queryset = Post.objects.all()\
+        .select_related('writer','board')\
+        .prefetch_related('comment_set','postimage_set')
 
     def create(self, request):
         data = request.data
