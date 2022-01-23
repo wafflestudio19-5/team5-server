@@ -3,7 +3,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 
 from report.models import ReportedUser
-from report.serializers import PostReportSerializer
+from report.serializers import PostReportSerializer, CommentReportSerializer, EvaluationReportSerializer, \
+    ExamInfoReportSerializer
 
 
 class PostReportView(APIView):
