@@ -73,7 +73,7 @@ class EvalCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = LectureEvaluation
-        exclude = ['course', 'like_users', 'num_of_likes']
+        exclude = ['course', 'like_users', 'num_of_likes', 'reporting_users']
 
     def validate(self, data):
         content = data.get('content')
@@ -134,7 +134,7 @@ class ExamInfoCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ExamInfo
-        exclude = ['course', 'readable_users', 'num_of_likes', 'like_users']
+        exclude = ['course', 'readable_users', 'num_of_likes', 'like_users', 'reporting_users']
 
     def validate(self, data):
         strategy = data.get('strategy')
