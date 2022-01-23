@@ -6,14 +6,7 @@ class ChatRoom(models.Model):
     partner = models.ForeignKey('user.User', related_name='other_chatrooms', on_delete=models.SET_NULL, null=True)
     updated_at = models.DateTimeField(auto_now=True, null=True)
     is_anonymous = models.BooleanField(default=False)
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=["user", "partner", "is_anonymous"],
-                name="chat room"
-            )
-        ]
+    channel = models.CharField(max_length=15, null=True)
 
 
 class Message(models.Model):
