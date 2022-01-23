@@ -48,7 +48,7 @@ class MessageThroughPostOrCommentView(GenericAPIView):
             'sender': user,
             'receiver': receiver,
             'channel': channel,
-            'channel_detail': channel + '_' + obj.id,
+            'channel_detail': channel + '_' + str(obj.id),
             'object': obj
         })
         serializer.is_valid(raise_exception=True)

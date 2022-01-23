@@ -52,13 +52,13 @@ class MessageCreateSerializer(serializers.ModelSerializer):
             ChatRoomMessage.objects.create(chatroom=chatroom_receiver, message=notice1)
             if is_anonymous:
                 if channel == 'post':
-                    post = self.context.get('obj')
+                    post = self.context.get('object')
                     notice2 = Message.objects.create(sender=None, receiver=None, is_notice=True,
                                                     content=post.board.title + '에 작성된 글을 통해 시작된 쪽지입니다.\n글 내용: ' + (
                                                         post.title if post.board.title_enabled else post.content))
                     ChatRoomMessage.objects.create(chatroom=chatroom_receiver, message=notice2)
                 elif channel == 'comment':
-                    comment = self.context.get('obj')
+                    comment = self.context.get('object')
                     post = comment.post
                     notice2 = Message.objects.create(sender=None, receiver=None, is_notice=True,
                                                     content=post.board.title + '에 작성된 ' + comment.writer.userpost_set.get(post=post).anonymous_nickname + '의 댓글을 통해 시작된 쪽지입니다.\n글 내용: ' + (post.title if post.board.title_enabled else post.content))
@@ -131,6 +131,7 @@ class MessageSerializer(serializers.ModelSerializer):
         model = Message
         fields = (
             'is_mine',
+            'is_notice',
             'content',
             'created_at'
         )
