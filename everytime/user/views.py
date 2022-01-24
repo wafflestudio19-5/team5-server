@@ -41,7 +41,7 @@ from .models import User, SocialAccount
 from .serializers import UserCreateSerializer, UserLoginSerializer, SocialUserCreateSerializer, UserProfileSerializer, UserProfileUpdateSerializer, jwt_token_of, SchoolMailVerifyService
 from .utils import email_verification_token, message
 
-from post.serializers import PostSerializer, MyPostSerializer
+from post.serializers import PostSerializer
 from post.models import Post
 
 
@@ -439,7 +439,7 @@ class VerifyingMailAcceptView(APIView):
 
 class UserScrapView(GenericAPIView):
     permission_classes = (permissions.IsAuthenticated, )
-    serializer_class = MyPostSerializer
+    serializer_class = PostSerializer
 
     def get(self, request):
         user = request.user
@@ -451,7 +451,7 @@ class UserScrapView(GenericAPIView):
 
 class UserPostView(GenericAPIView):
     permission_classes = (permissions.IsAuthenticated,)
-    serializer_class = MyPostSerializer
+    serializer_class = PostSerializer
 
     def get(self, request):
         user = request.user
@@ -463,7 +463,7 @@ class UserPostView(GenericAPIView):
 
 class UserCommentView(GenericAPIView):
     permission_classes = (permissions.IsAuthenticated,)
-    serializer_class = MyPostSerializer
+    serializer_class = PostSerializer
 
     def get(self, request):
         user = request.user
