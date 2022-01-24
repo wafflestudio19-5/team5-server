@@ -2,6 +2,10 @@ from rest_framework import permissions
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
+from django.utils import timezone
+
+import datetime
+
 from report.models import ReportedUser
 from report.serializers import PostReportSerializer, CommentReportSerializer, EvaluationReportSerializer, \
     ExamInfoReportSerializer
@@ -21,8 +25,11 @@ class PostReportView(APIView):
 
         if ReportedUser.objects.filter(school_email=reported_email).exists():
             reported_user = ReportedUser.objects.get(school_email=reported_email)
-            reported_user.count += 1
-            reported_user.save()
+            if reported_user.count % 10 == 0 and timezone.now() < reported_user.updated_at + datetime.timedelta(days=30):
+                pass
+            else:
+                reported_user.count += 1
+                reported_user.save()
         else:
             ReportedUser.objects.create(school_email=reported_email)
 
@@ -42,8 +49,11 @@ class CommentReportView(APIView):
 
         if ReportedUser.objects.filter(school_email=reported_email).exists():
             reported_user = ReportedUser.objects.get(school_email=reported_email)
-            reported_user.count += 1
-            reported_user.save()
+            if reported_user.count % 10 == 0 and timezone.now() < reported_user.updated_at + datetime.timedelta(days=30):
+                pass
+            else:
+                reported_user.count += 1
+                reported_user.save()
         else:
             ReportedUser.objects.create(school_email=reported_email)
 
@@ -63,8 +73,11 @@ class EvaluationReportView(APIView):
 
         if ReportedUser.objects.filter(school_email=reported_email).exists():
             reported_user = ReportedUser.objects.get(school_email=reported_email)
-            reported_user.count += 1
-            reported_user.save()
+            if reported_user.count % 10 == 0 and timezone.now() < reported_user.updated_at + datetime.timedelta(days=30):
+                pass
+            else:
+                reported_user.count += 1
+                reported_user.save()
         else:
             ReportedUser.objects.create(school_email=reported_email)
 
@@ -84,14 +97,12 @@ class ExamInfoReportView(APIView):
 
         if ReportedUser.objects.filter(school_email=reported_email).exists():
             reported_user = ReportedUser.objects.get(school_email=reported_email)
-            reported_user.count += 1
-            reported_user.save()
+            if reported_user.count % 10 == 0 and timezone.now() < reported_user.updated_at + datetime.timedelta(days=30):
+                pass
+            else:
+                reported_user.count += 1
+                reported_user.save()
         else:
             ReportedUser.objects.create(school_email=reported_email)
 
         return Response('신고하였습니다.')
-
-
-# 제한 횟수에 따른 제한 기간은 기준을 모르겠어서 우리끼리 알아서 정하면 될 거 같고,
-# (10회 일주일 정지, 30회 한 달 정지, 50회 6개월 정지 등등,, 알아서)
-# 이후 ReportedUser 객체의 count와 updated_at 따라 permission 조정

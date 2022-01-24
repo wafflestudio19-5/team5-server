@@ -51,10 +51,10 @@ class PostSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'board', 'writer', 'is_mine', 'created_at', 'num_of_likes', 'num_of_scrap', 'num_of_comments']
 
     def get_writer(self, post):
-        if post.is_anonymous:
-            return '익명'
         if post.writer is None:
             return None
+        if post.is_anonymous:
+            return '익명'
         return post.writer.nickname
 
     def get_images(self, obj):

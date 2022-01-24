@@ -23,5 +23,5 @@ class ChatRoomMessage(models.Model):
 
 
 class ChatBlackList(models.Model):
-    user = user = models.ForeignKey('user.User', related_name='my_blacklist', on_delete=models.CASCADE)
+    user = models.ForeignKey('user.User', related_name='my_blacklist', on_delete=models.CASCADE)
     partner = models.ForeignKey('user.User', related_name='other_blacklist', on_delete=models.CASCADE)
