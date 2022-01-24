@@ -134,9 +134,11 @@ class User(AbstractBaseUser, PermissionsMixin):
     def get_short_name(self):
         return self.email
 
+
 @receiver(models.signals.pre_delete, sender=User)
 def remove_file_from_s3(sender, instance, using, **kwargs):
-    instance.profile_picture.delete(save=False)
+    if instance.profile_picture != "images/profile/default.png":
+        instance.profile_picture.delete(save=False)
 
 class SocialAccount(models.Model):
     provider = models.CharField(max_length=10, null=True)
