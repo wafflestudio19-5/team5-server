@@ -189,14 +189,28 @@ class LiveTopSerializer(serializers.ModelSerializer):
 
 class HotSerializer(serializers.ModelSerializer):
     title_content = serializers.SerializerMethodField()
+    board = serializers.SerializerMethodField()
 
     class Meta:
         model = Post
         fields = (
             'id',
+            'board',
             'title_content',
             'created_at'
         )
+
+    def get_board(self, obj):
+        if obj.board.head_board is None:
+            return {
+                'id': obj.board.id,
+                'title': obj.board.title
+            }
+        else:
+            return {
+                'id': obj.board.head_board.id,
+                'title': obj.board.head_board.title
+            }
 
     def get_title_content(self, post):
         return post.title + ' ' + post.content
@@ -225,3 +239,83 @@ class ContentListSerializer(serializers.ModelSerializer):
 
     def get_num_of_comments(self, obj):
         return obj.comment_set.count()
+
+
+class MyPostSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(required=False)
+    board = serializers.SerializerMethodField()
+    writer = serializers.SerializerMethodField()
+    title = serializers.CharField(required=False, max_length=100)
+    content = serializers.CharField()
+    num_of_comments = serializers.SerializerMethodField()
+    tags = serializers.PrimaryKeyRelatedField(queryset=Tag.objects.all(), many=True)
+    images = serializers.SerializerMethodField()
+    is_mine = serializers.SerializerMethodField()
+    is_anonymous = serializers.BooleanField(default=False)
+    is_question = serializers.BooleanField(default=False)
+    profile_picture = serializers.SerializerMethodField()
+    thumbnail_picture = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Post
+        fields = (
+            'id',
+            'board',
+            'writer',
+            'profile_picture',
+            'thumbnail_picture',
+            'title',
+            'content',
+            'num_of_likes',
+            'num_of_scrap',
+            'num_of_comments',
+            'tags',
+            'images',
+            'is_mine',
+            'is_anonymous',
+            'is_question',
+            'created_at',
+        )
+        read_only_fields = ['id', 'board', 'writer', 'is_mine', 'created_at', 'num_of_likes', 'num_of_scrap',
+                            'num_of_comments']
+
+    def get_board(self, obj):
+        if obj.board.head_board is None:
+            return {
+                'id': obj.board.id,
+                'title': obj.board.title
+            }
+        else:
+            return {
+                'id': obj.board.head_board.id,
+                'title': obj.board.head_board.title
+            }
+
+    def get_writer(self, post):
+        if post.writer is None:
+            return None
+        if post.is_anonymous:
+            return '익명'
+        return post.writer.nickname
+
+    def get_images(self, obj):
+        image = obj.postimage_set.all()
+        return PostImageSerializer(instance=image, many=True).data
+
+    def get_num_of_comments(self, obj):
+        return obj.comment_set.count()
+
+    def get_is_mine(self, obj):
+        if obj.writer == self.context['request'].user:
+            return True
+        return False
+
+    def get_profile_picture(self, obj):
+        if obj.writer and not obj.is_anonymous:
+            return obj.writer.profile_picture.url
+        return "https://t5backendbucket.s3.ap-northeast-2.amazonaws.com/media/images/profile/default.png"
+
+    def get_thumbnail_picture(self, obj):
+        if obj.postimage_set.all():
+            return obj.postimage_set.all()[0].image.url
+        return None
