@@ -202,3 +202,20 @@ class SelfLectureCreateSerializer(serializers.Serializer):
         return lecture
 
 
+class FriendTimeTableListSerializer(serializers.ModelSerializer):
+    semester = serializers.SerializerMethodField()
+
+    class Meta:
+        model = TimeTable
+        fields = (
+            'id',
+            'name',
+            'semester',
+            'is_default',
+            'private',
+            'created_at',
+            'updated_at',
+        )
+
+    def get_semester(self, timetable):
+        return timetable.semester.name
