@@ -338,11 +338,11 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
         for i in range(6):
             board = boards[i]
             if board.sub_boards.exists():
-                queryset = Post.objects.filter(board__head_board=board)
+                queryset = Post.objects.filter(board__head_board=board).order_by('-id')
             else:
-                queryset = Post.objects.filter(board=board)
+                queryset = Post.objects.filter(board=board).order_by('-id')
             if board.title_enabled:
-                data[board.title] = TitleListSerializer(queryset, many=True).data[:4]
+                data[board.title] = TitleListSerializer(queryset[:4], many=True).data
             else:
-                data[board.title] = ContentListSerializer(queryset, many=True).data[:2]
+                data[board.title] = ContentListSerializer(queryset[:2], many=True).data
         return Response(data, status=status.HTTP_200_OK)
