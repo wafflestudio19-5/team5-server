@@ -402,6 +402,8 @@ class VerifyingMailSendView(APIView):
         data = request.data
         SchoolMailVerifyService(data=data).is_valid(raise_exception=True)
         email = data['email']
+        if User.objects.filter(school_email=email).exists():
+            raise FieldError('해당 메일로 인증된 계정이 이미 존재합니다. 다른 계정을 확인해주세요.')
         uidb64 = urlsafe_base64_encode(force_bytes(user.id))
         emailb64 = urlsafe_base64_encode(force_bytes(email))
         token = email_verification_token.make_token(user)
