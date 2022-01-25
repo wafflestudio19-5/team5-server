@@ -22,7 +22,7 @@ class Comment(models.Model):
     # 어떤 댓글은 A처럼 윗댓글이 없을 수 있으므로 head_comment의 null 허용. 즉 head_comment가 null이면 댓글이고 null이 아니면 대댓글임.
     # 댓글이 삭제되어도 그에 종속되는 대댓글은 사라지지 않으므로 on_delete 는 do_nothing (사실 삭제하면 on_delete를 true로 만드니 댓글레코드 삭제는 없을듯)
     # on_delete를 set_null로 할 수는 없음 - 댓글과 대댓글을 구분해야하기 때문
-    head_comment = models.ForeignKey('self', related_name='tail_comments', on_delete=models.DO_NOTHING, null=True)
+    head_comment = models.ForeignKey('self', related_name='tail_comments', on_delete=models.CASCADE, null=True)
 
     reporting_users = models.ManyToManyField('user.User', related_name='comment_reporting_users')
 
