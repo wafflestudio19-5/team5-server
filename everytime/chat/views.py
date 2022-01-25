@@ -1,11 +1,12 @@
 from django.db.models import Count
 
-from rest_framework import permissions, status
+from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.generics import GenericAPIView
 
 from .serializers import *
+from everytime import permissions
 from everytime.exceptions import FieldError, NotFound, NotAllowed
 from everytime.utils import get_object_or_404
 

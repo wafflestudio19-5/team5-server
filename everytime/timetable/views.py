@@ -1,11 +1,12 @@
 from django.http import JsonResponse
 from django.db import transaction
 
-from rest_framework import status, viewsets, permissions, exceptions
+from rest_framework import status, viewsets, exceptions
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.decorators import action
 
+from everytime import permissions
 from everytime.utils import get_object_or_404
 from everytime.exceptions import NotAllowed, FieldError
 from user.models import User

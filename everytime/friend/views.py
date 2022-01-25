@@ -1,10 +1,11 @@
 from django.db.transaction import atomic
-from rest_framework import viewsets, permissions, status, generics
+from rest_framework import viewsets, status, generics
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from user.models import User
 from .models import Friend, FriendRequest
 from .serializers import FriendRequestSerializer, FriendSerializer
+from everytime import permissions
 from everytime.exceptions import FieldError, ServerError, NotFound, DatabaseError
 
 # Create your views here.

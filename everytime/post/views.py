@@ -3,7 +3,7 @@ from django.http import JsonResponse
 from django.http.request import QueryDict
 from django.utils import timezone
 
-from rest_framework import status, viewsets, permissions
+from rest_framework import status, viewsets
 from rest_framework.views import APIView
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -22,6 +22,7 @@ from pytz import utc
 
 from everytime.exceptions import NotAllowed, FieldError, NotFound
 from everytime.utils import ViewSetActionPermissionMixin, get_object_or_404
+from everytime import permissions
 
 # request.data안에 새로운 Tag를 찾아서 데이터베이스에 저장
 def create_tag(data):
