@@ -17,7 +17,7 @@ class PostSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(required=False)
     board = serializers.SerializerMethodField()
     writer = serializers.SerializerMethodField()
-    title = serializers.CharField(required=False, max_length=100)
+    title = serializers.CharField(allow_blank=True, required=False, max_length=100)
     content = serializers.CharField()
     num_of_comments = serializers.SerializerMethodField()
     tags = serializers.PrimaryKeyRelatedField(queryset=Tag.objects.all(), many=True)
@@ -123,9 +123,9 @@ class PostSerializer(serializers.ModelSerializer):
         except Board.DoesNotExist:
             raise NotFound("존재하지 않는 게시판입니다. board를 확인해주세요.")
 
-        if validated_data.get('title', None) is not None and not board.title_enabled:
+        if validated_data.get('title', '') != '' and not board.title_enabled:
             raise NotAllowed("제목 사용이 허용되지 않는 게시판입니다.")
-        if validated_data.get('title', None) is None and board.title_enabled:
+        if validated_data.get('title', '') == '' and board.title_enabled:
             raise NotAllowed("제목을 입력해 주세요.")
 
         # tags 따로 저장하기
