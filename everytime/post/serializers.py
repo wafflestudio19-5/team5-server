@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from .models import Post, Tag, PostImage, PostTag
 from board.models import Board
-from everytime.exceptions import FieldError, NotFound
+from everytime.exceptions import FieldError, NotFound, NotAllowed
 
 
 class PostImageSerializer(serializers.ModelSerializer):
@@ -93,7 +93,6 @@ class PostSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         request = self.context['request']
-
         user = request.user
         data['writer'] = user
 
@@ -119,6 +118,9 @@ class PostSerializer(serializers.ModelSerializer):
             validated_data['board'] = board
         except Board.DoesNotExist:
             raise NotFound("존재하지 않는 게시판입니다. board를 확인해주세요.")
+
+        if validated_data.get('title', None) is not None and not board.title_enabled:
+            raise NotAllowed("제목 사용이 허용되지 않는 게시판입니다.")
 
         # tags 따로 저장하기
         tags = validated_data.pop('tags') if 'tags' in validated_data else None
