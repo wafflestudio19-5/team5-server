@@ -121,6 +121,8 @@ class PostSerializer(serializers.ModelSerializer):
 
         if validated_data.get('title', None) is not None and not board.title_enabled:
             raise NotAllowed("제목 사용이 허용되지 않는 게시판입니다.")
+        if validated_data.get('title', None) is None and board.title_enabled:
+            raise NotAllowed("제목을 입력해 주세요.")
 
         # tags 따로 저장하기
         tags = validated_data.pop('tags') if 'tags' in validated_data else None
