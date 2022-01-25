@@ -188,15 +188,19 @@ class LiveTopSerializer(serializers.ModelSerializer):
         )
 
     def get_board(self, obj):
-        if obj.board.head_board is None:
+        board = obj.board
+        head_board = board.head_board
+        if head_board is None:
             return {
-                'id': obj.board.id,
-                'title': obj.board.title
+                'id': board.id,
+                'title': board.title,
+                'title_exist': board.title_enabled
             }
         else:
             return {
-                'id': obj.board.head_board.id,
-                'title': obj.board.head_board.title
+                'id': head_board.id,
+                'title': head_board.title,
+                'title_exist': head_board.title_enabled
             }
 
     def get_num_of_comments(self, obj):
