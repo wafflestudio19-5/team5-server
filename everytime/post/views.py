@@ -153,8 +153,8 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
     def destroy(self, request, pk=None):
         post = get_object_or_404(Post, pk=pk)
         # 자신이 쓴 글이 아니면 프론트에서 삭제 버튼이 존재하지 않을테지만,
-        if post.writer != request.user:
-            raise NotAllowed('글 작성자가 아닙니다.')
+        # if post.writer != request.user:
+        #     raise NotAllowed('글 작성자가 아닙니다.')
 
         if post.is_question and post.comment_set.exists():  # 게시글이 질문 글이고 댓글이 존재한다면
             raise NotAllowed('질문 글은 댓글이 달린 이후에는 수정/삭제할 수 없습니다.')
@@ -162,6 +162,7 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
         tags = list(post.tags.all())  # 이렇게 하지 않으면 post.delete() 이후에 tags도 비어있게 됨.
         for image in post.postimage_set.all():
             image.delete()
+
         post.delete()
         delete_tag(tags)
         return JsonResponse({
@@ -338,11 +339,11 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
         for i in range(6):
             board = boards[i]
             if board.sub_boards.exists():
-                queryset = Post.objects.filter(board__head_board=board)
+                queryset = Post.objects.filter(board__head_board=board).order_by('-id')
             else:
-                queryset = Post.objects.filter(board=board)
+                queryset = Post.objects.filter(board=board).order_by('-id')
             if board.title_enabled:
-                data[board.title] = TitleListSerializer(queryset, many=True).data[:4]
+                data[board.title] = TitleListSerializer(queryset[:4], many=True).data
             else:
-                data[board.title] = ContentListSerializer(queryset, many=True).data[:2]
+                data[board.title] = ContentListSerializer(queryset[:2], many=True).data
         return Response(data, status=status.HTTP_200_OK)
