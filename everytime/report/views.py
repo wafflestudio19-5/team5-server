@@ -8,7 +8,7 @@ import datetime
 
 from report.models import ReportedUser
 from report.serializers import PostReportSerializer, CommentReportSerializer, EvaluationReportSerializer, \
-    ExamInfoReportSerializer
+    ExamInfoReportSerializer, ChatReportSerializer
 
 
 class PostReportView(APIView):
@@ -94,6 +94,29 @@ class ExamInfoReportView(APIView):
         serializer.validated_data['examinfo'].reporting_users.add(request.user)
 
         reported_email = exam_info_report.post.writer.school_email
+
+        if ReportedUser.objects.filter(school_email=reported_email).exists():
+            reported_user = ReportedUser.objects.get(school_email=reported_email)
+            if reported_user.count % 10 == 0 and timezone.now() < reported_user.updated_at + datetime.timedelta(days=30):
+                pass
+            else:
+                reported_user.count += 1
+                reported_user.save()
+        else:
+            ReportedUser.objects.create(school_email=reported_email)
+
+        return Response('신고하였습니다.')
+
+
+class ChatReportView(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def post(self, request):
+        serializer = ChatReportSerializer(data=request.data, context={'user': request.user})
+        serializer.is_valid(raise_exception=True)
+        chat_report = serializer.save()
+
+        reported_email = chat_report.chatroom.partner.school_email
 
         if ReportedUser.objects.filter(school_email=reported_email).exists():
             reported_user = ReportedUser.objects.get(school_email=reported_email)

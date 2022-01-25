@@ -44,10 +44,9 @@ class ExamInfoReport(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
 
-# 쪽지 신고
-# class ChatReport(models.Model):
-#     chatroom = models.ForeignKey(~~~)
-#     created_at = models.DateTimeField(auto_now_add=True)
+class ChatReport(models.Model):
+    chatroom = models.ForeignKey('chat.ChatRoom', related_name='reports', on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
 
 
 class ReportedUser(models.Model):
