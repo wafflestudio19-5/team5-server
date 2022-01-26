@@ -1,10 +1,6 @@
 from rest_framework import serializers
 
 from everytime.exceptions import NotAllowed, NotFound, DatabaseError
-from everytime.utils import get_object_or_404
-from post.models import Post
-from comment.models import Comment
-from lecture.models import LectureEvaluation, ExamInfo
 from report.models import PostReport, CommentReport, EvaluationReport, ExamInfoReport, ChatReport
 
 
@@ -15,8 +11,6 @@ class PostReportSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         post = data.get('post')
-        if post.writer is None:
-            raise NotAllowed('해당 글을 작성한 유저가 더이상 존재하지 않습니다.')
         if post.writer.school_email is None:
             raise DatabaseError('학교 인증을 마치지 않은 작성자입니다. 서버 관리자에게 문의 바랍니다.')
         if self.context['user'] in post.reporting_users.all():
@@ -32,8 +26,6 @@ class CommentReportSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         comment = data.get('comment')
-        if comment.writer is None:
-            raise NotAllowed('해당 글을 작성한 유저가 더이상 존재하지 않습니다.')
         if comment.writer.school_email is None:
             raise DatabaseError('학교 인증을 마치지 않은 작성자입니다. 서버 관리자에게 문의 바랍니다.')
         if self.context['user'] in comment.reporting_users.all():
@@ -49,8 +41,6 @@ class EvaluationReportSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         eval = data.get('eval')
-        if eval.writer is None:
-            raise NotAllowed('해당 글을 작성한 유저가 더이상 존재하지 않습니다.')
         if eval.writer.school_email is None:
             raise DatabaseError('학교 인증을 마치지 않은 작성자입니다. 서버 관리자에게 문의 바랍니다.')
         if self.context['user'] in eval.reporting_users.all():
@@ -66,8 +56,6 @@ class ExamInfoReportSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         examinfo = data.get('examinfo')
-        if examinfo.writer is None:
-            raise NotAllowed('해당 글을 작성한 유저가 더이상 존재하지 않습니다.')
         if examinfo.writer.school_email is None:
             raise DatabaseError('학교 인증을 마치지 않은 작성자입니다. 서버 관리자에게 문의 바랍니다.')
         if self.context['user'] in examinfo.reporting_users.all():
@@ -83,8 +71,6 @@ class ChatReportSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         chatroom = data.get('chatroom')
-        if chatroom.partner is None:
-            raise NotAllowed('해당 유저가 더 이상 존재하지 않습니다.')
         if chatroom.partner.school_email is None:
             raise DatabaseError('학교 인증을 마치지 않은 작성자입니다. 서버 관리자에게 문의 바랍니다.')
         if chatroom.reports.exists():
