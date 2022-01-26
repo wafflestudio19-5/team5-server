@@ -21,17 +21,18 @@ class PostReportView(APIView):
         postreport = serializer.save()
         serializer.validated_data['post'].reporting_users.add(request.user)
 
-        reported_email = postreport.post.writer.school_email
-
-        if ReportedUser.objects.filter(school_email=reported_email).exists():
-            reported_user = ReportedUser.objects.get(school_email=reported_email)
-            if reported_user.count % 10 == 0 and timezone.now() < reported_user.updated_at + datetime.timedelta(days=30):
-                pass
+        reported_email = postreport.post.writer
+        if reported_email is not None:
+            reported_email = reported_email.school_email
+            if ReportedUser.objects.filter(school_email=reported_email).exists():
+                reported_user = ReportedUser.objects.get(school_email=reported_email)
+                if reported_user.count % 10 == 0 and timezone.now() < reported_user.updated_at + datetime.timedelta(days=30):
+                    pass
+                else:
+                    reported_user.count += 1
+                    reported_user.save()
             else:
-                reported_user.count += 1
-                reported_user.save()
-        else:
-            ReportedUser.objects.create(school_email=reported_email)
+                ReportedUser.objects.create(school_email=reported_email)
 
         return Response('신고하였습니다.')
 
@@ -45,17 +46,18 @@ class CommentReportView(APIView):
         comment_report = serializer.save()
         serializer.validated_data['comment'].reporting_users.add(request.user)
 
-        reported_email = comment_report.comment.writer.school_email
-
-        if ReportedUser.objects.filter(school_email=reported_email).exists():
-            reported_user = ReportedUser.objects.get(school_email=reported_email)
-            if reported_user.count % 10 == 0 and timezone.now() < reported_user.updated_at + datetime.timedelta(days=30):
-                pass
+        reported_email = comment_report.comment.writer
+        if reported_email is not None:
+            reported_email = reported_email.school_email
+            if ReportedUser.objects.filter(school_email=reported_email).exists():
+                reported_user = ReportedUser.objects.get(school_email=reported_email)
+                if reported_user.count % 10 == 0 and timezone.now() < reported_user.updated_at + datetime.timedelta(days=30):
+                    pass
+                else:
+                    reported_user.count += 1
+                    reported_user.save()
             else:
-                reported_user.count += 1
-                reported_user.save()
-        else:
-            ReportedUser.objects.create(school_email=reported_email)
+                ReportedUser.objects.create(school_email=reported_email)
 
         return Response('신고하였습니다.')
 
@@ -69,17 +71,18 @@ class EvaluationReportView(APIView):
         evaluation_report = serializer.save()
         serializer.validated_data['eval'].reporting_users.add(request.user)
 
-        reported_email = evaluation_report.eval.writer.school_email
-
-        if ReportedUser.objects.filter(school_email=reported_email).exists():
-            reported_user = ReportedUser.objects.get(school_email=reported_email)
-            if reported_user.count % 10 == 0 and timezone.now() < reported_user.updated_at + datetime.timedelta(days=30):
-                pass
+        reported_email = evaluation_report.eval.writer
+        if reported_email is not None:
+            reported_email = reported_email.school_email
+            if ReportedUser.objects.filter(school_email=reported_email).exists():
+                reported_user = ReportedUser.objects.get(school_email=reported_email)
+                if reported_user.count % 10 == 0 and timezone.now() < reported_user.updated_at + datetime.timedelta(days=30):
+                    pass
+                else:
+                    reported_user.count += 1
+                    reported_user.save()
             else:
-                reported_user.count += 1
-                reported_user.save()
-        else:
-            ReportedUser.objects.create(school_email=reported_email)
+                ReportedUser.objects.create(school_email=reported_email)
 
         return Response('신고하였습니다.')
 
@@ -93,17 +96,18 @@ class ExamInfoReportView(APIView):
         exam_info_report = serializer.save()
         serializer.validated_data['examinfo'].reporting_users.add(request.user)
 
-        reported_email = exam_info_report.post.writer.school_email
-
-        if ReportedUser.objects.filter(school_email=reported_email).exists():
-            reported_user = ReportedUser.objects.get(school_email=reported_email)
-            if reported_user.count % 10 == 0 and timezone.now() < reported_user.updated_at + datetime.timedelta(days=30):
-                pass
+        reported_email = exam_info_report.post.writer
+        if reported_email is not None:
+            reported_email = reported_email.school_email
+            if ReportedUser.objects.filter(school_email=reported_email).exists():
+                reported_user = ReportedUser.objects.get(school_email=reported_email)
+                if reported_user.count % 10 == 0 and timezone.now() < reported_user.updated_at + datetime.timedelta(days=30):
+                    pass
+                else:
+                    reported_user.count += 1
+                    reported_user.save()
             else:
-                reported_user.count += 1
-                reported_user.save()
-        else:
-            ReportedUser.objects.create(school_email=reported_email)
+                ReportedUser.objects.create(school_email=reported_email)
 
         return Response('신고하였습니다.')
 
@@ -116,16 +120,17 @@ class ChatReportView(APIView):
         serializer.is_valid(raise_exception=True)
         chat_report = serializer.save()
 
-        reported_email = chat_report.chatroom.partner.school_email
-
-        if ReportedUser.objects.filter(school_email=reported_email).exists():
-            reported_user = ReportedUser.objects.get(school_email=reported_email)
-            if reported_user.count % 10 == 0 and timezone.now() < reported_user.updated_at + datetime.timedelta(days=30):
-                pass
+        reported_email = chat_report.chatroom.partner
+        if reported_email is not None:
+            reported_email = reported_email.school_email
+            if ReportedUser.objects.filter(school_email=reported_email).exists():
+                reported_user = ReportedUser.objects.get(school_email=reported_email)
+                if reported_user.count % 10 == 0 and timezone.now() < reported_user.updated_at + datetime.timedelta(days=30):
+                    pass
+                else:
+                    reported_user.count += 1
+                    reported_user.save()
             else:
-                reported_user.count += 1
-                reported_user.save()
-        else:
-            ReportedUser.objects.create(school_email=reported_email)
+                ReportedUser.objects.create(school_email=reported_email)
 
         return Response('신고하였습니다.')
