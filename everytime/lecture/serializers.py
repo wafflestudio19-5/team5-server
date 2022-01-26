@@ -41,6 +41,7 @@ class CourseForEvalSerializer(serializers.ModelSerializer):
 
 class EvalListSerializer(serializers.ModelSerializer):
     course = serializers.SerializerMethodField(read_only=True)
+    course_id = serializers.SerializerMethodField()
     semester = serializers.SerializerMethodField(read_only=True)
     is_mine = serializers.SerializerMethodField(read_only=True)
 
@@ -48,6 +49,7 @@ class EvalListSerializer(serializers.ModelSerializer):
         model = LectureEvaluation
         fields = (
             'id',
+            'course_id',
             'course',
             'rating',
             'semester',
@@ -55,6 +57,9 @@ class EvalListSerializer(serializers.ModelSerializer):
             'is_mine',
             'num_of_likes'
         )
+
+    def get_course_id(self, obj):
+        return obj.course.id
 
     def get_course(self, obj):
         return obj.course.title + " : " + obj.course.instructor
