@@ -56,14 +56,12 @@ class PostSerializer(serializers.ModelSerializer):
         if head_board is None:
             return {
                 'id': board.id,
-                'title': board.title,
-                'title_exist': board.title_enabled
+                'title': board.title
             }
         else:
             return {
                 'id': head_board.id,
-                'title': head_board.title,
-                'title_exist': head_board.title_enabled
+                'title': head_board.title
             }
 
     def get_writer(self, post):

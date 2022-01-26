@@ -1,7 +1,9 @@
 from django.shortcuts import _get_queryset
 from .exceptions import NotFound
 from rest_framework_simplejwt.tokens import AccessToken, BlacklistMixin
-
+from rest_framework.pagination import LimitOffsetPagination
+from rest_framework.response import Response
+from collections import OrderedDict
 
 class AccessToken(BlacklistMixin, AccessToken):
     pass
@@ -55,7 +57,6 @@ class ViewSetActionPermissionMixin:
             ]
 
 
-
 def get_object_or_404(klass, *args, **kwargs):
     """
     Use get() to return an object, or raise a Http404 exception if the object
@@ -78,3 +79,14 @@ def get_object_or_404(klass, *args, **kwargs):
         return queryset.get(*args, **kwargs)
     except queryset.model.DoesNotExist:
         raise NotFound('%s 을(를) 찾을 수 없습니다.' % queryset.model._meta.object_name)
+
+
+class PostPagination(LimitOffsetPagination):
+    def post_pagination_response(self, data, title_exist):
+        return Response(OrderedDict([
+            ('count', self.count),
+            ('next', self.get_next_link()),
+            ('previous', self.get_previous_link()),
+            ('results', data),
+            ('title_exist', title_exist)
+        ]))
