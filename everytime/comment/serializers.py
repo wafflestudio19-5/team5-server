@@ -38,10 +38,10 @@ class CommentSerializer(serializers.ModelSerializer):
         return ReplySerializer(tail_comments, many=True, context={'post': self.context['post'], 'user': self.context['user']}).data
 
     def get_writer(self, comment):
-        if comment.is_anonymous:
-            return 0
         if comment.writer is None:
             return None
+        if comment.is_anonymous:
+            return 0
         return comment.writer.id
 
     def get_is_mine(self, comment):
@@ -121,10 +121,10 @@ class ReplySerializer(serializers.ModelSerializer):
         )
 
     def get_writer(self, comment):
-        if comment.is_anonymous:
-            return 0
         if comment.writer is None:
             return None
+        if comment.is_anonymous:
+            return 0
         return comment.writer.id
 
     def get_is_mine(self, comment):
