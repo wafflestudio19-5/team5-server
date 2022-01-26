@@ -6,7 +6,7 @@ from report.models import ReportedUser
 
 class IsAuthenticated(BasePermission):
     def has_permission(self, request, view):
-        if bool(request.user and request.user.is_authenticated):
+        if bool(request.user and request.user.is_authenticated and request.user.school_email):
             reported_user = ReportedUser.objects.filter(school_email=request.user.school_email)
             if reported_user.exists():
                 reported_user = reported_user[0]
