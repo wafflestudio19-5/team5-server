@@ -107,7 +107,7 @@ class TimeTableViewSet(viewsets.GenericViewSet):
             serializer.is_valid(raise_exception=True)
             lecture = serializer.save()
             timetable.lecture.add(lecture)
-            
+            timetable.save()
         return Response(self.get_serializer(timetable).data, status=status.HTTP_200_OK)
 
     @action(
@@ -140,10 +140,12 @@ class TimeTableViewSet(viewsets.GenericViewSet):
                         return FieldError(f'{lecture.course.title} 수업과 같은 시간에 이미 수업이 있습니다.')
                     
             timetable.lecture.add(lecture)
+            timetable.save()
             return Response(self.get_serializer(timetable).data, status=status.HTTP_200_OK)
 
         if request.method == 'DELETE':
             timetable.lecture.remove(lecture)
+            timetable.save()
             return Response(self.get_serializer(timetable).data, status=status.HTTP_200_OK)
 
     @action(
