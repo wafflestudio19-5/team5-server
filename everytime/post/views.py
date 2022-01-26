@@ -17,11 +17,8 @@ from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
 import datetime
-import re
-from pytz import utc
-
 from everytime.exceptions import NotAllowed, FieldError, NotFound
-from everytime.utils import ViewSetActionPermissionMixin, get_object_or_404
+from everytime.utils import ViewSetActionPermissionMixin, get_object_or_404, PostPagination
 from everytime import permissions
 
 # request.data안에 새로운 Tag를 찾아서 데이터베이스에 저장
@@ -55,6 +52,7 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
     queryset = Post.objects.all()\
         .select_related('writer','board')\
         .prefetch_related('comment_set','postimage_set')
+    pagination_class = PostPagination
 
     def create(self, request):
         data = request.data
@@ -117,7 +115,7 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
             
         page = self.paginate_queryset(queryset)
         data = self.get_serializer(page, many=True).data
-        return self.get_paginated_response(data)
+        return self.paginator.post_pagination_response(data, board.title_enabled)
 
     def update(self, request, pk=None):
         post = get_object_or_404(Post, pk=pk)
