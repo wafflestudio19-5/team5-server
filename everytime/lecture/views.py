@@ -3,7 +3,7 @@ from django.http import JsonResponse
 from django_filters import rest_framework as filters
 from django.utils import timezone
 
-from rest_framework import permissions, status, viewsets
+from rest_framework import status, viewsets
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.pagination import LimitOffsetPagination
@@ -13,6 +13,7 @@ from lecture.models import Course, Lecture, LectureEvaluation, Semester, Point, 
 from lecture.serializers import CourseForEvalSerializer, EvalListSerializer, EvalCreateSerializer, \
     CourseSearchSerializer, MyCourseSerializer, ExamInfoCreateSerializer, ExamInfoListSerializer, PointSerializer, LectureSearchSerializer
 
+from everytime import permissions
 from everytime.utils import get_object_or_404
 from everytime.exceptions import NotAllowed, FieldError
 

@@ -2,7 +2,7 @@ from django.http import JsonResponse
 from django.shortcuts import redirect
 from django.utils import timezone
 
-from rest_framework import permissions
+from everytime import permissions
 from rest_framework.views import APIView
 
 import datetime

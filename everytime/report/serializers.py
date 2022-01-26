@@ -5,7 +5,7 @@ from everytime.utils import get_object_or_404
 from post.models import Post
 from comment.models import Comment
 from lecture.models import LectureEvaluation, ExamInfo
-from report.models import PostReport, CommentReport, EvaluationReport, ExamInfoReport
+from report.models import PostReport, CommentReport, EvaluationReport, ExamInfoReport, ChatReport
 
 
 class PostReportSerializer(serializers.ModelSerializer):
@@ -71,6 +71,23 @@ class ExamInfoReportSerializer(serializers.ModelSerializer):
         if examinfo.writer.school_email is None:
             raise DatabaseError('학교 인증을 마치지 않은 작성자입니다. 서버 관리자에게 문의 바랍니다.')
         if self.context['user'] in examinfo.reporting_users.all():
+            raise NotAllowed('이미 신고한 글입니다.')
+
+        return data
+
+
+class ChatReportSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ChatReport
+        fields = '__all__'
+
+    def validate(self, data):
+        chatroom = data.get('chatroom')
+        if chatroom.partner is None:
+            raise NotAllowed('해당 유저가 더 이상 존재하지 않습니다.')
+        if chatroom.partner.school_email is None:
+            raise DatabaseError('학교 인증을 마치지 않은 작성자입니다. 서버 관리자에게 문의 바랍니다.')
+        if chatroom.reports.exists():
             raise NotAllowed('이미 신고한 글입니다.')
 
         return data

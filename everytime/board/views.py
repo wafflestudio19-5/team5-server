@@ -1,6 +1,6 @@
 from django.shortcuts import render
 
-from rest_framework import status, viewsets, permissions
+from rest_framework import status, viewsets
 from rest_framework.views import APIView
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -10,6 +10,7 @@ from .serializers import BoardSerializer
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
+from everytime import permissions
 from everytime.exceptions import NotAllowed
 from everytime.utils import get_object_or_404
 
