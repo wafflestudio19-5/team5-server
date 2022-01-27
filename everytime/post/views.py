@@ -100,6 +100,10 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
 
             queryset = queryset.order_by('-id')
 
+            page = self.paginate_queryset(queryset)
+            data = self.get_serializer(page, many=True).data
+            return self.paginator.post_pagination_response(data, board.title_enabled)
+
         elif board == 'hot':  # hot 게시판
             hot_posts = HotBoard.objects.all().values('post')
             queryset = Post.objects.filter(id__in=hot_posts).order_by('-hotboard__created_at')
