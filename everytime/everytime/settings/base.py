@@ -190,7 +190,7 @@ REST_FRAMEWORK = {
     'EXCEPTION_HANDLER': 'everytime.views.exception_handler',
 
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
-    'PAGE_SIZE': 10,
+    'PAGE_SIZE': 20,
 }
 
 
