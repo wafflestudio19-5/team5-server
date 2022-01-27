@@ -24,4 +24,9 @@ urlpatterns = [
     path('mypost/', views.UserPostView.as_view(), name='myscrap'),
     path('mycomment/', views.UserCommentView.as_view(), name='myscrap'),
     path('myprofile/', views.UserProfileView.as_view(), name='myprofile'),
+    path('issocial/', views.IsSocialView.as_view(), name='is_social'),
+    path('social/deactivate/', views.SocialUserDeleteAccountView.as_view(), name='delete social account'),
+    path('naver/deactivate/callback/', views.naver_delete_callback, name = 'naver delete callback'),
+    path('kakao/deactivate/callback/', views.kakao_delete_callback, name = 'kakao delete callback'),
+    path('google/deactivate/callback/', views.google_delete_callback, name = 'google delete callback'),
 ]

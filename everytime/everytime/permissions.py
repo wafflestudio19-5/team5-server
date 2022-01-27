@@ -15,3 +15,11 @@ class IsAuthenticated(BasePermission):
                 return True
         else:
             return False
+
+
+class IsLoggedIn(BasePermission):
+    def has_permission(self, request, view):
+        if request.user.is_authenticated:
+            return True
+        else:
+            return False

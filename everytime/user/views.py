@@ -87,8 +87,6 @@ class UserDeleteAccountView(APIView):
             request.user.delete()
             return Response("정상적으로 회원탈퇴가 완료되었습니다.")
 
-
-
 class UserLoginView(APIView):
     permission_classes = (permissions.AllowAny,)
 
@@ -310,7 +308,6 @@ def naver_callback(request):
         raise SocialLoginError(token_req_json.get('error'))
 
     access_token = token_req_json.get('access_token')
-    print(access_token)
     # access token 바탕으로 정보 가져오기
     access_token = urllib.parse.quote(access_token)
     profile_req = requests.get('https://openapi.naver.com/v1/nid/me', headers={'Authorization': '{} {}'.format('Bearer', access_token)})
@@ -393,7 +390,7 @@ class SocialUserSignUpView(APIView):
 
 
 class VerifyingMailSendView(APIView):
-    permission_classes = (permissions.IsAuthenticated,)
+    permission_classes = (permissions.IsLoggedIn,)
 
     def post(self, request):
         user = request.user
@@ -474,3 +471,125 @@ class UserCommentView(GenericAPIView):
         page = self.paginate_queryset(queryset)
         data = self.get_serializer(page, many=True).data
         return self.get_paginated_response(data)
+
+
+class IsSocialView(APIView):
+    permission_classes = (permissions.IsLoggedIn,)
+
+    def get(self, request):
+        if SocialAccount.objects.filter(user=request.user).exists():
+            return Response(True)
+        else:
+            return Response(False)
+
+
+class SocialUserDeleteAccountView(APIView):
+    permission_classes = (permissions.IsLoggedIn,)
+
+    def get(self, request):
+        # 이게 불리면 무조건 소셜계정이 존재할 것이긴 하지만 일단 체크
+        if not SocialAccount.objects.filter(user=request.user).exists():
+            raise SocialLoginError('잘못된 접근입니다.')
+        provider = SocialAccount.objects.get(user=request.user).provider
+
+        if provider == 'naver':
+            NAVER_CALLBACK_URI = 'http://d2hw7p0vhygoha.cloudfront.net/social/delete/naver'
+            CLIENT_ID = getattr(settings, 'SOCIAL_AUTH_NAVER_CLIENT_ID')
+            # Create random state
+            STATE = ''.join((random.choice(string.digits)) for x in range(15))
+            return redirect(
+                f"https://nid.naver.com/oauth2.0/authorize?response_type=code&client_id={CLIENT_ID}&state={STATE}&redirect_uri={NAVER_CALLBACK_URI}&auth_type=reauthenticate"
+            )
+        elif provider == 'kakao':
+            REST_API_KEY = getattr(settings, 'SOCIAL_AUTH_KAKAO_SECRET')
+            # 추가해야함
+            REDIRECT_URI = 'http://d2hw7p0vhygoha.cloudfront.net/social/delete/kakao'
+            API_HOST = f'https://kauth.kakao.com/oauth/authorize?client_id={REST_API_KEY}&redirect_uri={REDIRECT_URI}&response_type=code&prompt=login'
+            return redirect(API_HOST)
+        else:   # google
+            pass
+
+
+@api_view(["POST"])
+@permission_classes([permissions.IsLoggedIn])
+def naver_delete_callback(request):
+    CLIENT_ID = getattr(settings, 'SOCIAL_AUTH_NAVER_CLIENT_ID')
+    CLIENT_SECRET = getattr(settings, 'SOCIAL_AUTH_NAVER_SECRET')
+    code = request.data.get('code')
+    state = request.data.get('state')
+
+    # access token 받아오기
+    token_req = requests.get(
+        f"https://nid.naver.com/oauth2.0/token?grant_type=authorization_code&client_id={CLIENT_ID}&client_secret={CLIENT_SECRET}&code={code}&state={state}"
+    )
+    token_req_json = token_req.json()
+
+    # token을 제대로 받아오지 못했다면
+    if not token_req.ok:
+        raise SocialLoginError('회원탈퇴에 실패하였습니다. detail :' + str(token_req_json.get('error')))
+
+    access_token = token_req_json.get('access_token')
+    ACCESS_TOKEN = urllib.parse.quote(access_token)
+
+    delete_req = requests.get(
+        f"https://nid.naver.com/oauth2.0/token?grant_type=delete&client_id={CLIENT_ID}&client_secret={CLIENT_SECRET}&access_token={ACCESS_TOKEN}&service_provider=NAVER"
+    )
+
+    delete_req_status = delete_req.status_code
+    if delete_req_status != 200:
+        raise SocialLoginError('계정을 삭제하는 데에 실패하였습니다.')
+
+    delete_req_json = delete_req.json()
+    result = delete_req_json.get('result')
+
+    if result == 'success':
+        refresh_token = RefreshToken(request.data.get('refresh'))
+        access_token = AccessToken(request.META.get('HTTP_AUTHORIZATION').split()[1])
+        refresh_token.blacklist()
+        access_token.blacklist()
+        SocialAccount.objects.get(user=request.user).delete()
+        request.user.delete()
+        return Response("정상적으로 회원탈퇴가 완료되었습니다.")
+    else:
+        raise SocialLoginError('계정을 삭제하는 데에 실패하였습니다.')
+
+
+@api_view(["POST"])
+@permission_classes([permissions.IsLoggedIn])
+def kakao_delete_callback(request):
+    code = request.data.get("code")
+    REST_API_KEY = getattr(settings, 'SOCIAL_AUTH_KAKAO_SECRET')
+    REDIRECT_URI = 'http://d2hw7p0vhygoha.cloudfront.net/social/delete/kakao'
+    token_response = requests.get(
+        f"https://kauth.kakao.com/oauth/token?grant_type=authorization_code&client_id={REST_API_KEY}&redirect_uri={REDIRECT_URI}&code={code}"
+    )
+    token_json = token_response.json()
+
+    error = token_json.get("error", None)
+    if error is not None:
+        raise SocialLoginError('회원탈퇴에 실패하였습니다. detail :' + str(error))
+
+    access_token = token_json.get("access_token")
+
+    delete_req = requests.post(
+        "https://kapi.kakao.com/v1/user/unlink",
+        headers={"Authorization": f"Bearer {access_token}"},
+    )
+    delete_req_status = delete_req.status_code
+    if delete_req_status != 200:
+        raise SocialLoginError('계정을 삭제하는 데에 실패하였습니다.')
+
+    # 계정 삭제에 성공한다면
+    refresh_token = RefreshToken(request.data.get('refresh'))
+    access_token = AccessToken(request.META.get('HTTP_AUTHORIZATION').split()[1])
+    refresh_token.blacklist()
+    access_token.blacklist()
+    SocialAccount.objects.get(user=request.user).delete()
+    request.user.delete()
+    return Response("정상적으로 회원탈퇴가 완료되었습니다.")
+
+
+@api_view(["POST"])
+@permission_classes([permissions.IsLoggedIn])
+def google_delete_callback(request):
+    pass
