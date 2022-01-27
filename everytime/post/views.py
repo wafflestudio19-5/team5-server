@@ -12,7 +12,8 @@ from comment.models import Comment
 from comment.serializers import CommentSerializer
 from .models import Post, Tag
 from board.models import Board, HotBoard, BestBoard
-from .serializers import PostSerializer, LiveTopSerializer, HotSerializer, TitleListSerializer, ContentListSerializer
+from .serializers import PostSerializer, LiveTopSerializer, HotSerializer, TitleListSerializer, ContentListSerializer, \
+    HotBestPostSerializer
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
@@ -114,8 +115,8 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
             queryset = Post.objects.filter(id__in=best_posts).order_by('-num_of_likes')
             
         page = self.paginate_queryset(queryset)
-        data = self.get_serializer(page, many=True).data
-        return self.paginator.post_pagination_response(data, board.title_enabled)
+        data = HotBestPostSerializer(page, many=True, context={'request': request}).data
+        return self.get_paginated_response(data)
 
     def update(self, request, pk=None):
         post = get_object_or_404(Post, pk=pk)
