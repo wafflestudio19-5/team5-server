@@ -137,7 +137,7 @@ class TimeTableViewSet(viewsets.GenericViewSet):
                     if new_time.start >= existing_time.end or new_time.end <= existing_time.start:
                         pass
                     else:
-                        return FieldError(f'{lecture.course.title} 수업과 같은 시간에 이미 수업이 있습니다.')
+                        raise FieldError(f'{lecture.course.title} 수업과 같은 시간에 이미 수업이 있습니다.')
                     
             timetable.lecture.add(lecture)
             timetable.save()
