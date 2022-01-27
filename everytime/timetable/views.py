@@ -129,11 +129,10 @@ class TimeTableViewSet(viewsets.GenericViewSet):
             if lecture in existing_lectures:
                 raise FieldError('이미 추가한 수업입니다.')
             existing_time_set = LectureTime.objects.filter(lecture__in=existing_lectures).all()
-            
+
             new_time_set = lecture.lecturetime_set.all()
             for new_time in new_time_set:
-                existing_time_set = existing_time_set.filter(day=new_time.day)
-                for existing_time in existing_time_set:
+                for existing_time in existing_time_set.filter(day=new_time.day):
                     if new_time.start >= existing_time.end or new_time.end <= existing_time.start:
                         pass
                     else:
