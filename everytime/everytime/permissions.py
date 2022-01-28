@@ -10,7 +10,10 @@ class IsAuthenticated(BasePermission):
             reported_user = ReportedUser.objects.filter(school_email=request.user.school_email)
             if reported_user.exists():
                 reported_user = reported_user[0]
-                return timezone.now() > reported_user.updated_at + timedelta(days=30)
+                if reported_user.count % 10 == 0 and timezone.now() < reported_user.updated_at + timedelta(days=30):
+                    return False
+                else:
+                    return True
             else:
                 return True
         else:
