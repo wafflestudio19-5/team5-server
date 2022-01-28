@@ -52,3 +52,4 @@ jobs:
         SERVER_EMAIL: ${{ secrets.SERVER_EMAIL }}
         REDIRECT_PAGE: ${{ secrets.REDIRECT_PAGE }}
         BASE_URL: ${{ secrets.BASE_URL }}
+        DEBUG_TOOLBAR: ${{ secrets.DEBUG_TOOLBAR }}
