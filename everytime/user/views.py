@@ -29,7 +29,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from everytime import permissions
 from everytime.exceptions import AlreadyLogin, SocialLoginError, DatabaseError, FieldError, DuplicationError
-from everytime.utils import AccessToken
+from everytime.utils import AccessToken, PostPagination
 
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
@@ -444,6 +444,7 @@ class UserScrapView(GenericAPIView):
     permission_classes = (permissions.IsAuthenticated, )
     serializer_class = PostSerializer
     queryset = Post.objects.all()
+    pagination_class = PostPagination
 
     def get(self, request):
         user = request.user
@@ -459,6 +460,7 @@ class UserPostView(GenericAPIView):
     permission_classes = (permissions.IsAuthenticated,)
     serializer_class = PostSerializer
     queryset = Post.objects.all()
+    pagination_class = PostPagination
 
     def get(self, request):
         user = request.user
@@ -475,6 +477,7 @@ class UserCommentView(GenericAPIView):
     permission_classes = (permissions.IsAuthenticated,)
     serializer_class = PostSerializer
     queryset = Post.objects.all()
+    pagination_class = PostPagination
 
     def get(self, request):
         user = request.user
