@@ -45,6 +45,8 @@ ALLOWED_HOSTS = [
     '13.125.247.56',
     '127.0.0.1',
     'localhost',
+    'waffle-minkyu.shop',
+    'www.waffle-minkyu.shop'
 ]
 
 # Application definition
