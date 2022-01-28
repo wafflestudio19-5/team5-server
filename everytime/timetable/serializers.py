@@ -12,7 +12,7 @@ class LectureTimeSerializer(serializers.ModelSerializer):
     day = serializers.ChoiceField(choices=LectureTime.DAY_CHOICES)
     start = serializers.IntegerField(max_value=2400,min_value=0)
     end = serializers.IntegerField(max_value=2400, min_value=0)
-    location = serializers.CharField(max_length=100, required=False)
+    location = serializers.CharField(max_length=100, required=False, allow_blank=True)
     
     class Meta:
         model = LectureTime
