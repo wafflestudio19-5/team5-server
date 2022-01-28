@@ -315,7 +315,7 @@ class UsePointView(APIView):
         examinfo.readable_users.add(request.user)
         Point.objects.create(user=request.user.school_email, reason='시험 정보 조회', point=-5)
 
-        exam_info = ExamInfo.objects.filter(course=course).order_by('-created_at').prefetch_related('readable_users').select_related('semester')
+        exam_info = ExamInfo.objects.filter(course=course).order_by('-created_at').prefetch_related('readable_users', 'types').select_related('semester', 'writer')
         serializer = ExamInfoListSerializer(exam_info, many=True, context={'user': request.user})
         return Response(serializer.data, status.HTTP_200_OK)
 
