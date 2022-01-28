@@ -331,7 +331,7 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
     )
     def hot(self, request):
         hot_posts = HotBoard.objects.all().values('post')
-        queryset = Post.objects.filter(id__in=hot_posts).order_by('-hotboard__created_at')[:4]
+        queryset = Post.objects.select_related('board').filter(id__in=hot_posts).order_by('-hotboard__created_at')[:4]
         return Response(HotSerializer(queryset, many=True).data, status=status.HTTP_200_OK)
 
     @action(
