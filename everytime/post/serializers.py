@@ -206,7 +206,7 @@ class LiveTopSerializer(serializers.ModelSerializer):
             }
 
     def get_num_of_comments(self, obj):
-        return obj.comment_set.count()
+        return obj.num_of_comments
 
 
 class HotSerializer(serializers.ModelSerializer):
@@ -235,28 +235,8 @@ class HotSerializer(serializers.ModelSerializer):
             }
 
     def get_title_content(self, post):
-        return post.title + ' ' + post.content
+        return post.title if post.board.title_enabled else post.content
 
-class MainSerializer(serializers.ModelSerializer):
-    posts = serializers.SerializerMethodField()
-    class Meta:
-        model = Board
-        fields = (
-            'id',
-            'title',
-            'posts'
-        )
-
-    def get_posts(self, board):
-        if board.sub_boards.exists():
-            posts = Post.objects.filter(board__in=board.sub_boards.values('id')).order_by('-id')
-        else:
-            posts = board.post_set.order_by('-id')
-        if board.title_enabled:
-            return TitleListSerializer(posts[:4], many=True).data
-        else:
-            posts = posts.prefetch_related('comment_set')
-            return ContentListSerializer(posts[:2], many=True).data
 
 class TitleListSerializer(serializers.ModelSerializer):
     class Meta:
@@ -281,7 +261,7 @@ class ContentListSerializer(serializers.ModelSerializer):
         )
 
     def get_num_of_comments(self, obj):
-        return obj.comment_set.count()
+        return obj.num_of_comments
 
 
 class HotBestPostSerializer(serializers.ModelSerializer):

@@ -2,6 +2,7 @@ import pytz
 from django.http import JsonResponse
 from django.http.request import QueryDict
 from django.utils import timezone
+from django.db.models import Prefetch, Count
 
 from rest_framework import status, viewsets
 from rest_framework.views import APIView
@@ -13,7 +14,7 @@ from comment.serializers import CommentSerializer
 from .models import Post, Tag
 from board.models import Board, HotBoard, BestBoard
 from .serializers import PostSerializer, LiveTopSerializer, HotSerializer, TitleListSerializer, ContentListSerializer, \
-    HotBestPostSerializer, MainSerializer
+    HotBestPostSerializer
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
@@ -52,7 +53,7 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
     serializer_class = PostSerializer
     queryset = Post.objects.all()\
         .select_related('writer','board')\
-        .prefetch_related('comment_set','postimage_set')
+        .prefetch_related('comment_set','postimage_set', 'tags')
     pagination_class = PostPagination
 
     def create(self, request):
@@ -106,7 +107,7 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
 
         elif board == 'hot':  # hot 게시판
             hot_posts = HotBoard.objects.all().values('post')
-            queryset = Post.objects.filter(id__in=hot_posts).order_by('-hotboard__created_at')
+            queryset = self.queryset.filter(id__in=hot_posts).order_by('-hotboard__created_at')
         
         else:                 # best 게시판
             try:
@@ -116,7 +117,7 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
             except ValueError:
                 raise FieldError('query parameter의 year 또는 first_half 값을 확인해주세요.')
             best_posts = BestBoard.objects.filter(year=year, first_half=first_half).values('post')
-            queryset = Post.objects.filter(id__in=best_posts).order_by('-num_of_likes')
+            queryset = self.queryset.filter(id__in=best_posts).order_by('-num_of_likes')
             
         page = self.paginate_queryset(queryset)
         data = HotBestPostSerializer(page, many=True, context={'request': request}).data
@@ -233,7 +234,7 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
         if len(search_set) == 0:
             raise FieldError('검색어를 입력하세요.')
         if board == '':
-            queryset = Post.objects.all().order_by('-id')
+            queryset = self.queryset
             for query in search_set:
                 queryset = queryset.filter(content__icontains=query) | \
                            queryset.filter(title__icontains=query)
@@ -321,7 +322,7 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
     def livetop(self, request):
         now = datetime.datetime.now()
         yesterday = now - datetime.timedelta(days=1)
-        queryset = Post.objects.filter(created_at__gt=yesterday).order_by('-num_of_likes')[:2]
+        queryset = Post.objects.annotate(num_of_comments=Count('comment')).select_related('board').filter(created_at__gt=yesterday).order_by('-num_of_likes')[:2]
         return Response(LiveTopSerializer(queryset, many=True).data, status=status.HTTP_200_OK)
 
     @action(
@@ -330,7 +331,7 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
     )
     def hot(self, request):
         hot_posts = HotBoard.objects.all().values('post')
-        queryset = Post.objects.filter(id__in=hot_posts).order_by('-hotboard__created_at')[:4]
+        queryset = Post.objects.select_related('board').filter(id__in=hot_posts).order_by('-hotboard__created_at')[:4]
         return Response(HotSerializer(queryset, many=True).data, status=status.HTTP_200_OK)
 
     @action(
@@ -338,5 +339,25 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
         methods=['GET'],
     )
     def main(self, request):
-        boards = Board.objects.prefetch_related('sub_boards')[:6]
-        return Response(MainSerializer(boards, many=True).data, status=status.HTTP_200_OK)
+        data = []
+        post_queryset = Post.objects.order_by('-id').annotate(num_of_comments=Count('comment'))
+        board_queryset = Board.objects.all().prefetch_related('sub_boards', Prefetch('post_set', queryset=post_queryset))[:6]
+        for board in board_queryset:
+            if board.sub_boards.exists():
+                posts = post_queryset.filter(board__in=board.sub_boards.values('id'))
+            else:
+                posts = board.post_set.all()
+            if board.title_enabled:
+                data.append({
+                    'id': board.id,
+                    'title': board.title,
+                    'posts': TitleListSerializer(posts[:4], many=True).data
+                })
+            else:
+                data.append({
+                    'id': board.id,
+                    'title': board.title,
+                    'posts': ContentListSerializer(posts[:2], many=True).data
+                })
+
+        return Response(data, status=status.HTTP_200_OK)
