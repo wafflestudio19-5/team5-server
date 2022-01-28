@@ -1,4 +1,4 @@
-from django.db.models import Avg, Count, Q, Sum
+from django.db.models import Avg, Count, Q, Sum, Prefetch
 from django.http import JsonResponse
 from django_filters import rest_framework as filters
 from django.utils import timezone
@@ -342,8 +342,10 @@ class LectureSearchViewSet(viewsets.GenericViewSet):
     queryset = Lecture.objects.filter(course__self_made=False)\
             .exclude(lecturetime=None)\
             .select_related('course__department__college')\
-            .prefetch_related('lecturetime_set','course__lectureevaluation_set')\
+            .prefetch_related('lecturetime_set')\
+            .annotate(avg_rating=Avg('course__lectureevaluation__rating'))\
             .order_by('id')
+
     filter_backends = (filters.DjangoFilterBackend,)
     filterset_class = LectureFilter
 
