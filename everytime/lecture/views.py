@@ -44,7 +44,7 @@ class RecentEvalView(APIView, LimitOffsetPagination):
     permission_classes = (permissions.IsAuthenticated,)
 
     def get(self, request):
-        evals = LectureEvaluation.objects.order_by('-created_at')[:150]
+        evals = LectureEvaluation.objects.order_by('-created_at')[:150].select_related('course', 'semester')
         page = self.paginate_queryset(evals, request)
         data = EvalListSerializer(page, many=True, context={'user': request.user}).data
         return self.get_paginated_response(data)
@@ -83,7 +83,7 @@ class EvaluationView(APIView):
 
         Point.objects.create(user=request.user.school_email, reason='강의평 작성', point=10)
 
-        evals = LectureEvaluation.objects.filter(course=course).order_by('-created_at')
+        evals = LectureEvaluation.objects.filter(course=course).order_by('-created_at').select_related('course', 'semester')
         return Response(EvalListSerializer(evals, many=True, context={'user': request.user}).data, status=status.HTTP_201_CREATED)
 
     def get(self, request, pk=None):
@@ -91,7 +91,7 @@ class EvaluationView(APIView):
         if course.self_made:
             raise NotAllowed('자신이 직접 추가한 강의에는 강의평이 존재하지 않습니다.')
 
-        evals = LectureEvaluation.objects.filter(course=course).order_by('-created_at')
+        evals = LectureEvaluation.objects.filter(course=course).order_by('-created_at').select_related('course', 'semester')
         serializer = EvalListSerializer(evals, many=True, context={'user': request.user})
         return Response(serializer.data, status.HTTP_200_OK)
 

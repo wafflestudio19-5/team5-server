@@ -31,8 +31,8 @@ def exception_handler(exc, context):
         set_rollback()
         return Response(data, status=exc.status_code, headers=headers)
 
-    return Response({
-        'detail': '서버 에러입니다. 서버 관리자에게 문의 바랍니다.',
-        'code': 'E000'
-    }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    # return Response({
+    #     'detail': '서버 에러입니다. 서버 관리자에게 문의 바랍니다.',
+    #     'code': 'E000'
+    # }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
