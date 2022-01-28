@@ -261,6 +261,7 @@ class LectureSearchSerializer(serializers.ModelSerializer):
 
     def get_course(self, lecture):
         avg_rating = lecture.avg_rating if lecture.avg_rating else 0
+        avg_rating = round(avg_rating, 1)
         return {
             'title': lecture.course.title,
             'instructor': lecture.course.instructor,
