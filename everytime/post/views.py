@@ -14,7 +14,7 @@ from comment.serializers import CommentSerializer
 from .models import Post, Tag
 from board.models import Board, HotBoard, BestBoard
 from .serializers import PostSerializer, LiveTopSerializer, HotSerializer, TitleListSerializer, ContentListSerializer, \
-    HotBestPostSerializer, MainSerializer
+    HotBestPostSerializer
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
