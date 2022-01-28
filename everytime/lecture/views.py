@@ -102,16 +102,15 @@ class MyCourseView(APIView):
     def get(self, request):
         # 강의평가 탭의 '내 강의평'에 뜨는 강의들이 언제 새학기 걸로 바뀌는지 모르겠어서
         # 9월~2월은 2학기의 기본시간표 리스트가 뜨고, 3월~8월은 1학기의 기본 시간표 리스트가 뜬다고 가정
+        # --> 지금 2022-1 강의밖에 없어서 그냥 1~6월은 1학기, 7~12는 2학기 뜨도록 수정
 
         # semester 처리
         date = str(timezone.now())[:10].split('-')
         year = int(date[0])
         month = int(date[1])
 
-        if month in range(3, 9):
+        if month in range(1, 7):
             sem = str(year)+'년 1학기'
-        elif month in range(1, 3):
-            sem = str(year-1)+'년 2학기'
         else:
             sem = str(year)+'년 2학기'
 
