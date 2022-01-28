@@ -44,7 +44,7 @@ class RecentEvalView(APIView, LimitOffsetPagination):
     permission_classes = (permissions.IsAuthenticated,)
 
     def get(self, request):
-        evals = LectureEvaluation.objects.order_by('-created_at')[:150].select_related('course', 'semester')
+        evals = LectureEvaluation.objects.order_by('-created_at')[:150].select_related('course', 'semester', 'writer')
         page = self.paginate_queryset(evals, request)
         data = EvalListSerializer(page, many=True, context={'user': request.user}).data
         return self.get_paginated_response(data)
