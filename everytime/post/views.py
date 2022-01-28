@@ -13,7 +13,7 @@ from comment.serializers import CommentSerializer
 from .models import Post, Tag
 from board.models import Board, HotBoard, BestBoard
 from .serializers import PostSerializer, LiveTopSerializer, HotSerializer, TitleListSerializer, ContentListSerializer, \
-    HotBestPostSerializer
+    HotBestPostSerializer, MainSerializer
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
@@ -338,16 +338,5 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
         methods=['GET'],
     )
     def main(self, request):
-        data = {}
-        boards = Board.objects.all()[:6]
-        for i in range(6):
-            board = boards[i]
-            if board.sub_boards.exists():
-                queryset = Post.objects.filter(board__head_board=board).order_by('-id')
-            else:
-                queryset = Post.objects.filter(board=board).order_by('-id')
-            if board.title_enabled:
-                data[board.title] = TitleListSerializer(queryset[:4], many=True).data
-            else:
-                data[board.title] = ContentListSerializer(queryset[:2], many=True).data
-        return Response(data, status=status.HTTP_200_OK)
+        boards = Board.objects.prefetch_related('post_set')
+        return Response(MainSerializer(boards, many=True).data, status=status.HTTP_200_OK)
