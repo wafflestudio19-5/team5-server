@@ -127,7 +127,7 @@ class MyCourseSerializer(serializers.ModelSerializer):
         )
 
     def get_is_evaluated(self, course):
-        if course.lectureevaluation_set.filter(writer=self.context['user']).exists():
+        if course.lectureevaluation_set.exists():
             return True
         else:
             return False
@@ -216,13 +216,7 @@ class ExamInfoListSerializer(serializers.ModelSerializer):
         if not obj.types.exists():
             return None
 
-        result = ""
-        types = obj.types.all()
-        for i in range(len(types)-1):
-            result += (types[i].type + ", ")
-
-        result += types.last().type
-        return result
+        return ', '.join(list(obj.types.values_list('type',flat=True)))
 
     def get_examples(self, obj):
         if self.context['user'] in obj.readable_users.all():
