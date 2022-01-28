@@ -82,7 +82,6 @@ def get_object_or_404(klass, *args, **kwargs):
 
 
 class PostPagination(LimitOffsetPagination):
-    default_limit = 10
     def post_pagination_response(self, data, title_exist):
         return Response(OrderedDict([
             ('count', self.count),
