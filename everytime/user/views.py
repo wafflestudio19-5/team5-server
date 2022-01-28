@@ -29,7 +29,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from everytime import permissions
 from everytime.exceptions import AlreadyLogin, SocialLoginError, DatabaseError, FieldError, DuplicationError
-from everytime.utils import AccessToken
+from everytime.utils import AccessToken, PostPagination
 
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
@@ -443,10 +443,14 @@ class VerifyingMailAcceptView(APIView):
 class UserScrapView(GenericAPIView):
     permission_classes = (permissions.IsAuthenticated, )
     serializer_class = PostSerializer
+    queryset = Post.objects.all()
+    pagination_class = PostPagination
 
     def get(self, request):
         user = request.user
-        queryset = user.scrap_post.order_by('-id')
+        queryset = user.scrap_post.order_by('-id')\
+            .select_related('writer','board')\
+            .prefetch_related('comment_set','postimage_set', 'tags')
         page = self.paginate_queryset(queryset)
         data = self.get_serializer(page, many=True).data
         return self.get_paginated_response(data)
@@ -455,10 +459,15 @@ class UserScrapView(GenericAPIView):
 class UserPostView(GenericAPIView):
     permission_classes = (permissions.IsAuthenticated,)
     serializer_class = PostSerializer
+    queryset = Post.objects.all()
+    pagination_class = PostPagination
 
     def get(self, request):
         user = request.user
-        queryset = user.post_set.order_by('-id')
+        queryset = user.post_set\
+            .select_related('writer','board')\
+            .prefetch_related('comment_set','postimage_set', 'tags')\
+            .order_by('-id')
         page = self.paginate_queryset(queryset)
         data = self.get_serializer(page, many=True).data
         return self.get_paginated_response(data)
@@ -467,10 +476,16 @@ class UserPostView(GenericAPIView):
 class UserCommentView(GenericAPIView):
     permission_classes = (permissions.IsAuthenticated,)
     serializer_class = PostSerializer
+    queryset = Post.objects.all()
+    pagination_class = PostPagination
 
     def get(self, request):
         user = request.user
-        queryset = Post.objects.filter(id__in=user.comment_set.values("post")).order_by('-id')
+        queryset = Post.objects\
+            .select_related('writer','board')\
+            .prefetch_related('comment_set','postimage_set', 'tags')\
+            .order_by('-id')\
+            .filter(id__in=user.comment_set.values("post")).order_by('-id')
         page = self.paginate_queryset(queryset)
         data = self.get_serializer(page, many=True).data
         return self.get_paginated_response(data)

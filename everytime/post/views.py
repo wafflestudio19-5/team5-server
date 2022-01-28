@@ -107,7 +107,7 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
 
         elif board == 'hot':  # hot 게시판
             hot_posts = HotBoard.objects.all().values('post')
-            queryset = Post.objects.filter(id__in=hot_posts).order_by('-hotboard__created_at')
+            queryset = self.queryset.filter(id__in=hot_posts).order_by('-hotboard__created_at')
         
         else:                 # best 게시판
             try:
@@ -117,7 +117,7 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
             except ValueError:
                 raise FieldError('query parameter의 year 또는 first_half 값을 확인해주세요.')
             best_posts = BestBoard.objects.filter(year=year, first_half=first_half).values('post')
-            queryset = Post.objects.filter(id__in=best_posts).order_by('-num_of_likes')
+            queryset = self.queryset.filter(id__in=best_posts).order_by('-num_of_likes')
             
         page = self.paginate_queryset(queryset)
         data = HotBestPostSerializer(page, many=True, context={'request': request}).data
@@ -234,7 +234,7 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
         if len(search_set) == 0:
             raise FieldError('검색어를 입력하세요.')
         if board == '':
-            queryset = Post.objects.all().order_by('-id')
+            queryset = self.queryset
             for query in search_set:
                 queryset = queryset.filter(content__icontains=query) | \
                            queryset.filter(title__icontains=query)
@@ -322,7 +322,7 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
     def livetop(self, request):
         now = datetime.datetime.now()
         yesterday = now - datetime.timedelta(days=1)
-        queryset = Post.objects.filter(created_at__gt=yesterday).order_by('-num_of_likes')[:2]
+        queryset = Post.objects.annotate(num_of_comments=Count('comment')).select_related('board').filter(created_at__gt=yesterday).order_by('-num_of_likes')[:2]
         return Response(LiveTopSerializer(queryset, many=True).data, status=status.HTTP_200_OK)
 
     @action(
@@ -331,7 +331,7 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
     )
     def hot(self, request):
         hot_posts = HotBoard.objects.all().values('post')
-        queryset = Post.objects.filter(id__in=hot_posts).order_by('-hotboard__created_at')[:4]
+        queryset = Post.objects.select_related('board').filter(id__in=hot_posts).order_by('-hotboard__created_at')[:4]
         return Response(HotSerializer(queryset, many=True).data, status=status.HTTP_200_OK)
 
     @action(
