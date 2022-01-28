@@ -2,6 +2,7 @@ import pytz
 from django.http import JsonResponse
 from django.http.request import QueryDict
 from django.utils import timezone
+from django.db.models import Prefetch, Count
 
 from rest_framework import status, viewsets
 from rest_framework.views import APIView
@@ -52,7 +53,7 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
     serializer_class = PostSerializer
     queryset = Post.objects.all()\
         .select_related('writer','board')\
-        .prefetch_related('comment_set','postimage_set')
+        .prefetch_related('comment_set','postimage_set', 'tags')
     pagination_class = PostPagination
 
     def create(self, request):
@@ -338,5 +339,25 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
         methods=['GET'],
     )
     def main(self, request):
-        boards = Board.objects.prefetch_related('sub_boards')[:6]
-        return Response(MainSerializer(boards, many=True).data, status=status.HTTP_200_OK)
+        data = []
+        post_queryset = Post.objects.order_by('-id').annotate(num_of_comments=Count('comment'))
+        board_queryset = Board.objects.all().prefetch_related('sub_boards', Prefetch('post_set', queryset=post_queryset))[:6]
+        for board in board_queryset:
+            if board.sub_boards.exists():
+                posts = post_queryset.filter(board__in=board.sub_boards.values('id'))
+            else:
+                posts = board.post_set.all()
+            if board.title_enabled:
+                data.append({
+                    'id': board.id,
+                    'title': board.title,
+                    'posts': TitleListSerializer(posts[:4], many=True).data
+                })
+            else:
+                data.append({
+                    'id': board.id,
+                    'title': board.title,
+                    'posts': ContentListSerializer(posts[:2], many=True).data
+                })
+
+        return Response(data, status=status.HTTP_200_OK)
