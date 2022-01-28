@@ -1,5 +1,4 @@
 from django.db.models import Avg, Count, Q, Sum, When, Prefetch
-from django.http import JsonResponse
 from django_filters import rest_framework as filters
 from django.utils import timezone
 
@@ -142,7 +141,7 @@ class EvalSummaryView(APIView):
         evals = LectureEvaluation.objects.filter(course=course)
 
         if not evals.exists():
-            return JsonResponse({
+            return Response({
                 'has_evals': False,
             }, status=status.HTTP_200_OK)
 
@@ -162,7 +161,7 @@ class EvalSummaryView(APIView):
         attendance = dict(LectureEvaluation.ATTENDANCE_CHOICES)[attendance]
         exam_freq = dict(LectureEvaluation.EXAM_FREQUENCY_CHOICES)[exam_freq]
 
-        return JsonResponse({
+        return Response({
             'has_evals': True,
             'rating': avg_rating,
             'assignment': assignment,
@@ -207,7 +206,7 @@ class LikeEvaluationView(APIView):
             eval.like_users.add(request.user)
             eval.num_of_likes += 1
             eval.save()
-            return JsonResponse({
+            return Response({
                 'is_success': True,
                 'value': eval.num_of_likes
             })
@@ -291,7 +290,7 @@ class LikeExamInfoView(APIView):
             examinfo.like_users.add(request.user)
             examinfo.num_of_likes += 1
             examinfo.save()
-            return JsonResponse({
+            return Response({
                 'is_success': True,
                 'value': examinfo.num_of_likes
             })
@@ -330,7 +329,7 @@ class MyPointView(APIView):
 
         point_sum = Point.objects.filter(user=request.user.school_email).aggregate(Sum('point'))
 
-        return JsonResponse({
+        return Response({
             'sum': point_sum.get('point__sum'),
             'details': serializer.data
         }, status=status.HTTP_200_OK)
