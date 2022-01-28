@@ -107,7 +107,7 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
 
         elif board == 'hot':  # hot 게시판
             hot_posts = HotBoard.objects.all().values('post')
-            queryset = Post.objects.filter(id__in=hot_posts).order_by('-hotboard__created_at')
+            queryset = self.queryset.filter(id__in=hot_posts).order_by('-hotboard__created_at')
         
         else:                 # best 게시판
             try:
@@ -117,7 +117,7 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
             except ValueError:
                 raise FieldError('query parameter의 year 또는 first_half 값을 확인해주세요.')
             best_posts = BestBoard.objects.filter(year=year, first_half=first_half).values('post')
-            queryset = Post.objects.filter(id__in=best_posts).order_by('-num_of_likes')
+            queryset = self.queryset.filter(id__in=best_posts).order_by('-num_of_likes')
             
         page = self.paginate_queryset(queryset)
         data = HotBestPostSerializer(page, many=True, context={'request': request}).data
