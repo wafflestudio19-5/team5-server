@@ -130,6 +130,7 @@ class MessageSerializer(serializers.ModelSerializer):
     class Meta:
         model = Message
         fields = (
+            'id',
             'is_mine',
             'is_notice',
             'content',
