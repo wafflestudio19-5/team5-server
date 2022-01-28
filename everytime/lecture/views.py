@@ -260,7 +260,7 @@ class ExamInfoView(APIView):
         # readable_users에 글쓴이 추가
         exam_info.readable_users.add(request.user)
 
-        exam_info = ExamInfo.objects.filter(course=course).order_by('-created_at').prefetch_related('readable_users').select_related('semester')
+        exam_info = ExamInfo.objects.filter(course=course).order_by('-created_at').prefetch_related('readable_users', 'types').select_related('semester', 'writer')
         serializer = ExamInfoListSerializer(exam_info, many=True, context={'user': request.user})
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -269,7 +269,7 @@ class ExamInfoView(APIView):
         if course.self_made:
             raise NotAllowed('자신이 직접 추가한 강의에는 시험 정보가 존재하지 않습니다.')
 
-        exam_info = ExamInfo.objects.filter(course=course).order_by('-created_at').prefetch_related('readable_users').select_related('semester')
+        exam_info = ExamInfo.objects.filter(course=course).order_by('-created_at').prefetch_related('readable_users', 'types').select_related('semester', 'writer')
         serializer = ExamInfoListSerializer(exam_info, many=True, context={'user': request.user})
         return Response(serializer.data, status.HTTP_200_OK)
 

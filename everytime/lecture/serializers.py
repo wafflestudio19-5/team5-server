@@ -216,13 +216,7 @@ class ExamInfoListSerializer(serializers.ModelSerializer):
         if not obj.types.exists():
             return None
 
-        result = ""
-        types = obj.types.all()
-        for i in range(len(types)-1):
-            result += (types[i].type + ", ")
-
-        result += types.last().type
-        return result
+        return ', '.join(list(obj.types.values_list('type',flat=True)))
 
     def get_examples(self, obj):
         if self.context['user'] in obj.readable_users.all():
