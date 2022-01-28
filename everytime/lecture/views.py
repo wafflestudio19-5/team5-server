@@ -44,7 +44,7 @@ class RecentEvalView(APIView, LimitOffsetPagination):
     permission_classes = (permissions.IsAuthenticated,)
 
     def get(self, request):
-        evals = LectureEvaluation.objects.order_by('-created_at')[:150]
+        evals = LectureEvaluation.objects.order_by('-created_at')[:150].select_related('course', 'semester', 'writer')
         page = self.paginate_queryset(evals, request)
         data = EvalListSerializer(page, many=True, context={'user': request.user}).data
         return self.get_paginated_response(data)
@@ -83,7 +83,7 @@ class EvaluationView(APIView):
 
         Point.objects.create(user=request.user.school_email, reason='강의평 작성', point=10)
 
-        evals = LectureEvaluation.objects.filter(course=course).order_by('-created_at')
+        evals = LectureEvaluation.objects.filter(course=course).order_by('-created_at').select_related('course', 'semester')
         return Response(EvalListSerializer(evals, many=True, context={'user': request.user}).data, status=status.HTTP_201_CREATED)
 
     def get(self, request, pk=None):
@@ -91,7 +91,7 @@ class EvaluationView(APIView):
         if course.self_made:
             raise NotAllowed('자신이 직접 추가한 강의에는 강의평이 존재하지 않습니다.')
 
-        evals = LectureEvaluation.objects.filter(course=course).order_by('-created_at')
+        evals = LectureEvaluation.objects.filter(course=course).order_by('-created_at').select_related('course', 'semester')
         serializer = EvalListSerializer(evals, many=True, context={'user': request.user})
         return Response(serializer.data, status.HTTP_200_OK)
 
@@ -119,7 +119,7 @@ class MyCourseView(APIView):
         if TimeTable.objects.filter(user=request.user, is_default=True, semester=sem_id).exists():
             timetable = TimeTable.objects.get(user=request.user, is_default=True, semester=sem_id)
             my_course_ids = timetable.lecture.values_list('course')
-            my_courses = Course.objects.filter(id__in=my_course_ids, self_made=False)
+            my_courses = Course.objects.filter(id__in=my_course_ids, self_made=False).prefetch_related('lectureevaluation_set')
         else:
             my_courses = None
 
@@ -260,7 +260,7 @@ class ExamInfoView(APIView):
         # readable_users에 글쓴이 추가
         exam_info.readable_users.add(request.user)
 
-        exam_info = ExamInfo.objects.filter(course=course).order_by('-created_at')
+        exam_info = ExamInfo.objects.filter(course=course).order_by('-created_at').prefetch_related('readable_users').select_related('semester')
         serializer = ExamInfoListSerializer(exam_info, many=True, context={'user': request.user})
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -269,7 +269,7 @@ class ExamInfoView(APIView):
         if course.self_made:
             raise NotAllowed('자신이 직접 추가한 강의에는 시험 정보가 존재하지 않습니다.')
 
-        exam_info = ExamInfo.objects.filter(course=course).order_by('-created_at')
+        exam_info = ExamInfo.objects.filter(course=course).order_by('-created_at').prefetch_related('readable_users').select_related('semester')
         serializer = ExamInfoListSerializer(exam_info, many=True, context={'user': request.user})
         return Response(serializer.data, status.HTTP_200_OK)
 
@@ -315,7 +315,7 @@ class UsePointView(APIView):
         examinfo.readable_users.add(request.user)
         Point.objects.create(user=request.user.school_email, reason='시험 정보 조회', point=-5)
 
-        exam_info = ExamInfo.objects.filter(course=course).order_by('-created_at')
+        exam_info = ExamInfo.objects.filter(course=course).order_by('-created_at').prefetch_related('readable_users').select_related('semester')
         serializer = ExamInfoListSerializer(exam_info, many=True, context={'user': request.user})
         return Response(serializer.data, status.HTTP_200_OK)
 
