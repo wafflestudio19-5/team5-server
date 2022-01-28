@@ -322,7 +322,7 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
     def livetop(self, request):
         now = datetime.datetime.now()
         yesterday = now - datetime.timedelta(days=1)
-        queryset = Post.objects.filter(created_at__gt=yesterday).order_by('-num_of_likes')[:2]
+        queryset = Post.objects.annotate(num_of_comments=Count('comment')).select_related('board').filter(created_at__gt=yesterday).order_by('-num_of_likes')[:2]
         return Response(LiveTopSerializer(queryset, many=True).data, status=status.HTTP_200_OK)
 
     @action(

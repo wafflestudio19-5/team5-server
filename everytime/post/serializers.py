@@ -206,7 +206,7 @@ class LiveTopSerializer(serializers.ModelSerializer):
             }
 
     def get_num_of_comments(self, obj):
-        return obj.comment_set.count()
+        return obj.num_of_comments
 
 
 class HotSerializer(serializers.ModelSerializer):
