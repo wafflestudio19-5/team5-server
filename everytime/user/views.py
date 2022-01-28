@@ -393,7 +393,7 @@ class SocialUserSignUpView(APIView):
 
 
 class VerifyingMailSendView(APIView):
-    permission_classes = (permissions.IsAuthenticated,)
+    permission_classes = (permissions.IsLoggedIn,)
 
     def post(self, request):
         user = request.user
