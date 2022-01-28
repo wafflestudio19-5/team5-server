@@ -39,7 +39,9 @@ except FileNotFoundError:
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG_TOOLBAR = os.getenv('DEBUG_TOOLBAR') in ('true', 'True')
+# secrets.json 에서 이미 DEBUG_TOOLBAR에 대한 설정을 해주는데 아래 코드 때문에 안 먹힘
+# 서버에 secrets.json에는 False로 하고 각자 local에서는 True 로 하면 될 듯
+# DEBUG_TOOLBAR = os.getenv('DEBUG_TOOLBAR') in ('true', 'True')
 
 ALLOWED_HOSTS = [
     '13.125.247.56',
