@@ -338,5 +338,5 @@ class PostViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
         methods=['GET'],
     )
     def main(self, request):
-        boards = Board.objects.prefetch_related('post_set')
+        boards = Board.objects.prefetch_related('sub_boards')[:6]
         return Response(MainSerializer(boards, many=True).data, status=status.HTTP_200_OK)

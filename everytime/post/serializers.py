@@ -249,12 +249,13 @@ class MainSerializer(serializers.ModelSerializer):
 
     def get_posts(self, board):
         if board.sub_boards.exists():
-            posts = Post.objects.filter(board__head_board=board).order_by('-id')
+            posts = Post.objects.filter(board__in=board.sub_boards.values('id')).order_by('-id')
         else:
             posts = board.post_set.order_by('-id')
         if board.title_enabled:
             return TitleListSerializer(posts[:4], many=True).data
         else:
+            posts = posts.prefetch_related('comment_set')
             return ContentListSerializer(posts[:2], many=True).data
 
 class TitleListSerializer(serializers.ModelSerializer):
