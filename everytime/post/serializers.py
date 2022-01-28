@@ -143,12 +143,8 @@ class PostSerializer(serializers.ModelSerializer):
         # 이미지 저장 및 업로드
         image_set = self.context['request'].FILES
         if hasattr(image_set, 'getlist'):
-            raise FieldError()
             for image_data in image_set.getlist('image'):
-                PostImage.objects.create(post=post, image=image_data)
-        else:
-            raise NotAllowed()
-            for image_data in image_set['image']:
+                raise FieldError()
                 PostImage.objects.create(post=post, image=image_data)
         return post
 
