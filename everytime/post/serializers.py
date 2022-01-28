@@ -235,7 +235,7 @@ class HotSerializer(serializers.ModelSerializer):
             }
 
     def get_title_content(self, post):
-        return post.title + ' ' + post.content
+        return post.title if post.board.title_enabled else post.content
 
 
 class TitleListSerializer(serializers.ModelSerializer):
