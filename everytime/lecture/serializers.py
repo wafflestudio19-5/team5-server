@@ -127,7 +127,7 @@ class MyCourseSerializer(serializers.ModelSerializer):
         )
 
     def get_is_evaluated(self, course):
-        if course.lectureevaluation_set.filter(writer=self.context['user']).exists():
+        if course.lectureevaluation_set.exists():
             return True
         else:
             return False

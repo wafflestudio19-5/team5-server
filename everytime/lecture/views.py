@@ -1,4 +1,4 @@
-from django.db.models import Avg, Count, Q, Sum
+from django.db.models import Avg, Count, Q, Sum, When, Prefetch
 from django.http import JsonResponse
 from django_filters import rest_framework as filters
 from django.utils import timezone
@@ -103,7 +103,7 @@ class MyCourseView(APIView):
         # 강의평가 탭의 '내 강의평'에 뜨는 강의들이 언제 새학기 걸로 바뀌는지 모르겠어서
         # 9월~2월은 2학기의 기본시간표 리스트가 뜨고, 3월~8월은 1학기의 기본 시간표 리스트가 뜬다고 가정
         # --> 지금 2022-1 강의밖에 없어서 그냥 1~6월은 1학기, 7~12는 2학기 뜨도록 수정
-
+        user = request.user
         # semester 처리
         date = str(timezone.now())[:10].split('-')
         year = int(date[0])
@@ -114,20 +114,21 @@ class MyCourseView(APIView):
         else:
             sem = str(year)+'년 2학기'
 
-        sem_id = Semester.objects.get(name=sem).id
+        # sem_id = Semester.objects.get(name=sem).id
 
-        if TimeTable.objects.filter(user=request.user, is_default=True, semester=sem_id).exists():
-            timetable = TimeTable.objects.get(user=request.user, is_default=True, semester=sem_id)
+        queryset = TimeTable.objects.prefetch_related('lecture__course').filter(user=request.user, is_default=True, semester__name=sem)[:1]
+        if queryset:
+            timetable = queryset[0]
             my_course_ids = timetable.lecture.values_list('course')
-            my_courses = Course.objects.filter(id__in=my_course_ids, self_made=False).prefetch_related('lectureevaluation_set')
+            my_courses = Course.objects.filter(id__in=my_course_ids, self_made=False).prefetch_related(Prefetch('lectureevaluation_set', queryset=LectureEvaluation.objects.filter(writer=user)))
         else:
             my_courses = None
 
-        point = Point.objects.filter(user=request.user.school_email).aggregate(Sum('point'))
+        point = Point.objects.filter(user=user.school_email).aggregate(Sum('point'))
 
-        return JsonResponse({
+        return Response({
             'point': point.get('point__sum'),
-            'courses': MyCourseSerializer(my_courses, many=True, context={'user': request.user}).data
+            'courses': MyCourseSerializer(my_courses, many=True, context={'user': user}).data
         }, status=status.HTTP_200_OK)
 
 
