@@ -2,7 +2,7 @@ from django.shortcuts import render
 
 from rest_framework import status, viewsets
 from rest_framework.views import APIView
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
 
 from .models import Board
@@ -12,12 +12,16 @@ from drf_yasg.utils import swagger_auto_schema
 
 from everytime import permissions
 from everytime.exceptions import NotAllowed
-from everytime.utils import get_object_or_404
+from everytime.utils import get_object_or_404, ViewSetActionPermissionMixin
 
-class BoardView(APIView):
-    permission_classes = (permissions.IsLoggedIn, )
 
-    def post(self, request, *args, **kwargs):
+class BoardViewSet(ViewSetActionPermissionMixin, viewsets.GenericViewSet):
+    permission_classes = (permissions.IsAuthenticated, )
+    permission_action_classes = {
+        'list': (permissions.IsLoggedIn, ),
+    }
+
+    def create(self, request):
         data = request.data
         user = request.user
         if user.is_staff is not True:
@@ -28,7 +32,7 @@ class BoardView(APIView):
 
         return Response(BoardSerializer(board).data, status.HTTP_201_CREATED)
 
-    def get(self, request):
+    def list(self, request):
         # 하위 게시판이 아닌 일반 게시판만 불러옴
         boards = Board.objects.filter(head_board=None)
         serializer = BoardSerializer(boards, many=True)
