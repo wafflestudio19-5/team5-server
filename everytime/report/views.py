@@ -96,7 +96,7 @@ class ExamInfoReportView(APIView):
         exam_info_report = serializer.save()
         serializer.validated_data['examinfo'].reporting_users.add(request.user)
 
-        reported_email = exam_info_report.post.writer
+        reported_email = exam_info_report.examinfo.writer
         if reported_email is not None:
             reported_email = reported_email.school_email
             if ReportedUser.objects.filter(school_email=reported_email).exists():
