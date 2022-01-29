@@ -20,7 +20,7 @@ class FriendRequestView(generics.GenericAPIView):
         friend_request = serializer.save()
         if friend_request is None:
             raise ServerError()
-        return Response("친구 요청을 보냈습니다.\n상대방이 수락하면 친구가 맺어짖니다.", status=status.HTTP_201_CREATED) # 이 부분 직접 친구신청 해보고 response 수정해야됨
+        return Response("친구 요청을 보냈습니다.\n상대방이 수락하면 친구가 맺어집니다.", status=status.HTTP_201_CREATED) # 이 부분 직접 친구신청 해보고 response 수정해야됨
 
 class FriendRequestDeleteView(generics.GenericAPIView):
     permission_classes = (permissions.IsAuthenticated, )
