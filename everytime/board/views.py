@@ -15,7 +15,7 @@ from everytime.exceptions import NotAllowed
 from everytime.utils import get_object_or_404
 
 class BoardView(APIView):
-    permission_classes = (permissions.IsAuthenticated, )
+    permission_classes = (permissions.IsLoggedIn, )
 
     def post(self, request, *args, **kwargs):
         data = request.data
